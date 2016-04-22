@@ -55,6 +55,9 @@ public:
     }
 };
 
+typedef Value (*ParseSomething)( Isolate* isolate, StreamReader* r );
+extern ParseSomething Parsers[128];
+
 
 // Provides a stream of characters to the parser
 class StringReader : public StreamReader {
@@ -76,7 +79,7 @@ public:
     }
     
     void UnRead() {
-        pos += 1;
+        pos -= 1;
     }
 };
 
@@ -87,6 +90,14 @@ class Parser {
     public:
     
     static Value ParseForm( Isolate*  isolate, StreamReader* r ) {
+        
+        char c = r->Read();
+        ParseSomething fn = Parsers[c];
+        if (fn != NULL) {
+            std::cout << "Found parser for ";
+            std::cout << c;
+            std::cout << "\n";
+        }
         return isolate->NIL;
     }
 
