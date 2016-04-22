@@ -16,9 +16,11 @@ $ mkdir ~/addie
 $ cd ~/addie
 $ sudo apt-get install cmake
 $ git clone https://github.com/Starcounter/Addie.git ./
-$ cmake ./
+$ mkdir build
+$ cd build
+$ cmake ..
 $ make
-$ ./addie
+$ ../addie
 ```
 
 ### Windows
