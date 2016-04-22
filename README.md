@@ -24,3 +24,12 @@ $ ./addie
 ### Windows
 
 TODO!
+
+### OS X
+
+Optionally, you can use CMake to create a XCode project 
+
+```bash
+$ make -G Xcode
+```
+
