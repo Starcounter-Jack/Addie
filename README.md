@@ -7,11 +7,20 @@ Clojure based embeddable Lisp.
 
 ## Building and running
 
+You need a C/C++ compiler and CMake. 
+
+### Linux
+
 ```bash
-$ mkdir addie
-$ cd addie
+$ mkdir ~/addie
+$ cd ~/addie
+$ apt-get cmake
 $ git clone https://github.com/Starcounter/Addie.git ./
 $ cmake ./
 $ make
 $ ./addie
 ```
+
+### Windows
+
+TODO!
