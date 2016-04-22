@@ -24,7 +24,6 @@ class UnexpectedEOF: public std::exception
 {
 };
 
-
 struct Char {
     unsigned int IsSymbol : 1;              // Any glyph that can be used as a lisp symbol
     unsigned int IsWhitespace : 1;          // space, tab, comma, cr, lf
@@ -92,12 +91,19 @@ class Parser {
     static Value ParseForm( Isolate*  isolate, StreamReader* r ) {
         
         char c = r->Read();
-        ParseSomething fn = Parsers[c];
-        if (fn != NULL) {
-            std::cout << "Found parser for ";
-            std::cout << c;
-            std::cout << "\n";
-            return fn( isolate, r );
+        if ( Chars[c].ClojureSpecialMeaning ) {
+           ParseSomething fn = Parsers[c];
+           if (fn == NULL) {
+               std::string msg = "Missing parser for character ";
+               msg += c;
+               throw std::runtime_error(msg);
+           }
+           else {
+               std::cout << "Found parser for ";
+               std::cout << c;
+               std::cout << "\n";
+               return fn( isolate, r );
+           }
         }
         return isolate->NIL;
     }
