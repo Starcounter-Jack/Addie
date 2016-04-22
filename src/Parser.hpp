@@ -97,6 +97,7 @@ class Parser {
             std::cout << "Found parser for ";
             std::cout << c;
             std::cout << "\n";
+            return fn( isolate, r );
         }
         return isolate->NIL;
     }

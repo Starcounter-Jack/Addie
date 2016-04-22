@@ -30,8 +30,9 @@ int main(int argc, const char * argv[]) {
     auto test_str = StringReader("\"Jack Wester\"");
     auto test_list = StringReader("(Jack Wester)");
     
-    test_str.Read();
-    Value v1 = Parser::ParseString( &isolate, &test_str );
+    //test_str.Read();
+    //Value v1 = Parser::ParseString( &isolate, &test_str );
+    Value v1 = Parser::ParseForm( &isolate, &test_str );
     
     test_list.Read();
     Value v2 = Parser::ParseList( &isolate, &test_list );
