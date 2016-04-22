@@ -1,13 +1,13 @@
 # Addie
 
-Clojure based embeddable Lisp. 
+Clojure based embeddable Lisp.
 
 *** JUST STARTED DEVELOPMENT. DOES NOT WORK YET ***
 
 
 ## Building and running
 
-You need a C/C++ compiler and CMake. 
+You need a C/C++ compiler and CMake.
 
 ### Linux
 
@@ -20,7 +20,7 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make
-$ ../addie
+$ ./addie
 ```
 
 ### Windows
@@ -29,9 +29,8 @@ TODO!
 
 ### OS X
 
-Optionally, you can use CMake to create a XCode project 
+Optionally, you can use CMake to create a XCode project
 
 ```bash
-$ make -G Xcode
+$ cmake -G Xcode
 ```
-
