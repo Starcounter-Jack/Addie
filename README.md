@@ -14,7 +14,7 @@ You need a C/C++ compiler and CMake.
 ```bash
 $ mkdir ~/addie
 $ cd ~/addie
-$ apt-get cmake
+$ apt-get install cmake
 $ git clone https://github.com/Starcounter/Addie.git ./
 $ cmake ./
 $ make
