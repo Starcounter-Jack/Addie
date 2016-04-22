@@ -1,6 +1,6 @@
 # Addie
 
-A Modern Clojure based embeddable Lisp. Lightweight scripting language that is easy to port and integrate into existing C/C++ codebases. Focus on efficiency for functional programming.
+A Modern Clojure based embeddable functional Lisp. At least, this is the plan.
 
 *** JUST STARTED DEVELOPMENT. DOES NOT WORK YET ***
 
