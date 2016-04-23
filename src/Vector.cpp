@@ -2,8 +2,8 @@
 //  Starcounter Lisp
 //
 //  Vector.cpp
-//  Implementation of a Bitmapped Vector Trie
-//  Clojure Inspired Immutable/Persistent Vector.
+//  Planned Implementation of a persistent bit-partitioned vector trie, 
+//  i.e. a Clojure inspired immutable vector.
 //  Needs unit tests badly.
 //
 //  https://www.youtube.com/watch?v=pNhBQJN44YQ
