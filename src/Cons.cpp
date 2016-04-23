@@ -31,9 +31,13 @@ void CONS::Print() {
 // Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because
 // this should only be done on mutable lists.
 CONS CONS::SnocBANG( VALUE elem ) {
-    CONS previousTail;
-    auto x = previousTail.__allocateCons( elem, NIL() );
-    GetCons()->Cdr = previousTail;
+    Cons* cons = GetCons();
+    if (cons->Cdr != NIL()) {
+        throw std::runtime_error("Can only append at the end of a list");
+    }
+    CONS c;
+    auto x = c.__allocateCons( elem, NIL() );
+    GetCons()->Cdr = c;
     return CONS(x);
 }
 

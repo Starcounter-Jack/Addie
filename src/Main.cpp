@@ -36,6 +36,13 @@ int main(int argc, const char * argv[]) {
     v2.Print();
     std::cout << "\n";
     
+//    std::string str3 = "(\"Jack\"";
+//    auto test_str3 = StringReader(str3);
+//    std::cout << "\nParsing: " << str3 << "\n";
+//    VALUE v3 = Parser::ParseForm( &isolate, &test_str3 );
+//    v3.Print();
+//    std::cout << "\n";
+    
     Heap.PrintStatus();
     
 //    TestHashTrie();
