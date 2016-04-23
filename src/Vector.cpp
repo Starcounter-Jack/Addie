@@ -3,7 +3,6 @@
 //
 //  Vector.cpp
 //  Planned Implementation of a persistent bit-partitioned vector trie.
-//  Pioneered by Phil Bagwell: http://lampwww.epfl.ch/papers/idealhashtrees.pdf
 //  Needs unit tests badly.
 //
 //  Made popular in Clojure as their persistent vector.
