@@ -20,7 +20,7 @@ void CONS::Print() {
         std::cout << "()";
     }
     else {
-        std::cout << " (";
+        std::cout << "(";
         GetCons()->Car.Print();
         std::cout << " . ";
         GetCons()->Cdr.Print();
