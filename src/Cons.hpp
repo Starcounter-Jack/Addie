@@ -23,6 +23,24 @@ public:
         IsHeapObject = true;
         Pointer = 0;
     };
+
+    CONS( VALUE _car, VALUE _cdr) {
+        HType = TCons;
+        IsHeapObject = true;
+        __allocateCons( _car, _cdr );
+    }
+    
+    
+    CONS( Cons* cons ) {
+        HType = TCons;
+        IsHeapObject = true;
+        Pointer = (uint64_t)cons;
+    }
+    
+    // Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because
+    // this should only be done on mutable lists.
+    CONS SnocBANG( VALUE elem );
+
     
     bool IsEmptyList() {
         return Pointer == 0;
@@ -34,7 +52,9 @@ public:
         return (class Cons*)Pointer;
     }
     
-    Cons* AllocateCons( VALUE car, VALUE cdr );
+private:
+    Cons* __allocateCons( VALUE car, VALUE cdr );
+    
     
     
 };
@@ -49,6 +69,8 @@ public:
     
     VALUE Car;   // Aka CAR
     VALUE Cdr;    // Aka CDR
+    
+
 };
 
 

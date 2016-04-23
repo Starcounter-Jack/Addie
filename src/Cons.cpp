@@ -28,7 +28,16 @@ void CONS::Print() {
     }
 }
 
-Cons* CONS::AllocateCons( VALUE car, VALUE cdr ) {
+// Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because
+// this should only be done on mutable lists.
+CONS CONS::SnocBANG( VALUE elem ) {
+    CONS previousTail;
+    auto x = previousTail.__allocateCons( elem, NIL() );
+    GetCons()->Cdr = previousTail;
+    return CONS(x);
+}
+
+Cons* CONS::__allocateCons( VALUE car, VALUE cdr ) {
         auto c = new Cons(car,cdr); // TODO! GC
         Pointer = (uint64_t)c;
     return c;

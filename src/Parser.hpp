@@ -137,7 +137,7 @@ class Parser {
 
    static VALUE ParseList( Isolate* isolate, StreamReader* r) {
        CONS list;
-       Cons* previous = NULL;
+       CONS previous;
        
         while (true) {
             
@@ -158,14 +158,12 @@ class Parser {
             r->UnRead(); // We are ready to consume any lisp form
             
             VALUE elem = ParseForm( isolate, r );
-            if (previous == NULL) {
-                previous = list.AllocateCons( elem, NIL() );
+            if (previous.IsEmptyList()) {
+                list = CONS( elem, NIL());
+                previous = list;
             }
             else {
-                CONS previousTail;
-                auto x = previousTail.AllocateCons( elem, NIL() );
-                previous->Cdr = previousTail;
-                previous = x;
+                previous = previous.SnocBANG( elem );
             }
         }
 
