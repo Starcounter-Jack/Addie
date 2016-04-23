@@ -2,10 +2,11 @@
 //  Starcounter Lisp
 //
 //  Vector.cpp
-//  Planned Implementation of a persistent bit-partitioned vector trie, 
-//  i.e. a Clojure inspired immutable vector.
+//  Planned Implementation of a persistent bit-partitioned vector trie.
+//  Pioneered by Phil Bagwell: http://lampwww.epfl.ch/papers/idealhashtrees.pdf
 //  Needs unit tests badly.
 //
+//  Made popular in Clojure as their persistent vector.
 //  https://www.youtube.com/watch?v=pNhBQJN44YQ
 //  http://www.infoq.com/presentations/Value-Identity-State-Rich-Hickey
 //
