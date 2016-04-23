@@ -8,10 +8,28 @@
 //  (aka car,cdr).
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB. All rights reserved.
+//  Copyright © 2016 Starcounter AB.
 //
 
 #include "Cons.hpp"
 
 
 
+void CONS::Print() {
+    if (Pointer == 0) {
+        std::cout << "()";
+    }
+    else {
+        std::cout << " (";
+        GetCons()->Car.Print();
+        std::cout << " . ";
+        GetCons()->Cdr.Print();
+        std::cout << ")";
+    }
+}
+
+Cons* CONS::AllocateCons( VALUE car, VALUE cdr ) {
+        auto c = new Cons(car,cdr); // TODO! GC
+        Pointer = (uint64_t)c;
+    return c;
+}

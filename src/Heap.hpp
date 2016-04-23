@@ -3,7 +3,7 @@
 //  Starcounter Lisp
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB. All rights reserved.
+//  Copyright © 2016 Starcounter AB.
 //
 
 #ifndef Heap_hpp
@@ -43,12 +43,26 @@ public:
        if (NumberOfAllocations) {
            std::cout << "\nNumber of unfreed allocations: ";
            std::cout << NumberOfAllocations;
-           std::cout << " (";
+           std::cout << "\nTotal allocations: ";
            std::cout << BytesAllocated;
-           std::cout << " bytes) \n";
+           std::cout << " bytes\n";
        }
     }
+    
 };
+
+/*
+ http://stackoverflow.com/questions/4956249/using-malloc-instead-of-new-and-calling-the-copy-constructor-when-the-object-is
+ You'll need to use placement new after getting the raw memory from malloc.
+ 
+ void* mem = malloc(sizeof(S));
+ S* s = new (mem) S(); //this is the so called "placement new"
+ When you're done with the object you have to make sure to explicitly call its destructor.
+ 
+ s->~S();
+ free(mem);
+ */
+
 
 extern Heap Heap;
 

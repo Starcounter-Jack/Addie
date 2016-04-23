@@ -6,7 +6,7 @@ set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
 project (Addie)
 
 file(GLOB_RECURSE Addie_SOURCES "src/*.cpp")
-file(GLOB_RECURSE Addie_HEADERS "src/*.hpp")
+file(GLOB_RECURSE Addie_HEADERS "src/*.h*")
 
 set (Addie_INCLUDE_DIRS "")
 foreach (_headerFile ${Addie_HEADERS})

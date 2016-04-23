@@ -3,7 +3,7 @@
 //  Starcounter Lisp
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB. All rights reserved.
+//  Copyright © 2016 Starcounter AB.
 //
 
 #ifndef Parser_hpp
@@ -24,14 +24,15 @@ class UnexpectedEOF: public std::exception
 {
 };
 
+// Single byte lookup table for character parsing
 struct Char {
     unsigned int IsSymbol : 1;              // Any glyph that can be used as a lisp symbol
     unsigned int IsWhitespace : 1;          // space, tab, comma, cr, lf
     unsigned int ClojureSpecialMeaning : 1; // Standard Lisp and a few new ones {[#%: etc...
-    unsigned int ParensAndQuotes : 1;       // Things that starts parser modes sucg as {[("`;
+    unsigned int ParensAndQuotes : 1;       // Things that starts parser modes such as {[("`;
 };
 
-extern Char Chars[256];
+extern Char Chars[256]; // 256 byte quick lookup for UTF-8 bytes
 
 class StreamReader {
     
@@ -54,7 +55,7 @@ public:
     }
 };
 
-typedef Value (*ParseSomething)( Isolate* isolate, StreamReader* r );
+typedef VALUE (*ParseSomething)( Isolate* isolate, StreamReader* r );
 extern ParseSomething Parsers[128];
 
 
@@ -88,7 +89,7 @@ public:
 class Parser {
     public:
     
-    static Value ParseForm( Isolate*  isolate, StreamReader* r ) {
+    static VALUE ParseForm( Isolate*  isolate, StreamReader* r ) {
         
         char c = r->Read();
         if ( Chars[c].ClojureSpecialMeaning ) {
@@ -99,16 +100,16 @@ class Parser {
                throw std::runtime_error(msg);
            }
            else {
-               std::cout << "Found parser for ";
-               std::cout << c;
-               std::cout << "\n";
+//               std::cout << "Found parser for ";
+//               std::cout << c;
+//               std::cout << "\n";
                return fn( isolate, r );
            }
         }
-        return isolate->NIL;
+        return isolate->Nil;
     }
 
-   static Value ParseString( Isolate* isolate, StreamReader* r) {
+   static VALUE ParseString( Isolate* isolate, StreamReader* r) {
         
         std::ostringstream res;
         
@@ -118,7 +119,7 @@ class Parser {
                 switch (v) {
                     case '"':
                         // We've reached the end of the string literal
-                        return Value::CreateString(res.str());
+                        return STRING(res.str());
                     case '\\':
                         throw std::invalid_argument( "escape characters not implemented yet" );
                     default:
@@ -131,33 +132,43 @@ class Parser {
             }
         }
         
-        return Value::CreateString("error");
+        return STRING("error");
    }
 
-   static Value ParseList( Isolate* isolate, StreamReader* r) {
+   static VALUE ParseList( Isolate* isolate, StreamReader* r) {
+       CONS list;
+       Cons* previous = NULL;
+       
         while (true) {
             
-            // Parse into a classic lisp list
-            Cons* list = NULL;
-            int count = 0;
             try {
                 StreamReader::SkipWhitespace(r);
             }
             catch (UnexpectedEOF e) {
-                throw std::runtime_error("EOF while reading list");
+                // The original idea is to test parse errors from Clojure, but
+                // they are not very nice. Besides, rolling our own will save time.
+                throw std::runtime_error("Missing )");
             }
             char c = r->Read();
             if (c == ')') {
-                if (count == 0)
-                    return isolate->EmptyList;
-                // TODO!
+//                previous->GetCons()->cdr = NIL();
+                return list;
             }
+
             r->UnRead(); // We are ready to consume any lisp form
-            Value elem = ParseForm( isolate, r );
-            if (!(elem == isolate->NIL)) {
-                // TODO!
+            
+            VALUE elem = ParseForm( isolate, r );
+            if (previous == NULL) {
+                previous = list.AllocateCons( elem, NIL() );
+            }
+            else {
+                CONS previousTail;
+                auto x = previousTail.AllocateCons( elem, NIL() );
+                previous->Cdr = previousTail;
+                previous = x;
             }
         }
+
 
    }
 };

@@ -3,43 +3,41 @@
 //  Starcounter Lisp
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB. All rights reserved.
+//  Copyright © 2016 Starcounter AB.
 //
+#include "Helpers.h"
+
 
 #include "Main.hpp"
 #include "Parser.hpp"
 #include <iostream>
+#include "../tests/TestHashTrie.hpp"
 
 
 int main(int argc, const char * argv[]) {
     
-    /*
-     http://stackoverflow.com/questions/4956249/using-malloc-instead-of-new-and-calling-the-copy-constructor-when-the-object-is
-     You'll need to use placement new after getting the raw memory from malloc.
-     
-     void* mem = malloc(sizeof(S));
-     S* s = new (mem) S(); //this is the so called "placement new"
-     When you're done with the object you have to make sure to explicitly call its destructor.
-     
-     s->~S();
-     free(mem);
-     */
     Isolate isolate;
     
+    std::string str1 = "\"Jack Wester\"";
+    std::string str2 = "(\"Jack\" \"Wester\")";
     
-    auto test_str = StringReader("\"Jack Wester\"");
-    auto test_list = StringReader("(Jack Wester)");
+    auto test_str = StringReader(str1);
+    auto test_list = StringReader(str2);
     
     //test_str.Read();
     //Value v1 = Parser::ParseString( &isolate, &test_str );
-    Value v1 = Parser::ParseForm( &isolate, &test_str );
-    
-    test_list.Read();
-    Value v2 = Parser::ParseList( &isolate, &test_list );
-    
+    std::cout << "\nParsing: " << str1 << "\n";
+    VALUE v1 = Parser::ParseForm( &isolate, &test_str );
     v1.Print();
+    std::cout << "\n";
+    
+    std::cout << "\nParsing: " << str2 << "\n";
+    VALUE v2 = Parser::ParseForm( &isolate, &test_list );
     v2.Print();
+    std::cout << "\n";
     
     Heap.PrintStatus();
+    
+//    TestHashTrie();
 
 }
