@@ -6,11 +6,10 @@ A modern clojure based embeddable Lisp.
 2. C/C++ Embeddable
 3. Basic Clojure compatibility
 4. Small
-5. Simple single threaded isolates for simple embedding
-6. Zero startup time
+5. Fast
+6. Simple single threaded isolates for simple embedding
 7. Portable (ansi C/++)
-8. Fast enough
-9. Supports vertical parentheses to relax your brain 🍺
+8. Supports vertical parentheses to relax your brain 🍺
 
 *** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
 
