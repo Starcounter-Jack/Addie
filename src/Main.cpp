@@ -12,15 +12,18 @@
 #include "Parser.hpp"
 #include <iostream>
 #include "../tests/TestHashTrie.hpp"
+#include "Compiler.hpp"
+#include "Interpreter.hpp"
 
 
-void IllustrateParse( const char* str ) {
+VALUE IllustrateParse( const char* str ) {
     auto teststr = StringReader(str);
-    std::cout << "\n\n**** Parsing ****\n" << str << "\n";
+    std::cout << "\n**** Parsing ****\n" << str << "\n";
     std::cout << "===>\n\n";
-    VALUE v3 = Parser::ParseForm( &teststr );
-    v3.Print();
-    std::cout << "\n";
+    VALUE v = Parser::ParseForm( &teststr );
+    v.Print();
+    std::cout << "\n\n";
+    return v;
 }
 
 int main(int argc, const char * argv[]) {
@@ -31,6 +34,17 @@ int main(int argc, const char * argv[]) {
     IllustrateParse( "\"Jack Gök Wester\"" );
     IllustrateParse("(\"Jack\" \"Wester\")");
     IllustrateParse( "\n⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝" );
-    
+    VALUE v = IllustrateParse("(+ 1 1)");
+
+    Compiler c;
+    Interpreter i;
+    STRING bytecode = c.Compile( v );
+    VALUE result = i.Interpret( bytecode );
+
+    std::cout << "\n**** Compiling and running ****\n";
+    result.Print();
+    std::cout << "\n\n";
+
+
 //    CurrentIsolate->Heap.PrintStatus();
 }

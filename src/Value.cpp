@@ -50,8 +50,8 @@ std::string SYMBOL::ToString() {
 
 void SYMBOL::Print() {
     std::cout << ToString();
-    std::cout << "#";
-    std::cout << Integer;
+    // std::cout << "#";       // Uncomment these to see symbol integer
+    // std::cout << Integer;   // Uncomment these to see symbol integer
 }
 
 
