@@ -1,6 +1,6 @@
 # Addie
 
-A modern clojure based embeddable Lisp.
+A modern clojure based embeddable Lisp. *** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
 
 1. Functional first (immutable data structures)
 2. C/C++ Embeddable
@@ -11,7 +11,6 @@ A modern clojure based embeddable Lisp.
 7. Portable (ansi C/++)
 8. Supports vertical parentheses to relax your brain 🍺
 
-*** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
 
 ## Example
 ```clojure
