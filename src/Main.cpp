@@ -19,7 +19,7 @@
 VALUE IllustrateParse( const char* str ) {
     auto teststr = StringReader(str);
     std::cout << "\n**** Parsing ****\n" << str << "\n";
-    std::cout << "===>\n\n";
+    std::cout << "===>\n";
     VALUE v = Parser::ParseForm( &teststr );
     v.Print();
     std::cout << "\n\n";
