@@ -34,7 +34,7 @@ You need a C/C++ compiler and CMake.
 $ mkdir ~/addie
 $ cd ~/addie
 $ sudo apt-get install cmake
-$ git clone https://github.com/Starcounter/Addie.git ./
+$ git clone https://github.com/Starcounter-Jack/Addie.git ./
 $ mkdir build
 $ cd build
 $ cmake ..
