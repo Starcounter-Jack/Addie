@@ -45,21 +45,21 @@ ParseSomething Parsers[128] = {
     NULL,    // 30
     NULL,    // 31
     NULL,    // 32
-    NULL,    // 33
+    &(Parser::ParseSymbol),    // 33
     &(Parser::ParseString),    // 34  "
-    NULL,    // 35
-    NULL,    // 36
-    NULL,    // 37
-    NULL,    // 38
-    NULL,    // 39
+    &(Parser::ParseSymbol),    // 35
+    &(Parser::ParseSymbol),    // 36
+    &(Parser::ParseSymbol),    // 37
+    &(Parser::ParseSymbol),    // 38
+    &(Parser::ParseSymbol),    // 39
     &(Parser::ParseList),    // 40 (
-    NULL,    // 41
-    NULL,    // 42
-    NULL,    // 43
-    NULL,    // 44
-    NULL,    // 45
-    NULL,    // 46
-    NULL,    // 47
+    &(Parser::ParseSymbol),    // 41
+    &(Parser::ParseSymbol),    // 42
+    &(Parser::ParseSymbol),    // 43
+    &(Parser::ParseSymbol),    // 44
+    &(Parser::ParseSymbol),    // 45
+    &(Parser::ParseSymbol),    // 46
+    &(Parser::ParseSymbol),    // 47
     NULL,    // 48 0
     NULL,    // 49 1
     NULL,    // 50 2
@@ -70,74 +70,74 @@ ParseSomething Parsers[128] = {
     NULL,    // 55 7
     NULL,    // 56 8
     NULL,    // 57 9
-    NULL,    // 58
-    NULL,    // 59
-    NULL,    // 60
-    NULL,    // 61
-    NULL,    // 62
-    NULL,    // 63
-    NULL,    // 64
-    NULL,    // 65
-    NULL,    // 66
-    NULL,    // 67
-    NULL,    // 68
-    NULL,    // 69
-    NULL,    // 70
-    NULL,    // 71
-    NULL,    // 72
-    NULL,    // 73
-    NULL,    // 74
-    NULL,    // 75
-    NULL,    // 76
-    NULL,    // 77
-    NULL,    // 78
-    NULL,    // 79
-    NULL,    // 80
-    NULL,    // 81
-    NULL,    // 82
-    NULL,    // 83
-    NULL,    // 84
-    NULL,    // 85
-    NULL,    // 86
-    NULL,    // 87
-    NULL,    // 88
-    NULL,    // 89
-    NULL,    // 90
-    NULL,    // 91
-    NULL,    // 92
-    NULL,    // 93
-    NULL,    // 94
-    NULL,    // 95
-    NULL,    // 96
-    NULL,    // 97
-    NULL,    // 98
-    NULL,    // 99
-    NULL,    // 100
-    NULL,    // 101
-    NULL,    // 102
-    NULL,    // 103
-    NULL,    // 104
-    NULL,    // 105
-    NULL,    // 106
-    NULL,    // 107
-    NULL,    // 108
-    NULL,    // 109
-    NULL,    // 110
-    NULL,    // 111
-    NULL,    // 112
-    NULL,    // 113
-    NULL,    // 114
-    NULL,    // 115
-    NULL,    // 116
-    NULL,    // 117
-    NULL,    // 118
-    NULL,    // 119
-    NULL,    // 120
-    NULL,    // 121
-    NULL,    // 122
-    NULL,    // 123
-    NULL,    // 124
-    NULL,    // 125
+    NULL,    // 58 :
+    NULL,    // 59 ;
+    &(Parser::ParseSymbol),    // 60
+    &(Parser::ParseSymbol),    // 61
+    &(Parser::ParseSymbol),    // 62
+    &(Parser::ParseSymbol),    // 63
+    NULL,     // 64 @
+    &(Parser::ParseSymbol),    // 65
+    &(Parser::ParseSymbol),    // 66
+    &(Parser::ParseSymbol),    // 67
+    &(Parser::ParseSymbol),    // 68
+    &(Parser::ParseSymbol),    // 69
+    &(Parser::ParseSymbol),    // 70
+    &(Parser::ParseSymbol),    // 71
+    &(Parser::ParseSymbol),    // 72
+    &(Parser::ParseSymbol),    // 73
+    &(Parser::ParseSymbol),    // 74
+    &(Parser::ParseSymbol),    // 75
+    &(Parser::ParseSymbol),    // 76
+    &(Parser::ParseSymbol),    // 77
+    &(Parser::ParseSymbol),    // 78
+    &(Parser::ParseSymbol),    // 79
+    &(Parser::ParseSymbol),    // 80
+    &(Parser::ParseSymbol),    // 81
+    &(Parser::ParseSymbol),    // 82
+    &(Parser::ParseSymbol),    // 83
+    &(Parser::ParseSymbol),    // 84
+    &(Parser::ParseSymbol),    // 85
+    &(Parser::ParseSymbol),    // 86
+    &(Parser::ParseSymbol),    // 87
+    &(Parser::ParseSymbol),    // 88
+    &(Parser::ParseSymbol),    // 89
+    &(Parser::ParseSymbol),    // 90 Z
+    NULL,    // 91 [
+    NULL,    // 92 BACKSLASH
+    NULL,    // 93 ]
+    NULL,    // 94 ^
+    &(Parser::ParseSymbol),    // 95 _
+    NULL,    // 96 `
+    &(Parser::ParseSymbol),    // 97 a
+    &(Parser::ParseSymbol),    // 98
+    &(Parser::ParseSymbol),    // 99
+    &(Parser::ParseSymbol),    // 100
+    &(Parser::ParseSymbol),    // 101
+    &(Parser::ParseSymbol),    // 102
+    &(Parser::ParseSymbol),    // 103
+    &(Parser::ParseSymbol),    // 104
+    &(Parser::ParseSymbol),    // 105
+    &(Parser::ParseSymbol),    // 106
+    &(Parser::ParseSymbol),    // 107
+    &(Parser::ParseSymbol),    // 108
+    &(Parser::ParseSymbol),    // 109
+    &(Parser::ParseSymbol),    // 110
+    &(Parser::ParseSymbol),    // 111
+    &(Parser::ParseSymbol),    // 112
+    &(Parser::ParseSymbol),    // 113
+    &(Parser::ParseSymbol),    // 114
+    &(Parser::ParseSymbol),    // 115
+    &(Parser::ParseSymbol),    // 116
+    &(Parser::ParseSymbol),    // 117
+    &(Parser::ParseSymbol),    // 118
+    &(Parser::ParseSymbol),    // 119
+    &(Parser::ParseSymbol),    // 120
+    &(Parser::ParseSymbol),    // 121
+    &(Parser::ParseSymbol),    // 122 z
+    NULL,    // 123 {
+    NULL,    // 124 |
+    NULL,    // 125 }
     NULL,    // 126
     NULL     // 127
 };
@@ -266,6 +266,7 @@ Char Chars[256] = {
     {1},         // 119 w
     {1},         // 120 x
     {1},         // 121 y
+    {1},         // 122 z
     {0,0,1,1},   // 123 {
     {1},         // 124 |
     {0,0,1,1},   // 125 }

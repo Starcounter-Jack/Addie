@@ -89,10 +89,15 @@ public:
 class Parser {
     public:
     
+    static VALUE ParseSymbol( Isolate* isolate, StreamReader* r ) {
+        throw std::runtime_error("Encountered a symbol");
+        return NIL();
+    }
+    
     static VALUE ParseForm( Isolate*  isolate, StreamReader* r ) {
         
         char c = r->Read();
-        if ( Chars[c].ClojureSpecialMeaning ) {
+       // if ( Chars[c].ClojureSpecialMeaning ) {
            ParseSomething fn = Parsers[c];
            if (fn == NULL) {
                std::string msg = "Missing parser for character ";
@@ -105,7 +110,7 @@ class Parser {
 //               std::cout << "\n";
                return fn( isolate, r );
            }
-        }
+      //  }
         return isolate->Nil;
     }
 
@@ -166,8 +171,6 @@ class Parser {
                 previous = previous.SnocBANG( elem );
             }
         }
-
-
    }
 };
 
