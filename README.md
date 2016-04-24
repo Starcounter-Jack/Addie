@@ -1,14 +1,17 @@
 # Addie
 
-Clojure based embeddable Lisp.
+A modern clojure based embeddable Lisp.
 
-1. Functional
-2. Some basic Clojure compatibility
+1. Functional first (immutable data structures)
+2. Basic Clojure compatibility
+3. V8 semantics (multiple single threaded isolates)
 3. Small
-4. Embeddable
+4. C/C++ Embeddable
 5. Minimal startup time
-6. Portable
+6. Portable (ansi C/++)
 7. Fast enough
+
+*** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
 
 ### Example
 ```clojure
@@ -19,7 +22,6 @@ if (= einstein genius)
 ⏝
 ```
 
-*** JUST STARTED DEVELOPMENT. DOES NOT WORK YET ***
 
 
 ## Building and running
