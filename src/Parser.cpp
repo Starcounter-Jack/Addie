@@ -138,7 +138,7 @@ ParseSomething Parsers[128] = {
     &(Parser::ParseSymbol),    // 121 y
     &(Parser::ParseSymbol),    // 122 z
     &(Parser::ParseMap),    // 123 {
-    NULL,    // 124 |
+    &(Parser::ParseSymbol),    // 124 |
     &(Parser::ParseUnsolicitedEndCurly),    // 125 }
     NULL,    // 126
     NULL     // 127
