@@ -31,6 +31,7 @@ struct Char {
     unsigned int IsSymbol : 1;              // Any glyph that can be used as a lisp symbol
     unsigned int IsWhitespace : 1;          // space, tab, comma, cr, lf
     unsigned int IsClojureSpecialMeaning : 1; // Standard Lisp and a few new ones {[#%: etc...
+    unsigned int IsDigit : 1;
 };
 
 extern Char Chars[256]; // 256 byte quick lookup for UTF-8 bytes
@@ -132,15 +133,32 @@ class Parser {
         return SYMBOL(str.c_str(), str.length());
     }
     
+    
+    static VALUE ParseNumber( StreamReader* r ) {
+        
+        // TODO! Currently only supports integers
+        // TODO! Also read decimal numbers and maybe other numeric literals. Check Clojure...
+        r->UnRead();
+        std::ostringstream res;
+        
+        while (true) {
+            unsigned char c = r->ReadEofOk();
+            if (!Chars[c].IsDigit) {
+                r->UnRead();
+                break;
+            }
+            res << c;
+        }
+        std::string str = res.str();
+        return INTEGER( std::stoi(str) );
+    }
+
+    
     static VALUE ParseMinusOrSymbol( StreamReader* r ) {
         throw std::runtime_error("Encountered a minus or symbol");
         return NIL();
     }
-    
-    static VALUE ParseNumber( StreamReader* r ) {
-        throw std::runtime_error("Encountered a number");
-        return NIL();
-    }
+
     
     
     static VALUE ParseVector( StreamReader* r ) {

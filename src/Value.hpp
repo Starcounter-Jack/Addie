@@ -140,6 +140,27 @@ public:
     void Print();
 };
 
+class INTEGER : public VALUE {
+public:
+    INTEGER() {
+        IsHeapObject = false;
+        PType = PInteger;
+        Integer = 0;
+    }
+    
+    INTEGER( int i ) {
+        IsHeapObject = false;
+        PType = PInteger;
+        Integer = i;
+
+    }
+    
+    std::string ToString();
+    void Print();
+};
+
+
+
 
 
 #endif /* Value_hpp */

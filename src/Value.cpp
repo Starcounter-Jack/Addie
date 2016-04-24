@@ -70,6 +70,9 @@ void VALUE::Print() {
             case (PNil) :
                 ((NIL*)this)->Print();
                 return;
+            case (PInteger) :
+                ((INTEGER*)this)->Print();
+                return;
             default:
                 break;
         }
@@ -82,4 +85,9 @@ void VALUE::Print() {
     std::cout << " ptype=";
     std::cout << PType;
 }
+
+void INTEGER::Print() {
+    std::cout << Integer;
+}
+
 

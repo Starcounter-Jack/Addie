@@ -37,7 +37,7 @@ int main(int argc, const char * argv[]) {
     v2.Print();
     std::cout << "\n";
     
-    std::string str3 = "(foo bar \"hello world\")";
+    std::string str3 = "(foo bar \"hello world\" 123)";
     auto test_str3 = StringReader(str3);
     std::cout << "\nParsing: " << str3 << "\n";
     VALUE v3 = Parser::ParseForm( &test_str3 );

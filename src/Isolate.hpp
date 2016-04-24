@@ -28,6 +28,10 @@ public:
     std::string GetStringFromSymbolId( uint16_t id ) {
         return SymbolStrings[id];
     }
+
+    uint RegisterSymbol( const char* str ) {
+        return RegisterSymbol( str, strlen(str) );
+    }
     
     uint RegisterSymbol( const char* str, size_t size ) {
 //        std::cout << std::string( str, size );
@@ -44,9 +48,27 @@ public:
         
         return SymbolStrings.size();
     }
+
     
     Isolate()
     {
+        RegisterSymbol( "nil" );   // 1
+#define NilSymbol 1
+        RegisterSymbol( "true" );  // 2
+#define TrueSymbol 2
+        RegisterSymbol( "false" ); // 3
+#define FalseSymbol 3
+        RegisterSymbol( "__reserved4" ); // 4
+        RegisterSymbol( "__reserved5" ); // 5
+        RegisterSymbol( "__reserved6" ); // 6
+        RegisterSymbol( "__reserved7" ); // 7
+        RegisterSymbol( "__reserved8" ); // 8
+#define ReservedSymbols 8
+    }
+    
+    
+    bool IsReservedSymbol( uint16_t id ) {
+        return id <= ReservedSymbols;
     }
 };
 
