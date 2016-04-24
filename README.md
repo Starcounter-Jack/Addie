@@ -2,17 +2,17 @@
 
 A modern clojure based embeddable Lisp.
 
-1. Functional first (immutable data structures)
-2. C/C++ Embeddable
-3. Basic Clojure compatibility
-4. Small
-5. Simple single threaded isolates for simple embedding
-6. Zero startup time
-7. Portable (ansi C/++)
-8. Fast enough
-9. Supports vertical parentheses to relax your brain 🍺
+⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
 
-*** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
+1. Functional first (immutable data structures)
+2. Basic Clojure (script) compatibility
+3. Embeddable
+4. Small
+5. Fast
+6. Portable (ansi C/C++)
+7. Simple single threaded isolates for simple embedding
+8. Supports vertical parentheses to relax your brain 🍺
+
 
 ## Example
 ```clojure
