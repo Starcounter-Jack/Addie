@@ -14,6 +14,8 @@
 #include <cstdint>
 #include "Heap.hpp"
 
+class Isolate;
+
 enum PrimitiveType : int {
     PNil        =  0b000,    // 1 bit integer
     PBool       =  0b001,    // 1 bit integer
@@ -122,6 +124,19 @@ public:
         PType = PNil;
     }
     
+    void Print();
+};
+
+class SYMBOL : public VALUE {
+public:
+    SYMBOL() {
+        IsHeapObject = false;
+        PType = PSymbol;
+    }
+    
+    SYMBOL( const char* str, size_t len );
+    
+    std::string ToString();
     void Print();
 };
 

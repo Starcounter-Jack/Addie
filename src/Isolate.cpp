@@ -9,3 +9,4 @@
 #include "Isolate.hpp"
 
 
+ATTRIBUTE_TLS Isolate* CurrentIsolate;

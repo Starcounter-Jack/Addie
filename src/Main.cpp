@@ -17,6 +17,7 @@
 int main(int argc, const char * argv[]) {
     
     Isolate isolate;
+    CurrentIsolate = &isolate;
     
     std::string str1 = "\"Jack Wester\"";
     std::string str2 = "(\"Jack\" \"Wester\")";
@@ -25,23 +26,23 @@ int main(int argc, const char * argv[]) {
     auto test_list = StringReader(str2);
     
     //test_str.Read();
-    //Value v1 = Parser::ParseString( &isolate, &test_str );
+    //Value v1 = Parser::ParseString( &test_str );
     std::cout << "\nParsing: " << str1 << "\n";
-    VALUE v1 = Parser::ParseForm( &isolate, &test_str );
+    VALUE v1 = Parser::ParseForm( &test_str );
     v1.Print();
     std::cout << "\n";
     
     std::cout << "\nParsing: " << str2 << "\n";
-    VALUE v2 = Parser::ParseForm( &isolate, &test_list );
+    VALUE v2 = Parser::ParseForm( &test_list );
     v2.Print();
     std::cout << "\n";
     
-//    std::string str3 = "(\"Jack\"";
-//    auto test_str3 = StringReader(str3);
-//    std::cout << "\nParsing: " << str3 << "\n";
-//    VALUE v3 = Parser::ParseForm( &isolate, &test_str3 );
-//    v3.Print();
-//    std::cout << "\n";
+    std::string str3 = "(foo bar \"hello world\")";
+    auto test_str3 = StringReader(str3);
+    std::cout << "\nParsing: " << str3 << "\n";
+    VALUE v3 = Parser::ParseForm( &test_str3 );
+    v3.Print();
+    std::cout << "\n";
     
     Heap.PrintStatus();
     

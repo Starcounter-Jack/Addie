@@ -19,6 +19,7 @@
 #include "Cons.hpp"
 #include "Vector.hpp"
 #include "Isolate.hpp"
+#include "Value.hpp"
 
 class UnexpectedEOF: public std::exception
 {
@@ -26,10 +27,10 @@ class UnexpectedEOF: public std::exception
 
 // Single byte lookup table for character parsing
 struct Char {
+    unsigned int IsSymbolTerminator : 1;
     unsigned int IsSymbol : 1;              // Any glyph that can be used as a lisp symbol
     unsigned int IsWhitespace : 1;          // space, tab, comma, cr, lf
-    unsigned int ClojureSpecialMeaning : 1; // Standard Lisp and a few new ones {[#%: etc...
-    unsigned int ParensAndQuotes : 1;       // Things that starts parser modes such as {[("`;
+    unsigned int IsClojureSpecialMeaning : 1; // Standard Lisp and a few new ones {[#%: etc...
 };
 
 extern Char Chars[256]; // 256 byte quick lookup for UTF-8 bytes
@@ -41,12 +42,13 @@ public:
     }
     
     virtual char Read() = 0;
+    virtual char ReadEofOk() = 0;
     virtual void UnRead() = 0;
     
     
     static void SkipWhitespace(StreamReader* r) {
     start:
-        char c = r->Read();
+        unsigned char c = r->Read();
         
         if (Chars[c].IsWhitespace)
             goto start;
@@ -55,7 +57,7 @@ public:
     }
 };
 
-typedef VALUE (*ParseSomething)( Isolate* isolate, StreamReader* r );
+typedef VALUE (*ParseSomething)( StreamReader* r );
 extern ParseSomething Parsers[128];
 
 
@@ -67,6 +69,15 @@ public:
     
     StringReader( std::string s ) {
         str = s;
+    }
+    
+    char ReadEofOk() {
+        if (pos >= str.length()) {
+            return 0;
+        }
+        char c = str[pos];
+        pos += 1;
+        return c;
     }
     
     char Read() {
@@ -89,14 +100,67 @@ public:
 class Parser {
     public:
     
-    static VALUE ParseSymbol( Isolate* isolate, StreamReader* r ) {
-        throw std::runtime_error("Encountered a symbol");
+    static VALUE ParseUnsolicitedEndBracket( StreamReader* r ) {
+        throw std::runtime_error("] does not match any [");
         return NIL();
     }
     
-    static VALUE ParseForm( Isolate*  isolate, StreamReader* r ) {
+    static VALUE ParseUnsolicitedEndParen( StreamReader* r ) {
+        throw std::runtime_error(") does not match any (");
+        return NIL();
+    }
+    
+    static VALUE ParseUnsolicitedEndCurly( StreamReader* r ) {
+        throw std::runtime_error("} does not match any {");
+        return NIL();
+    }
+    
+    static VALUE ParseSymbol( StreamReader* r ) {
         
-        char c = r->Read();
+        r->UnRead();
+        std::ostringstream res;
+        
+        while (true) {
+            unsigned char c = r->ReadEofOk();
+            if (Chars[c].IsSymbolTerminator) {
+                r->UnRead();
+                break;
+            }
+            res << c;
+        }
+        std::string str = res.str();
+        return SYMBOL(str.c_str(), str.length());
+    }
+    
+    static VALUE ParseMinusOrSymbol( StreamReader* r ) {
+        throw std::runtime_error("Encountered a minus or symbol");
+        return NIL();
+    }
+    
+    static VALUE ParseNumber( StreamReader* r ) {
+        throw std::runtime_error("Encountered a number");
+        return NIL();
+    }
+    
+    
+    static VALUE ParseVector( StreamReader* r ) {
+        throw std::runtime_error("Encountered a vector");
+        return NIL();
+    }
+    
+    static VALUE ParseComment( StreamReader* r ) {
+        throw std::runtime_error("Encountered a comment");
+        return NIL();
+    }
+    
+    static VALUE ParseMap( StreamReader* r ) {
+        throw std::runtime_error("Encountered a map");
+        return NIL();
+    }
+    
+    static VALUE ParseForm( StreamReader* r ) {
+        
+        unsigned char c = r->Read();
        // if ( Chars[c].ClojureSpecialMeaning ) {
            ParseSomething fn = Parsers[c];
            if (fn == NULL) {
@@ -108,13 +172,13 @@ class Parser {
 //               std::cout << "Found parser for ";
 //               std::cout << c;
 //               std::cout << "\n";
-               return fn( isolate, r );
+               return fn( r );
            }
       //  }
-        return isolate->Nil;
+        return NIL();
     }
 
-   static VALUE ParseString( Isolate* isolate, StreamReader* r) {
+   static VALUE ParseString( StreamReader* r) {
         
         std::ostringstream res;
         
@@ -137,10 +201,10 @@ class Parser {
             }
         }
         
-        return STRING("error");
+        //return STRING("error");
    }
 
-   static VALUE ParseList( Isolate* isolate, StreamReader* r) {
+   static VALUE ParseList( StreamReader* r) {
        CONS list;
        CONS previous;
        
@@ -150,8 +214,6 @@ class Parser {
                 StreamReader::SkipWhitespace(r);
             }
             catch (UnexpectedEOF e) {
-                // The original idea is to test parse errors from Clojure, but
-                // they are not very nice. Besides, rolling our own will save time.
                 throw std::runtime_error("Missing )");
             }
             char c = r->Read();
@@ -162,7 +224,7 @@ class Parser {
 
             r->UnRead(); // We are ready to consume any lisp form
             
-            VALUE elem = ParseForm( isolate, r );
+            VALUE elem = ParseForm( r );
             if (previous.IsEmptyList()) {
                 list = CONS( elem, NIL());
                 previous = list;

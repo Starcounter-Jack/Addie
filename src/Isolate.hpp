@@ -13,6 +13,7 @@
 #include <map>
 #include <vector>
 
+// To allow multiple VMs in the same process.
 class Isolate {
     
 public:
@@ -22,9 +23,46 @@ public:
     VALUE EmptyList;
     NIL Nil;
     
+    uint LastSymbolUsed = 0;
+    
+    std::string GetStringFromSymbolId( uint16_t id ) {
+        return SymbolStrings[id];
+    }
+    
+    uint RegisterSymbol( const char* str, size_t size ) {
+//        std::cout << std::string( str, size );
+        
+        auto s = std::string(str,size);
+        
+        auto x = SymbolsIds.find(str);
+        if (x != SymbolsIds.end())
+            return x->second;
+        
+        SymbolStrings.push_back(s);
+        uint16_t id = SymbolStrings.size();
+        SymbolsIds[s] = id;
+        
+        return SymbolStrings.size();
+    }
+    
     Isolate()
     {
     }
 };
+
+
+// http://stackoverflow.com/questions/23791060/c-thread-local-storage-clang-503-0-40-mac-osx
+#if HAS_CXX11_THREAD_LOCAL
+#define ATTRIBUTE_TLS thread_local
+#elif defined (__GNUC__)
+#define ATTRIBUTE_TLS __thread
+#elif defined (_MSC_VER)
+#define ATTRIBUTE_TLS __declspec(thread)
+#else // !C++11 && !__GNUC__ && !_MSC_VER
+#error "Define a thread local storage qualifier for your compiler/platform!"
+#endif
+
+extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
+
 
 #endif /* Isolate_hpp */

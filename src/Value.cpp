@@ -8,19 +8,38 @@
 
 #include "Value.hpp"
 #include "Cons.hpp"
+#include "Isolate.hpp"
 
 
 std::string STRING::ToString() {
-    if (Pointer == NULL) {
+    if (Pointer == 0) {
         return "\"\"";
     }
     return (char*) Pointer;
 }
 
+
+
 void STRING::Print() {
     std::cout << "\"";
     std::cout << ToString();
     std::cout << "\"";
+}
+
+SYMBOL::SYMBOL( const char* str, size_t len ) {
+    IsHeapObject = false;
+    PType = PSymbol;
+    Integer = CurrentIsolate->RegisterSymbol( str, len );
+}
+
+std::string SYMBOL::ToString() {
+    return CurrentIsolate->GetStringFromSymbolId(Integer-1); // vectors are zero based. symbols start with 1
+}
+
+void SYMBOL::Print() {
+    std::cout << ToString();
+    std::cout << "#";
+    std::cout << Integer;
 }
 
 
@@ -45,6 +64,9 @@ void VALUE::Print() {
     }
     else {
         switch (PType) {
+            case (PSymbol) :
+                ((SYMBOL*)this)->Print();
+                return;
             case (PNil) :
                 ((NIL*)this)->Print();
                 return;
