@@ -5,7 +5,7 @@ A modern clojure based embeddable Lisp.
 ⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
 
 1. Functional first (immutable data structures)
-2. C/C++ Embeddable
+2. Embeddable
 3. Basic Clojure compatibility
 4. Small
 5. Fast
