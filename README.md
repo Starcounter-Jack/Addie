@@ -27,18 +27,12 @@ if (= einstein genius)
 
 ## Building and running
 
-You need a C/C++ compiler and CMake.
-
 #### Linux
 
 ```bash
 $ mkdir ~/addie
 $ cd ~/addie
-$ sudo apt-get install cmake
 $ git clone https://github.com/Starcounter-Jack/Addie.git ./
-$ mkdir build
-$ cd build
-$ cmake ..
 $ make
 $ ./addie
 ```
