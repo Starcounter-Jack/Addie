@@ -14,39 +14,23 @@
 #include "../tests/TestHashTrie.hpp"
 
 
+void IllustrateParse( const char* str ) {
+    auto teststr = StringReader(str);
+    std::cout << "\n\n**** Parsing ****\n" << str << "\n";
+    std::cout << "===>\n\n";
+    VALUE v3 = Parser::ParseForm( &teststr );
+    v3.Print();
+    std::cout << "\n";
+}
+
 int main(int argc, const char * argv[]) {
     
     Isolate isolate;
     CurrentIsolate = &isolate;
     
-    std::string str1 = "\"Jack Gök Wester\"";
-    std::string str2 = "(\"Jack\" \"Wester\")";
+    IllustrateParse( "\"Jack Gök Wester\"" );
+    IllustrateParse("(\"Jack\" \"Wester\")");
+    IllustrateParse( "\n⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝" );
     
-    auto test_str = StringReader(str1);
-    auto test_list = StringReader(str2);
-    
-    //test_str.Read();
-    //Value v1 = Parser::ParseString( &test_str );
-    std::cout << "\nParsing: " << str1 << "\n";
-    VALUE v1 = Parser::ParseForm( &test_str );
-    v1.Print();
-    std::cout << "\n";
-    
-    std::cout << "\nParsing: " << str2 << "\n";
-    VALUE v2 = Parser::ParseForm( &test_list );
-    v2.Print();
-    std::cout << "\n";
-    
-    std::string str3 = "\n⏜\nif (bar) (print \"hello world\") (print (+123))\n⏝"; //
-//    std::string str3 = "\n⏜ \nif (bar print)\n⏝";
-    auto test_str3 = StringReader(str3);
-    std::cout << "\nParsing: " << str3 << "\n";
-    VALUE v3 = Parser::ParseForm( &test_str3 );
-    v3.Print();
-    std::cout << "\n";
-    
-    CurrentIsolate->Heap.PrintStatus();
-    
-//    TestHashTrie();
-
+//    CurrentIsolate->Heap.PrintStatus();
 }
