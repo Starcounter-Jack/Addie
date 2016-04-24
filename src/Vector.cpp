@@ -528,4 +528,5 @@ int TestPVec(int argc, char **argv) {
         print_pvec(stages[i]);
         printf("\n==============================\n");
     }
+    return 0;
 }
