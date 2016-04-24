@@ -3,14 +3,14 @@
 A modern clojure based embeddable Lisp.
 
 1. Functional first (immutable data structures)
-2. Basic Clojure compatibility
-3. V8 semantics (multiple single threaded isolates)
-3. Small
-4. C/C++ Embeddable
-5. Minimal startup time
-6. Portable (ansi C/++)
-7. Fast enough
-8. Supports vertical parentheses
+2. C/C++ Embeddable
+3. Basic Clojure compatibility
+4. Small
+5. Simple single threaded isolates for simple embedding
+6. Minimal startup time
+7. Portable (ansi C/++)
+8. Fast enough
+9. Supports vertical parentheses to relax your brain 🍺
 
 *** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
 
