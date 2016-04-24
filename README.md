@@ -27,6 +27,8 @@ if (= einstein genius)
 
 ## Building and running
 
+If you just want to build, we've included a simple makefile. You can also optionally use CMake.
+
 #### Linux
 
 ```bash
