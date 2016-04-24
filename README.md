@@ -10,10 +10,11 @@ A modern clojure based embeddable Lisp.
 5. Minimal startup time
 6. Portable (ansi C/++)
 7. Fast enough
+8. Supports vertical parentheses
 
 *** DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET! ***
 
-### Example
+## Example
 ```clojure
 ⏜
 if (= einstein genius)
@@ -28,7 +29,7 @@ if (= einstein genius)
 
 You need a C/C++ compiler and CMake.
 
-### Linux
+#### Linux
 
 ```bash
 $ mkdir ~/addie
@@ -42,14 +43,14 @@ $ make
 $ ./addie
 ```
 
-### Windows
-
-TODO!
-
-### OS X
+#### OS X
 
 Optionally, you can use CMake to create a XCode project
 
 ```bash
 $ cmake -G Xcode
 ```
+
+#### Windows
+
+We will make sure that Addie compiles using the Microsoft compiler and Visual Studio.
