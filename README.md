@@ -2,6 +2,23 @@
 
 Clojure based embeddable Lisp.
 
+1. Functional
+2. Some basic Clojure compatibility
+3. Small
+4. Embeddable
+5. Minimal startup time
+6. Portable
+7. Fast enough
+
+### Example
+```clojure
+⏜
+if (= einstein genius)
+  (print "e=mc²")
+  (print "e!=mc²")
+⏝
+```
+
 *** JUST STARTED DEVELOPMENT. DOES NOT WORK YET ***
 
 
