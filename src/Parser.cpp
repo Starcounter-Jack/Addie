@@ -11,6 +11,8 @@
 
 #include "Parser.hpp"
 
+// All our reserved characters lives in ASCII space except for our extended
+// begin/end parenthesis unicode symbols ⏜ ⏝ (9180 and 9181).
 ParseSomething Parsers[128] = {
     NULL,    // 0
     NULL,    // 1
@@ -140,6 +142,8 @@ ParseSomething Parsers[128] = {
     &(Parser::ParseUnsolicitedEndCurly),    // 125 }
     NULL,    // 126
     NULL     // 127
+    
+    // 
 };
 
 

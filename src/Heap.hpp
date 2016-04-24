@@ -64,6 +64,5 @@ public:
  */
 
 
-extern Heap Heap;
 
 #endif /* Heap_hpp */

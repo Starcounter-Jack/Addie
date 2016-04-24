@@ -19,7 +19,7 @@ int main(int argc, const char * argv[]) {
     Isolate isolate;
     CurrentIsolate = &isolate;
     
-    std::string str1 = "\"Jack Wester\"";
+    std::string str1 = "\"Jack Gök Wester\"";
     std::string str2 = "(\"Jack\" \"Wester\")";
     
     auto test_str = StringReader(str1);
@@ -37,14 +37,15 @@ int main(int argc, const char * argv[]) {
     v2.Print();
     std::cout << "\n";
     
-    std::string str3 = "(foo bar \"hello world\" 123)";
+    std::string str3 = "\n⏜\nif (bar) (print \"hello world\") (print (+123))\n⏝"; //
+//    std::string str3 = "\n⏜ \nif (bar print)\n⏝";
     auto test_str3 = StringReader(str3);
     std::cout << "\nParsing: " << str3 << "\n";
     VALUE v3 = Parser::ParseForm( &test_str3 );
     v3.Print();
     std::cout << "\n";
     
-    Heap.PrintStatus();
+    CurrentIsolate->Heap.PrintStatus();
     
 //    TestHashTrie();
 

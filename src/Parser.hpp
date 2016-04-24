@@ -20,6 +20,7 @@
 #include "Vector.hpp"
 #include "Isolate.hpp"
 #include "Value.hpp"
+#include "Heap.hpp"
 
 class UnexpectedEOF: public std::exception
 {
@@ -36,18 +37,73 @@ struct Char {
 
 extern Char Chars[256]; // 256 byte quick lookup for UTF-8 bytes
 
-class StreamReader {
-    
+
+
+// Provides a stream of characters to the parser
+class StringReader  {
 public:
-    StreamReader() {
+    char* str;
+    int length = 0;
+    int pos = 0;
+
+    StringReader( const char* original, size_t len ) {
+        char* pc = (char *)CurrentIsolate->Heap.SafeMalloc( len );
+        memcpy( pc, original, len );
+        str = pc;
+        length = len;
+        for( int i = 0 ; i < len ; i++ ) { // Let's support cool unicode!
+            unsigned char c = pc[i];
+            if (c > 127) {
+               if (c == 226 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
+                   c = pc[++i];
+                    if ( c== 143 ) { // Second part of unicode ⏜⏝ (9180,9181)
+                       c = pc[++i];
+                       if ( c== 156 ) { // Third part of unicode ⏜ (9180)
+                           pc[i-2] = '(';
+                           pc[i-1] = ' ';
+                           pc[i] = ' ';
+                       } else if ( c== 157 ) { // Third part of unicode ⏜ (9181)
+                           pc[i-2] = ')';
+                           pc[i-1] = ' ';
+                           pc[i] = ' ';
+                       }
+                   }
+               }
+            }
+
+            pc[i] = pc[i];
+        }
     }
     
-    virtual char Read() = 0;
-    virtual char ReadEofOk() = 0;
-    virtual void UnRead() = 0;
+    StringReader( std::string str ) : StringReader( (char *)str.c_str(), str.length() ) {
+    }
+
+    
+    unsigned char ReadEofOk() {
+        if (pos >= length) {
+            pos++;
+            return 0;
+        }
+        char c = str[pos];
+        pos++;
+        return c;
+    }
+    
+    unsigned char Read() {
+        if (pos >= length) {
+            throw UnexpectedEOF();
+        }
+        unsigned char c = str[pos];
+        pos += 1;
+        return c;
+    }
+    
+    void UnRead() {
+        pos--;
+    }
     
     
-    static void SkipWhitespace(StreamReader* r) {
+    static void SkipWhitespace(StringReader* r) {
     start:
         unsigned char c = r->Read();
         
@@ -58,65 +114,30 @@ public:
     }
 };
 
-typedef VALUE (*ParseSomething)( StreamReader* r );
+typedef VALUE (*ParseSomething)( StringReader* r );
 extern ParseSomething Parsers[128];
-
-
-// Provides a stream of characters to the parser
-class StringReader : public StreamReader {
-public:
-    std::string str;
-    int pos = 0;
-    
-    StringReader( std::string s ) {
-        str = s;
-    }
-    
-    char ReadEofOk() {
-        if (pos >= str.length()) {
-            return 0;
-        }
-        char c = str[pos];
-        pos += 1;
-        return c;
-    }
-    
-    char Read() {
-        if (pos >= str.length()) {
-            throw UnexpectedEOF();
-        }
-        char c = str[pos];
-        pos += 1;
-        return c;
-    }
-    
-    void UnRead() {
-        pos -= 1;
-    }
-};
-
 
 
 
 class Parser {
     public:
     
-    static VALUE ParseUnsolicitedEndBracket( StreamReader* r ) {
+    static VALUE ParseUnsolicitedEndBracket( StringReader* r ) {
         throw std::runtime_error("] does not match any [");
         return NIL();
     }
     
-    static VALUE ParseUnsolicitedEndParen( StreamReader* r ) {
+    static VALUE ParseUnsolicitedEndParen( StringReader* r ) {
         throw std::runtime_error(") does not match any (");
         return NIL();
     }
     
-    static VALUE ParseUnsolicitedEndCurly( StreamReader* r ) {
+    static VALUE ParseUnsolicitedEndCurly( StringReader* r ) {
         throw std::runtime_error("} does not match any {");
         return NIL();
     }
     
-    static VALUE ParseSymbol( StreamReader* r ) {
+    static VALUE ParseSymbol( StringReader* r ) {
         
         r->UnRead();
         std::ostringstream res;
@@ -134,7 +155,7 @@ class Parser {
     }
     
     
-    static VALUE ParseNumber( StreamReader* r ) {
+    static VALUE ParseNumber( StringReader* r ) {
         
         // TODO! Currently only supports integers
         // TODO! Also read decimal numbers and maybe other numeric literals. Check Clojure...
@@ -154,37 +175,44 @@ class Parser {
     }
 
     
-    static VALUE ParseMinusOrSymbol( StreamReader* r ) {
+    static VALUE ParseMinusOrSymbol( StringReader* r ) {
         throw std::runtime_error("Encountered a minus or symbol");
         return NIL();
     }
 
     
     
-    static VALUE ParseVector( StreamReader* r ) {
+    static VALUE ParseVector( StringReader* r ) {
         throw std::runtime_error("Encountered a vector");
         return NIL();
     }
     
-    static VALUE ParseComment( StreamReader* r ) {
+    static VALUE ParseComment( StringReader* r ) {
         throw std::runtime_error("Encountered a comment");
         return NIL();
     }
     
-    static VALUE ParseMap( StreamReader* r ) {
+    static VALUE ParseMap( StringReader* r ) {
         throw std::runtime_error("Encountered a map");
         return NIL();
     }
     
-    static VALUE ParseForm( StreamReader* r ) {
+    static VALUE ParseForm( StringReader* r ) {
         
+        r->SkipWhitespace(r);
         unsigned char c = r->Read();
-       // if ( Chars[c].ClojureSpecialMeaning ) {
+        if (c > 127 ) {
+            std::cout << "Unicode!!" ;
+            std::cout << (int)c ;
+            return Parser::ParseSymbol( r );
+        }
+        else {
            ParseSomething fn = Parsers[c];
            if (fn == NULL) {
-               std::string msg = "Missing parser for character ";
-               msg += c;
-               throw std::runtime_error(msg);
+               std::ostringstream msg;
+               msg << "Missing parser for character ";
+               msg << (int)c;
+               throw std::runtime_error(msg.str());
            }
            else {
 //               std::cout << "Found parser for ";
@@ -192,11 +220,12 @@ class Parser {
 //               std::cout << "\n";
                return fn( r );
            }
+        }
       //  }
         return NIL();
     }
 
-   static VALUE ParseString( StreamReader* r) {
+   static VALUE ParseString( StringReader* r) {
         
         std::ostringstream res;
         
@@ -222,20 +251,20 @@ class Parser {
         //return STRING("error");
    }
 
-   static VALUE ParseList( StreamReader* r) {
+   static VALUE ParseList( StringReader* r) {
        CONS list;
        CONS previous;
        
         while (true) {
             
             try {
-                StreamReader::SkipWhitespace(r);
+                StringReader::SkipWhitespace(r);
             }
             catch (UnexpectedEOF e) {
                 throw std::runtime_error("Missing )");
             }
-            char c = r->Read();
-            if (c == ')') {
+            unsigned char c = r->Read();
+            if (c == ')' ) {
 //                previous->GetCons()->cdr = NIL();
                 return list;
             }

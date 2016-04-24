@@ -12,6 +12,7 @@
 #include "Value.hpp"
 #include <map>
 #include <vector>
+#include "Heap.hpp"
 
 // To allow multiple VMs in the same process.
 class Isolate {
@@ -22,6 +23,7 @@ public:
     
     VALUE EmptyList;
     NIL Nil;
+    Heap Heap;
     
     uint LastSymbolUsed = 0;
     

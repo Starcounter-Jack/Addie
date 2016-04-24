@@ -105,17 +105,7 @@ public:
     
     
     // TODO! Strings are immutable/persistent vectors.
-    void AllocateString( std::string str ) {
-        auto size = str.size();
-        char* obj = (char*)Heap.SafeMalloc(size+1); // We add a zero termination so we have a
-        // cheap conversion
-        // to zero terminated strings if needed. TODO! GC
-        void *original = &str[0];
-        memcpy(obj, original, size);
-        obj[size] = 0;
-        this->Pointer = (uint64_t)obj;
-    }
-};
+    void AllocateString( std::string str );};
 
 class NIL : public VALUE {
 public:
