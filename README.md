@@ -1,7 +1,8 @@
 # Addie
 
-⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
 A modern clojure based embeddable Lisp.
+
+⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
 
 
 ### Update!
