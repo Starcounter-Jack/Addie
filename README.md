@@ -7,10 +7,9 @@ A modern clojure based embeddable Lisp.
 1. Functional first (immutable data structures)
 2. Basic Clojure (script) compatibility
 3. Embeddable
-4. Small
-5. Fast
-6. Simple single threaded isolates for simple embedding
-7. Supports vertical parentheses to relax your brain 🍺
+4. Fast
+5. Simple single threaded isolates for simple embedding
+6. Supports vertical parentheses to relax your brain 🍺
 
 
 ## Example
