@@ -22,6 +22,7 @@
 #include "Value.hpp"
 #include "Heap.hpp"
 
+
 class UnexpectedEOF: public std::exception
 {
 };
@@ -37,47 +38,38 @@ struct Char {
 
 extern Char Chars[256]; // 256 byte quick lookup for UTF-8 bytes
 
+class StreamReader  {
+public:
+    virtual unsigned char ReadEofOk() = 0;
+    virtual unsigned char Read() = 0;
+    virtual void UnRead() = 0;
+    
+    
+    static void SkipWhitespace(StreamReader* r) {
+    start:
+        unsigned char c = r->Read();
+        
+        if (Chars[c].IsWhitespace)
+            goto start;
+        else
+            r->UnRead();
+    }
 
+};
 
 // Provides a stream of characters to the parser
-class StringReader  {
+class StringReader : public StreamReader {
 public:
-    char* str;
+    const char* str;
     int length = 0;
     int pos = 0;
 
     StringReader( const char* original, size_t len ) {
-        char* pc = (char *)CurrentIsolate->Heap.SafeMalloc( len );
-        memcpy( pc, original, len );
-        str = pc;
+        //char* pc = (char *)CurrentIsolate->Heap.SafeMalloc( len ); // TODO! GC
+        //memcpy( pc, original, len );
+        str = original;
         length = len;
-        for( int i = 0 ; i < len ; i++ ) { // Let's support cool unicode!
-            unsigned char c = pc[i];
-            if (c > 127) {
-               if (c == 226 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
-                   c = pc[++i];
-                    if ( c== 143 ) { // Second part of unicode ⏜⏝ (9180,9181)
-                       c = pc[++i];
-                       if ( c== 156 ) { // Third part of unicode ⏜ (9180)
-                           pc[i-2] = '(';
-                           pc[i-1] = ' ';
-                           pc[i] = ' ';
-                       } else if ( c== 157 ) { // Third part of unicode ⏜ (9181)
-                           pc[i-2] = ')';
-                           pc[i-1] = ' ';
-                           pc[i] = ' ';
-                       }
-                   }
-               }
-            }
-
-            pc[i] = pc[i];
-        }
     }
-    
-    StringReader( std::string str ) : StringReader( (char *)str.c_str(), str.length() ) {
-    }
-
     
     unsigned char ReadEofOk() {
         if (pos >= length) {
@@ -102,19 +94,9 @@ public:
         pos--;
     }
     
-    
-    static void SkipWhitespace(StringReader* r) {
-    start:
-        unsigned char c = r->Read();
-        
-        if (Chars[c].IsWhitespace)
-            goto start;
-        else
-            r->UnRead();
-    }
 };
 
-typedef VALUE (*ParseSomething)( StringReader* r );
+typedef VALUE (*ParseSomething)( StreamReader* r );
 extern ParseSomething Parsers[128];
 
 
@@ -122,22 +104,40 @@ extern ParseSomething Parsers[128];
 class Parser {
     public:
     
-    static VALUE ParseUnsolicitedEndBracket( StringReader* r ) {
+    static VALUE ParseUnsolicitedEndBracket( StreamReader* r ) {
         throw std::runtime_error("] does not match any [");
         return NIL();
     }
     
-    static VALUE ParseUnsolicitedEndParen( StringReader* r ) {
+    static VALUE ParseUnsolicitedEndParen( StreamReader* r ) {
         throw std::runtime_error(") does not match any (");
         return NIL();
     }
     
-    static VALUE ParseUnsolicitedEndCurly( StringReader* r ) {
+    static VALUE ParseUnsolicitedEndCurly( StreamReader* r ) {
         throw std::runtime_error("} does not match any {");
         return NIL();
     }
     
-    static VALUE ParseSymbol( StringReader* r ) {
+    static bool CheckForVerticalStartParenthesis( StreamReader* r ) {
+        unsigned char c;
+        c = r->Read();
+        if (c == 226 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
+            c = r->Read();
+            if ( c== 143 ) { // Second part of unicode ⏜⏝ (9180,9181)
+                c = r->Read();
+                if ( c== 156 ) { // Third part of unicode ⏜ (9180)
+                    return true;
+                }
+                r->UnRead();
+            }
+            r->UnRead();
+        }
+        r->UnRead();
+        return false;
+    }
+
+    static VALUE ParseSymbol( StreamReader* r ) {
         
         r->UnRead();
         std::ostringstream res;
@@ -155,7 +155,7 @@ class Parser {
     }
     
     
-    static VALUE ParseNumber( StringReader* r ) {
+    static VALUE ParseNumber( StreamReader* r ) {
         
         // TODO! Currently only supports integers
         // TODO! Also read decimal numbers and maybe other numeric literals. Check Clojure...
@@ -175,36 +175,38 @@ class Parser {
     }
 
     
-    static VALUE ParseMinusOrSymbol( StringReader* r ) {
+    static VALUE ParseMinusOrSymbol( StreamReader* r ) {
         throw std::runtime_error("Encountered a minus or symbol");
         return NIL();
     }
 
     
     
-    static VALUE ParseVector( StringReader* r ) {
+    static VALUE ParseVector( StreamReader* r ) {
         throw std::runtime_error("Encountered a vector");
         return NIL();
     }
     
-    static VALUE ParseComment( StringReader* r ) {
+    static VALUE ParseComment( StreamReader* r ) {
         throw std::runtime_error("Encountered a comment");
         return NIL();
     }
     
-    static VALUE ParseMap( StringReader* r ) {
+    static VALUE ParseMap( StreamReader* r ) {
         throw std::runtime_error("Encountered a map");
         return NIL();
     }
     
-    static VALUE ParseForm( StringReader* r ) {
+    static VALUE ParseForm( StreamReader* r ) {
         
         r->SkipWhitespace(r);
         unsigned char c = r->Read();
         if (c > 127 ) {
-            std::cout << "Unicode!!" ;
-            std::cout << (int)c ;
-            return Parser::ParseSymbol( r );
+            r->UnRead();
+            if (CheckForVerticalStartParenthesis(r)) {
+                return Parser::ParseList(r);
+            }
+            return Parser::ParseSymbol(r);
         }
         else {
            ParseSomething fn = Parsers[c];
@@ -225,7 +227,7 @@ class Parser {
         return NIL();
     }
 
-   static VALUE ParseString( StringReader* r) {
+   static VALUE ParseString( StreamReader* r) {
         
         std::ostringstream res;
         
@@ -250,26 +252,45 @@ class Parser {
         
         //return STRING("error");
    }
+    
+    // We support some exotic unicode end parenthesis
+    static bool CheckForEndParenthesis( StreamReader* r ) {
+        unsigned char c = r->Read();
+        if (c == ')' ) {
+            return true;
+        }
+        else if ( c == 226 ) { // Potential vertical end parenthesis
+            std::cout << "Spotted potential parens candidate";
+            c = r->Read();
+            if ( c== 143 ) { // Second part of unicode ⏝ (9181)
+                c = r->Read();
+                if ( c== 157 ) { // Third part of unicode ⏝ (9181)
+                    return true; // Eureka! Vertical end paren
+                }
+                r->UnRead(); // This was not a vertical end paren
+            }
+            r->UnRead(); // This was not a vertical end paren
+        }
+        r->UnRead(); // We are ready to consume any lisp form
+        return false;
+    }
 
-   static VALUE ParseList( StringReader* r) {
+   static VALUE ParseList( StreamReader* r) {
        CONS list;
        CONS previous;
        
         while (true) {
             
             try {
-                StringReader::SkipWhitespace(r);
+                StreamReader::SkipWhitespace(r);
             }
             catch (UnexpectedEOF e) {
                 throw std::runtime_error("Missing )");
             }
-            unsigned char c = r->Read();
-            if (c == ')' ) {
-//                previous->GetCons()->cdr = NIL();
+
+            if (CheckForEndParenthesis(r)) {
                 return list;
             }
-
-            r->UnRead(); // We are ready to consume any lisp form
             
             VALUE elem = ParseForm( r );
             if (previous.IsEmptyList()) {

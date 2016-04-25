@@ -142,8 +142,7 @@ ParseSomething Parsers[128] = {
     &(Parser::ParseUnsolicitedEndCurly),    // 125 }
     NULL,    // 126
     NULL     // 127
-    
-    // 
+    //
 };
 
 

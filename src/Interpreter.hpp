@@ -16,7 +16,7 @@
 
 class Interpreter {
 public:
-    VALUE Interpret( STRING code ) {
+    VALUE Interpret( uint8_t* ) {
         // TODO!
         return NIL();
     }

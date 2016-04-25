@@ -17,7 +17,7 @@
 
 
 VALUE IllustrateParse( const char* str ) {
-    auto teststr = StringReader(str);
+    auto teststr = StringReader(str,strlen(str));
     std::cout << "\n**** Parsing ****\n" << str << "\n";
     std::cout << "===>\n";
     VALUE v = Parser::ParseForm( &teststr );
@@ -36,12 +36,12 @@ int main(int argc, const char * argv[]) {
     IllustrateParse( "\n⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝" );
     VALUE v = IllustrateParse("(+ 1 1)");
 
+    std::cout << "\n**** Compiling and running ****\n";
     Compiler c;
     Interpreter i;
-    STRING bytecode = c.Compile( v );
-    VALUE result = i.Interpret( bytecode );
+    STRING code = c.Compile( v );
+    VALUE result = i.Interpret( code.Bytes() );
 
-    std::cout << "\n**** Compiling and running ****\n";
     result.Print();
     std::cout << "\n\n";
 

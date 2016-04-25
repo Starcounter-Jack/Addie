@@ -95,7 +95,17 @@ public:
     STRING(std::string str ) {
         IsHeapObject = true;
         HType = TString;
-        AllocateString( str );
+        AllocateString( str.c_str(), str.length() );
+    }
+    
+    STRING(char* c, size_t size ) {
+        IsHeapObject = true;
+        HType = TString;
+        AllocateString( c, size );
+    }
+    
+    uint8_t* Bytes() {
+        return (uint8_t*)Pointer;
     }
     
     
@@ -105,7 +115,8 @@ public:
     
     
     // TODO! Strings are immutable/persistent vectors.
-    void AllocateString( std::string str );};
+    void AllocateString( const char* str, size_t size );
+};
 
 class NIL : public VALUE {
 public:

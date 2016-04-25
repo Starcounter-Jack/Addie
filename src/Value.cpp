@@ -26,13 +26,11 @@ void STRING::Print() {
     std::cout << "\"";
 }
 
-void STRING::AllocateString( std::string str ) {
-    auto size = str.size();
+void STRING::AllocateString( const char* str, size_t size ) {
     char* obj = (char*)CurrentIsolate->Heap.SafeMalloc(size+1); // We add a zero termination so we have a
     // cheap conversion
     // to zero terminated strings if needed. TODO! GC
-    void *original = &str[0];
-    memcpy(obj, original, size);
+    memcpy(obj, str, size);
     obj[size] = 0;
     this->Pointer = (uint64_t)obj;
 }
