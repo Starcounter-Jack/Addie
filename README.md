@@ -1,12 +1,12 @@
 # Addie
 
-A modern clojure based embeddable Lisp. 
+⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
+A modern clojure based embeddable Lisp.
+
 
 ### Update!
 
 The interal VM bytecode is being layed out in the [wiki](https://github.com/Starcounter-Jack/Addie/wiki). Please leave a comment as work on the interpreter is about to begin.
-
-⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
 
 1. Functional first (immutable data structures)
 2. Basic Clojure (script) compatibility
