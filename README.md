@@ -1,20 +1,30 @@
 # Addie
 
-A modern clojure based embeddable Lisp.
 
-⚠ **DEVELOPMENT HAS JUST BEGUN. DOES NOT WORK YET!**
 
+<table border=0>
+<tr>
+<td>
+<img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/addie2.gif">
+</td>
+<td valign="top"><h4>A modern clojure based embeddable Lisp.</h4>
+1. Functional first (immutable data structures)<br>
+2. Basic Clojure (script) compatibility<br>
+3. Embeddable<br>
+4. Fast<br>
+5. Simple single threaded isolates for simple embedding<br>
+6. Supports vertical parentheses to relax your brain 🍺<br>
+<br>
+⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
+</td>
+</tr>
+<table>
 
 ### Update!
 
 The interal VM bytecode is being layed out in the [wiki](https://github.com/Starcounter-Jack/Addie/wiki). Please leave a comment as work on the interpreter is about to begin.
 
-1. Functional first (immutable data structures)
-2. Basic Clojure (script) compatibility
-3. Embeddable
-4. Fast
-5. Simple single threaded isolates for simple embedding
-6. Supports vertical parentheses to relax your brain 🍺
+
 
 
 ## Example
