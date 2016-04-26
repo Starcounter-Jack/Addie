@@ -35,7 +35,7 @@ public:
         return RegisterSymbol( str, strlen(str) );
     }
     
-    uint RegisterSymbol( const char* str, size_t size ) {
+    uint RegisterSymbol( const char* str, size_t size, int known = -1 ) {
 //        std::cout << std::string( str, size );
         
         auto s = std::string(str,size);
@@ -48,30 +48,58 @@ public:
         uint16_t id = SymbolStrings.size();
         SymbolsIds[s] = id;
         
+        if (known != -1 && known != id ) {
+            throw std::runtime_error("Error in fixed symbol registration");
+        }
+        
         return SymbolStrings.size();
     }
 
+    //rrrr
+    //rrra
+    //rrar
+    //rraa
+    //rara
+    //arar
     
     Isolate()
     {
-        RegisterSymbol( "nil" );   // 1
-#define NilSymbol 1
-        RegisterSymbol( "true" );  // 2
-#define TrueSymbol 2
-        RegisterSymbol( "false" ); // 3
-#define FalseSymbol 3
-        RegisterSymbol( "__reserved4" ); // 4
-        RegisterSymbol( "__reserved5" ); // 5
-        RegisterSymbol( "__reserved6" ); // 6
-        RegisterSymbol( "__reserved7" ); // 7
-        RegisterSymbol( "__reserved8" ); // 8
-#define ReservedSymbols 8
+#define MOVE_rr 1
+        RegisterSymbol( "MOVE_rr", 1 );
+#define MOVE_ra 2
+        RegisterSymbol( "MOVE_ra", 2 );
+#define MOVE_aa 3
+        RegisterSymbol( "MOVE_aa", 3 );
+#define LOAD 4
+        RegisterSymbol( "LOAD", 4 );
+#define CALL 5
+        RegisterSymbol( "CALL", 5 );
+#define GOTO 6
+        RegisterSymbol( "GOTO", 6 );
+#define RETURN 7
+        RegisterSymbol( "RETURN", 7 );
+#define IF_TRUE_GOTO 8
+        RegisterSymbol( "IF_TRUE_GOTO", 8 );
+#define IF_FALSE_GOTO 9
+        RegisterSymbol( "IF_FALSE_GOTO", 9 );
+#define CLOSURIZE 10
+        RegisterSymbol( "CLOSURIZE", 10 );
+        
+        
+#define NilSymbol 11
+        RegisterSymbol( "nil", 11 );
+#define TrueSymbol 12
+        RegisterSymbol( "true", 12 );
+#define FalseSymbol 13
+        RegisterSymbol( "false", 13 );
+        
+//        ReservedSymbols = 8;
     }
     
     
-    bool IsReservedSymbol( uint16_t id ) {
-        return id <= ReservedSymbols;
-    }
+//    bool IsReservedSymbol( uint16_t id ) {
+//        return id <= ReservedSymbols;
+//    }
 };
 
 

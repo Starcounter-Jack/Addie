@@ -44,6 +44,8 @@ int main(int argc, const char * argv[]) {
 
     result.Print();
     std::cout << "\n\n";
+    
+   // std::cout << JitX86(123);
 
 
 //    CurrentIsolate->Heap.PrintStatus();

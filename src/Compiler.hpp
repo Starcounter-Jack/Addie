@@ -12,17 +12,17 @@
 #include <stdio.h>
 #include <vector>
 #include "Value.hpp"
+#include "Isolate.hpp"
 
-enum Codes {
-    PUSH = 123,
-    POP = 124
-};
+extern int JitX86( int num );
+
+typedef uint8_t byte;
 
 
 class Context {
 public:
-    std::vector<uint8_t> ByteCode;
-    std::vector<uint8_t> DebugCode;    
+    std::vector<byte> ByteCode;
+    std::vector<byte> DebugCode;
 };
 
 
@@ -32,9 +32,12 @@ class Compiler {
 public:
     
     STRING Compile( VALUE form ) {
+
+ 
+        
         Context c;
-        c.ByteCode.push_back( PUSH );
-        c.ByteCode.push_back( POP );
+        c.ByteCode.push_back( MOVE_aa );
+        c.ByteCode.push_back( MOVE_rr );
         
         std::cout << "Byte code:";
         std::cout << (int)c.ByteCode[0] << ".";
