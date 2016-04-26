@@ -10,3 +10,8 @@
 
 // VM byte-codes are described here
 // https://github.com/Starcounter-Jack/Addie/wiki
+
+
+while (true) {
+    
+}
