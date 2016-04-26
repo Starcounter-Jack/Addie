@@ -27,7 +27,7 @@ The interal VM bytecode is being layed out in the [wiki](https://github.com/Star
 
 
 
-## Example
+### Example
 ```clojure
 ⏜
 if (= einstein genius)
@@ -38,11 +38,11 @@ if (= einstein genius)
 
 
 
-## Building and running
+### Building and running
 
 Just run make to build. You can also optionally use CMake.
 
-#### Linux
+##### Linux
 
 ```bash
 $ mkdir ~/addie
@@ -52,7 +52,7 @@ $ make
 $ ./addie
 ```
 
-#### OS X
+##### OS X
 
 Optionally, you can use CMake to create a XCode project
 
@@ -60,6 +60,6 @@ Optionally, you can use CMake to create a XCode project
 $ cmake -G Xcode
 ```
 
-#### Windows
+##### Windows
 
 We will make sure that Addie compiles using the Microsoft compiler and Visual Studio.
