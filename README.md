@@ -7,7 +7,7 @@
 <td>
 <img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/addie2.gif">
 </td>
-<td valign="top"><h4>A modern clojure based embeddable Lisp.</h4>
+<td valign="top"><h4>A modern clojure style embeddable Lisp.</h4>
 1. Functional first (immutable data structures)<br>
 2. Basic Clojure (script) compatibility<br>
 3. Embeddable<br>
