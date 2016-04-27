@@ -8,13 +8,12 @@
 <img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/addie2.gif">
 </td>
 <td valign="top"><h4>A modern clojure style embeddable Lisp.</h4>
-1. Functional first (immutable data structures)<br>
-2. Basic Clojure (script) compatibility<br>
+1. Pure functional<br>
+2. Based on Clojure<br>
 3. Embeddable<br>
 4. Fast<br>
 5. Simple single threaded isolates for simple embedding<br>
-6. Hierarchical symbols<br>
-7. Supports vertical parentheses to relax your brain 🍺<br>
+6. Supports vertical parentheses to relax your brain 🍺<br>
 <br>
 ⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
 </td>
