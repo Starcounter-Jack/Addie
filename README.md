@@ -13,7 +13,8 @@
 3. Embeddable<br>
 4. Fast<br>
 5. Simple single threaded isolates for simple embedding<br>
-6. Supports vertical parentheses to relax your brain 🍺<br>
+6  Set Specifiers (aka hierarchical keywords)
+7. Supports vertical parentheses to relax your brain 🍺<br>
 <br>
 ⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
 </td>
