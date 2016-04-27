@@ -13,7 +13,7 @@
 3. Embeddable<br>
 4. Fast<br>
 5. Simple single threaded isolates for simple embedding<br>
-6.  Set Membership Specifiers
+6. Set Membership Specifiers<br>
 7. Supports vertical parentheses to relax your brain 🍺<br>
 <br>
 ⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
