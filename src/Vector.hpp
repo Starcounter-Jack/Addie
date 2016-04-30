@@ -23,29 +23,47 @@
 
 #include <vector>
 #include "Value.hpp"
+#include "Isolate.hpp"
 
 template <class T>
 
-class Vector {
-private:
-//    T Items[32];
-    std::vector<T> Items;
+// TODO! Replace which Bitmap Vector Trie
+class PVector : public Object {
     
 public:
+    std::vector<T> Items;
     
     T GetAt( int t ) {
         return Items[t];
     }
     
-    void SetAt( int t, VALUE v ) {
-        return Items[t] = v;
+    PVector<T>* SetAt( int t, VALUE v ) {
+        if (RefCount==1) {
+            // There is only one value observing this vector materialization,
+            // this means that we do not have to keep the old version.
+            // Let's turn the old version into the new version and forget about
+            // the old version.
+            this->Items[t] = v;
+            return this;
+        }
+        // The old version needs to be persisted. Here is where we will insert the
+        // bitmapped vector trie magic.
+        
+        PVector<T>* newVec = (PVector<T>*)MALLOC_HEAP(std::vector<T>);
+        new (newVec) PVector<T>();
+        newVec->Items = this->Items;
+        return newVec;
     }
-    
-    void Append( VALUE v ) {
-//        Append( v );
+
+    template<class V>
+    V Push() {
+        V v;
+        Items.push_back(v);
+        return v;
     }
-    
+
 };
+
 
 #ifndef _PVEC_H
 #define _PVEC_H

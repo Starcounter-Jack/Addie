@@ -12,47 +12,219 @@
 #include "Value.hpp"
 #include <map>
 #include <vector>
-#include "Heap.hpp"
+#include <sys/mman.h>
+#include <cstring>
+
+
+enum Symbols {
+    END,
+    EXIT_WITH_CONTINUATION,
+    RETURN,
+    LOAD_CONST,
+    MOVE,
+    CALL_0,
+    CALL_1,
+    CALL_2,
+    CLAIM_ARGS,
+    SymNil,
+    SymFalse,
+    SymTrue,
+    SymString,
+    SymPlus,
+    SymMinus,
+    SymStar,
+    SymSlash,
+    SymCons,
+    SymPrint,
+    Sym_Count
+};
+static const char *SymStrings[] = {
+    "end",
+    "exit-with-continuation",
+    "return",
+    "load-const",
+    "move",
+    "call-0",
+    "call-1",
+    "call-2",
+    "claim-args",
+    "nil",
+    "false",
+    "true",
+    "string",
+    "+",
+    "-",
+    "*",
+    "/",
+    "Cons",
+    "print"
+};
+
+
+
+#define MALLOC_HEAP(type) (type*)CurrentIsolate->MallocHeap(sizeof(type));
+
+
+class Evaluateable : public NamedEntity {
+public:
+    virtual VALUE Evaluate() = 0;
+};
+
+class Variable : public Evaluateable {
+};
+
+class Namespace : public NamedEntity {
+public:
+    std::map<Symbol,Variable*> Variables;
+};
+
+
+class Function : public NamedEntity {
+};
+
+class Continuation;
+
 
 // To allow multiple VMs in the same process.
 class Isolate {
     
 public:
-    std::map<std::string,uint16_t> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
-    std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
+    //byte* Code;
+    byte* Constants;
+    byte* Heap;
     
+    uint64_t NextOnHeap;
+    //uint64_t NextOnCode;
+    uint64_t NextOnConstant;
+    
+    
+    int NumberOfAllocations = 0;
+    int BytesAllocated = 0;
+
+    
+    byte* ReserveMemoryBlock(uint64_t address, size_t size) {
+        void* addr = (void*)address;
+        
+        addr = mmap((void *) addr, size,
+                    PROT_WRITE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        printf("%p\n", addr);
+        if(addr == MAP_FAILED)
+            throw std::runtime_error("Addie is trying to reserving 3TB of fixed memory addresses and fails. Jack was being a little bit too optimisitic.");
+        return (byte*)addr;
+    }
+    
+    
+    void CheckAddress(void* addr) {
+        uint64_t i = (uint64_t)addr;
+        if ( i & 0b0000000000000000000000000000000000000000000000000000000000001111 ) {
+            throw std::runtime_error( "Addresses must be aligned" );
+        }
+    }
+    
+    
+    void* MallocConstant( size_t size ) {
+        void* newAddress = (void*)NextOnConstant;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnConstant += size;
+        NextOnConstant = (NextOnConstant + 0b01111) & ~0b01111; // Round up for alignment
+        CheckAddress(newAddress);
+        return newAddress;
+    }
+    
+    
+//    void* MallocCode( size_t size ) {
+//        void* newAddress = (void*)NextOnCode;
+//        BytesAllocated += size;
+//        NumberOfAllocations++;
+//        NextOnCode += size;
+//        NextOnCode = (NextOnCode + 0b01111) & ~0b01111; // Round up for alignment
+//        CheckAddress(newAddress);
+//        return newAddress;
+//    }
+    
+    void* MallocHeap( size_t size ) {
+        void* newAddress = (void*)NextOnHeap;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnHeap += size;
+        NextOnHeap = (NextOnHeap + 0b01111) & ~0b01111; // Round up for alignment
+        CheckAddress(newAddress);
+        return newAddress;
+    }
+    
+    void PrintStatus() {
+        if (NumberOfAllocations) {
+            std::cout << "\nNumber of unfreed allocations: ";
+            std::cout << NumberOfAllocations;
+            std::cout << "\nTotal allocations: ";
+            std::cout << BytesAllocated;
+            std::cout << " bytes\n";
+        }
+    }
+
+    
+    
+    Type* StringType;
+    Type* ConsType;
+    
+    std::map<std::string,Symbol> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
+    std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
+    std::map<Symbol,Namespace*> Namespaces;
+    
+    public: Isolate();
+    
+
+    Continuation* Root;
+
     VALUE EmptyList;
     NIL Nil;
-    Heap Heap;
     
     uint LastSymbolUsed = 0;
     
-    std::string GetStringFromSymbolId( uint16_t id ) {
+    std::string GetStringFromSymbolId( uint32_t id ) {
         return SymbolStrings[id];
     }
-
-    uint RegisterSymbol( const char* str ) {
-        return RegisterSymbol( str, strlen(str) );
+  
+    uint RegisterNamespace( Symbol sym ) {
+        
+        auto x = Namespaces.find(sym);
+        
+        if (x != Namespaces.end())
+            throw std::runtime_error("Namespace does already exist");
+        
+        Namespaces[sym] = new Namespace(); // TODO! GC
     }
-    
-    uint RegisterSymbol( const char* str, size_t size, int known = -1 ) {
+
+
+    uint RegisterSymbol( const char* str, size_t size, int known ) {
 //        std::cout << std::string( str, size );
         
         auto s = std::string(str,size);
         
         auto x = SymbolsIds.find(str);
-        if (x != SymbolsIds.end())
+        if (x != SymbolsIds.end()) {
+//            if (memcmp(str,GetStringFromSymbolId(x->second).c_str(),size) != 0) {
+//                std::cout << str;
+//                std::cout << "!=";
+//                std::cout << GetStringFromSymbolId(x->second).c_str();
+//                throw std::runtime_error("Symbol finder does not work");
+//            }
             return x->second;
+        }
         
         SymbolStrings.push_back(s);
-        uint16_t id = SymbolStrings.size();
+        uint16_t id = SymbolStrings.size() - 1;
         SymbolsIds[s] = id;
+        
+        //std::cout << "\nRegistering: ";
+        //std::cout << SymbolStrings[id];
         
         if (known != -1 && known != id ) {
             throw std::runtime_error("Error in fixed symbol registration");
         }
         
-        return SymbolStrings.size();
+        return id;
     }
 
     //rrrr
@@ -62,39 +234,6 @@ public:
     //rara
     //arar
     
-    Isolate()
-    {
-#define MOVE_rr 1
-        RegisterSymbol( "MOVE_rr", 1 );
-#define MOVE_ra 2
-        RegisterSymbol( "MOVE_ra", 2 );
-#define MOVE_aa 3
-        RegisterSymbol( "MOVE_aa", 3 );
-#define LOAD 4
-        RegisterSymbol( "LOAD", 4 );
-#define CALL 5
-        RegisterSymbol( "CALL", 5 );
-#define GOTO 6
-        RegisterSymbol( "GOTO", 6 );
-#define RETURN 7
-        RegisterSymbol( "RETURN", 7 );
-#define IF_TRUE_GOTO 8
-        RegisterSymbol( "IF_TRUE_GOTO", 8 );
-#define IF_FALSE_GOTO 9
-        RegisterSymbol( "IF_FALSE_GOTO", 9 );
-#define CLOSURIZE 10
-        RegisterSymbol( "CLOSURIZE", 10 );
-        
-        
-#define NilSymbol 11
-        RegisterSymbol( "nil", 11 );
-#define TrueSymbol 12
-        RegisterSymbol( "true", 12 );
-#define FalseSymbol 13
-        RegisterSymbol( "false", 13 );
-        
-//        ReservedSymbols = 8;
-    }
     
     
 //    bool IsReservedSymbol( uint16_t id ) {
@@ -115,6 +254,18 @@ public:
 #endif
 
 extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
+
+
+class String : public Object {
+public:
+    uint32_t Length;
+    
+    String(uint32_t length) {
+        Length = length;
+//        Type = CurrentIsolate->StringType;
+    }
+};
+
 
 
 #endif /* Isolate_hpp */

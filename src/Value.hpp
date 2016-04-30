@@ -11,69 +11,84 @@
 
 //#include <string>
 #include <iostream>
+
+
 #include <cstdint>
-#include "Heap.hpp"
 
+typedef uint8_t byte;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef uint16_t Symbol;
+
+
+// * c = (Cons*)CurrentIsolate->Memory.MallocHeap(sizeof(Cons));
+
+
+class Object;
 class Isolate;
+class Continuation;
 
-enum PrimitiveType : int {
-    PNil        =  0b000,    // 1 bit integer
-    PBool       =  0b001,    // 1 bit integer
-    PSymbol     =  0b010,    // 8 bit or 32 bit symbol
-    PInteger    =  0b011,    // 60 bit signed integer
-    PFloat      =  0b100,    // 60 bit signed float????
-    PFraction   =  0b101,
-    PReserved1   =  0b110,
-    PReserved2   =  0b111
+enum ValueType : int {
+    PNil        =  0b0000,    // 1 bit integer
+    PBool       =  0b0001,    // 1 bit integer
+    PSymbol     =  0b0010,    // Symbol
+    PInteger    =  0b0011,    // 60 bit signed integer
+    PFloat      =  0b0100,    // 60 bit signed float????
+    PFraction   =  0b0101,
+    PReserved1   =  0b0110,
+    PReserved2   =  0b0111,
+    TVector     =  0b1000,
+    TString     =  0b1001,
+    TCons       =  0b1010,  // List
+    TLambda     =  0b1011,
 };
-enum HeapType : int {
-    TVector     =  0b000,
-    TString     =  0b001,
-    TCons       =  0b010,  // List
-    TLambda     =  0b011,
+
+/*
+class VALUE8 {
+    byte OpCode : 8;
 };
 
+class VALUE16 {
+    byte OpCode : 8;
+    union {
+        char Char;
+        int8_t Integer;
+    };
+};
 
+class VALUE32 {
+    byte OpCode : 8;
+    union {
+        uint16_t Char;
+        int16_t Integer;
+    };
+};
+ */
 
 // Let's make use of the fact that Starcounter only operates on modern operating systems.
 // Let's pack real pointers together with primitive value representations that all fit
 // in a single 64 register.
 class VALUE {
 public:
-    int foo;
     
-union  {
-
     union {
         uint64_t Whole;
         struct {
-            bool IsHeapObject : 1;
-            union {
-                long Integer: 60;
-                uint64_t Pointer: 60;
-                struct {
-                    int Numerator : 30;
-                    int Denominator : 30;
-                } Ratio;
-            };
-            union {
-                union {
-                    PrimitiveType PType : 3;
-                    HeapType HType : 3;
-                };
-            };
-                          // This relies on that the OS does aligned allocations.
-                          // The implementor needs to assert that the 4 least significant
-                          // bits are zero on any allocation.
-                          // For example, malloc on Windows always align such that 4 bits are free.
-                          // http://www.codeproject.com/Articles/28818/bit-pointers-in-a-bit-world.
+            uint8_t Type : 4;
+            int64_t Integer: 60;
         };
     };
-};
     
     VALUE() : Whole(0) { // Everything is zero by default
     }
+    
+    bool IsHeapObject() {
+        return Type & 0b1000;
+    }
 
+    uint8_t* OtherBytes();
     
     bool operator==( const VALUE& rhs)
     {
@@ -85,6 +100,19 @@ union  {
         return Whole != rhs.Whole;
     };
     
+    Object* GetObject() {
+        return (Object*)Integer;
+    }
+    
+    bool IsNil() {
+        return Type == PNil;
+    }
+    
+    bool IsCons() {
+        return Type == TCons;
+    }
+
+    
     void Print();
 };
 
@@ -93,22 +121,24 @@ union  {
 class STRING : public VALUE {
 public:
     STRING(std::string str ) {
-        IsHeapObject = true;
-        HType = TString;
+        Type = TString;
         AllocateString( str.c_str(), str.length() );
     }
     
     STRING(char* c, size_t size ) {
-        IsHeapObject = true;
-        HType = TString;
+        Type = TString;
         AllocateString( c, size );
     }
     
-    uint8_t* Bytes() {
-        return (uint8_t*)Pointer;
+
+    const char* c_str() {
+        return (const char*)StringBytes();
     }
+
+    uint32_t Length();
     
-    
+    uint8_t* StringBytes();
+
     std::string ToString();
     void Print();
     
@@ -121,8 +151,7 @@ public:
 class NIL : public VALUE {
 public:
     NIL() {
-        IsHeapObject = false;
-        PType = PNil;
+        Type = PNil;
     }
     
     void Print();
@@ -131,8 +160,11 @@ public:
 class SYMBOL : public VALUE {
 public:
     SYMBOL() {
-        IsHeapObject = false;
-        PType = PSymbol;
+        Type = PSymbol;
+    }
+    SYMBOL( uint32_t sym ) {
+        Type = PSymbol;
+        Integer = sym;
     }
     
     SYMBOL( const char* str, size_t len );
@@ -144,14 +176,12 @@ public:
 class INTEGER : public VALUE {
 public:
     INTEGER() {
-        IsHeapObject = false;
-        PType = PInteger;
+        Type = PInteger;
         Integer = 0;
     }
     
     INTEGER( int i ) {
-        IsHeapObject = false;
-        PType = PInteger;
+        Type = PInteger;
         Integer = i;
 
     }
@@ -159,6 +189,43 @@ public:
     std::string ToString();
     void Print();
 };
+
+class CONTINUATION : public VALUE {
+public:
+    Continuation* GetContinuation() {
+        return (Continuation*)OtherBytes();
+    }
+    
+};
+
+
+class Type;
+
+
+// The root heap object
+class Object {
+public:
+    int RefCount = 1;
+//    SYMBOL SetSpecifiers[32];
+};
+
+
+class NamedEntity : public Object {
+public:
+    Symbol Name;
+};
+
+// The root type object
+class Type : public NamedEntity {
+public:
+    Type( Symbol symbol ) {
+        Name = symbol;
+    }
+};
+
+//#define PUSH_INTEGER(x) INTEGER(x)
+//#define CALL(x,y) SYMBOL(x,y)
+//#define CALL(x) SYMBOL(x)
 
 
 

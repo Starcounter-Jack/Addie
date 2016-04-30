@@ -12,3 +12,20 @@
 #include <stdio.h>
 
 #endif /* Main_hpp */
+
+
+//STRING Isolate::Compile( VALUE form ) {
+//    Compiler c;
+//    return c.Compile( form );
+//}
+
+//STRING Isolate::Decompile( STRING code ) {
+//    Compiler c;
+//    return c.Decompile( code );
+//}
+
+//VALUE Isolate::Read( STRING source ) {
+//    const char* str = source.c_str();
+//    auto teststr = StringReader(str,strlen(str));
+//    return Parser::ParseForm( &teststr );
+//}

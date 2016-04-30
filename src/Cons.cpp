@@ -16,14 +16,34 @@
 
 
 void CONS::Print() {
-    if (Pointer == 0) {
+    if (Integer == 0) {
         std::cout << "()";
+        return;
+    }
+    Cons* self = GetCons();
+    if (self->Cdr.IsCons()) {
+        std::cout << "(";
+        self->Car.Print();
+        VALUE next = self->Cdr;
+        while (next.IsCons()) {
+            std::cout << " ";
+            Cons* pnext = (Cons*)next.OtherBytes();
+            pnext->Car.Print();
+            next = pnext->Cdr;
+        }
+        if (!next.IsNil()) {
+            std::cout << " . ";
+            next.Print();
+        }
+        std::cout << ")";
     }
     else {
         std::cout << "(";
-        GetCons()->Car.Print();
-        std::cout << " . ";
-        GetCons()->Cdr.Print();
+        self->Car.Print();
+        if (!self->Cdr.IsNil()) {
+           std::cout << " . ";
+           self->Cdr.Print();
+        }
         std::cout << ")";
     }
 }
@@ -41,8 +61,10 @@ CONS CONS::SnocBANG( VALUE elem ) {
     return CONS(x);
 }
 
+
 Cons* CONS::__allocateCons( VALUE car, VALUE cdr ) {
-        auto c = new Cons(car,cdr); // TODO! GC
-        Pointer = (uint64_t)c;
+    Cons* c = MALLOC_HEAP(Cons); // * c = (Cons*)CurrentIsolate->Memory.MallocHeap(sizeof(Cons));
+    new (c) Cons(car,cdr);  // Calling constructor
+    Integer = (uint64_t)c;
     return c;
 }

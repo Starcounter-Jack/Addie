@@ -20,7 +20,6 @@
 #include "Vector.hpp"
 #include "Isolate.hpp"
 #include "Value.hpp"
-#include "Heap.hpp"
 
 
 class UnexpectedEOF: public std::exception
@@ -139,7 +138,7 @@ class Parser {
 
     static VALUE ParseSymbol( StreamReader* r ) {
         
-        r->UnRead();
+//        r->UnRead();
         std::ostringstream res;
         
         while (true) {
@@ -151,6 +150,9 @@ class Parser {
             res << c;
         }
         std::string str = res.str();
+        if (str.length() == 0) {
+            throw std::runtime_error("Symbol size is zero!");
+        }
         return SYMBOL(str.c_str(), str.length());
     }
     
@@ -159,7 +161,7 @@ class Parser {
         
         // TODO! Currently only supports integers
         // TODO! Also read decimal numbers and maybe other numeric literals. Check Clojure...
-        r->UnRead();
+        //r->UnRead();
         std::ostringstream res;
         
         while (true) {
@@ -220,6 +222,7 @@ class Parser {
 //               std::cout << "Found parser for ";
 //               std::cout << c;
 //               std::cout << "\n";
+               r->UnRead();
                return fn( r );
            }
         }
@@ -230,6 +233,7 @@ class Parser {
    static VALUE ParseString( StreamReader* r) {
         
         std::ostringstream res;
+       r->Read(); // Skip first "
         
         while (true) {
             try {
@@ -260,7 +264,7 @@ class Parser {
             return true;
         }
         else if ( c == 226 ) { // Potential vertical end parenthesis
-            std::cout << "Spotted potential parens candidate";
+           // std::cout << "Spotted potential parens candidate";
             c = r->Read();
             if ( c== 143 ) { // Second part of unicode ⏝ (9181)
                 c = r->Read();
@@ -271,7 +275,7 @@ class Parser {
             }
             r->UnRead(); // This was not a vertical end paren
         }
-        r->UnRead(); // We are ready to consume any lisp form
+        r->UnRead(); // This was not a vertical end paren
         return false;
     }
 
@@ -279,6 +283,7 @@ class Parser {
        CONS list;
        CONS previous;
        
+       r->Read(); // Skip first parenthesis
         while (true) {
             
             try {

@@ -8,16 +8,26 @@
 
 #include "Value.hpp"
 #include "Cons.hpp"
-#include "Isolate.hpp"
+//#include "Isolate.hpp"
 
 
 std::string STRING::ToString() {
-    if (Pointer == 0) {
+    if (Integer == 0) {
         return "\"\"";
     }
-    return (char*) Pointer;
+    auto str =  (char*) Integer;
+    str += sizeof(String);
+    return str;
 }
 
+
+uint8_t* VALUE::OtherBytes() {
+    return (uint8_t*)(Integer);
+}
+
+uint8_t* STRING::StringBytes() {
+    return (uint8_t*)(Integer+sizeof(String));
+}
 
 
 void STRING::Print() {
@@ -26,24 +36,37 @@ void STRING::Print() {
     std::cout << "\"";
 }
 
-void STRING::AllocateString( const char* str, size_t size ) {
-    char* obj = (char*)CurrentIsolate->Heap.SafeMalloc(size+1); // We add a zero termination so we have a
+void STRING::AllocateString( const char* original, size_t size ) {
+    
+    size_t totalSize = size + sizeof(String) + 1;
+    String* obj = (String*)CurrentIsolate->MallocHeap(totalSize+1); // We add a zero termination so we have a
     // cheap conversion
     // to zero terminated strings if needed. TODO! GC
-    memcpy(obj, str, size);
-    obj[size] = 0;
-    this->Pointer = (uint64_t)obj;
+    char* str = (char*)obj;
+    str += sizeof(String);
+
+    memcpy(str, original, size);
+    str[size] = 0;
+    this->Integer = (uint64_t)obj;
+    
+    new (obj) String(size);
+
 }
+
+uint32_t STRING::Length() {
+    return ((String*)StringBytes())->Length;
+}
+
+
 
 
 SYMBOL::SYMBOL( const char* str, size_t len ) {
-    IsHeapObject = false;
-    PType = PSymbol;
-    Integer = CurrentIsolate->RegisterSymbol( str, len );
+    Type = PSymbol;
+    Integer = CurrentIsolate->RegisterSymbol( str, len, -1 );
 }
 
 std::string SYMBOL::ToString() {
-    return CurrentIsolate->GetStringFromSymbolId(Integer-1); // vectors are zero based. symbols start with 1
+    return CurrentIsolate->GetStringFromSymbolId(Integer); // vectors are zero based. symbols start with 1
 }
 
 void SYMBOL::Print() {
@@ -58,22 +81,14 @@ void NIL::Print() {
 }
 
 
-
 void VALUE::Print() {
-    if (IsHeapObject == true) {
-        switch (HType) {
+        switch (Type) {
             case (TString) :
                 ((STRING*)this)->Print();
                 return;
             case (TCons) :
                 ((CONS*)this)->Print();
                 return;
-            default:
-                break;
-        }
-    }
-    else {
-        switch (PType) {
             case (PSymbol) :
                 ((SYMBOL*)this)->Print();
                 return;
@@ -86,14 +101,9 @@ void VALUE::Print() {
             default:
                 break;
         }
-
-    }
     std::cout << "I dont know how to print a heap=";
-    std::cout << IsHeapObject;
-    std::cout << " htype=";
-    std::cout << HType;
-    std::cout << " ptype=";
-    std::cout << PType;
+    std::cout << " type=";
+    std::cout << Type;
 }
 
 void INTEGER::Print() {

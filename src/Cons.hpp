@@ -14,27 +14,26 @@
 #include "Value.hpp"
 
 
+#include "Isolate.hpp"
+
+
 class Cons;
 
 class CONS : public VALUE {
 public:
     CONS() {
-        HType = TCons;
-        IsHeapObject = true;
-        Pointer = 0;
+        Type = TCons;
+        Integer = 0;
     };
 
     CONS( VALUE _car, VALUE _cdr) {
-        HType = TCons;
-        IsHeapObject = true;
+        Type = TCons;
         __allocateCons( _car, _cdr );
     }
     
     
     CONS( Cons* cons ) {
-        HType = TCons;
-        IsHeapObject = true;
-        Pointer = (uint64_t)cons;
+        Integer = (uint64_t)cons;
     }
     
     // Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because
@@ -43,13 +42,13 @@ public:
 
     
     bool IsEmptyList() {
-        return Pointer == 0;
+        return Integer == 0;
     }
     
     void Print();
     
     Cons* GetCons() {
-        return (class Cons*)Pointer;
+        return (class Cons*)Integer;
     }
     
 private:
@@ -60,15 +59,17 @@ private:
 };
 
 
-class Cons {
+class Cons : public Object {
 public:
+    VALUE Car;   // Aka CAR
+    VALUE Cdr;    // Aka CDR
+
     Cons( VALUE _car, VALUE _cdr ) {
+//        Type = CurrentIsolate->ConsType;
         Car = _car;
         Cdr = _cdr;
     }
     
-    VALUE Car;   // Aka CAR
-    VALUE Cdr;    // Aka CDR
     
 
 };
