@@ -27,27 +27,32 @@ typedef uint8_t Op;
 
 class Instruction {
 public:
-    byte A;
-    byte B;
-    byte C;
-    Op OP;
+    union {
+        int32_t Whole;
+        int32_t A3 : 24;
+        struct {
+        char A;
+        char B;
+        char C;
+        Op OP;
+        };
+
+    };
     
     Instruction( Op op ) {
         OP = op;
     }
     
-    Instruction( Op op, uint16_t a2, byte c  ) {
+    Instruction( Op op, int16_t a2, byte c  ) {
         OP = op;
         A = a2 & 0x00FF;
         B = a2 & 0xFF00;
         C = c;
     }
     
-    Instruction( Op op, uint32_t a3  ) {
+    Instruction( Op op, int32_t a3  ) {
+        A3 = a3;
         OP = op;
-        A = a3 & 0x0000FF;
-        B = a3 & 0x00FF00;
-        C = a3 & 0xFF0000;
     }
     
     Instruction( Op op,byte a, byte b, byte c ) {
@@ -66,11 +71,7 @@ public:
         A = a;
     }
     
-    uint32_t A3() {
-        return A + (B<<8) + (C<<16);
-    }
-    
-    uint32_t A2() {
+    int32_t A2() {
         return A + (B<<8);
     }
 
@@ -78,7 +79,7 @@ public:
 
 class OpLoadConst : public Instruction {
 public:
-    OpLoadConst( byte regno, uint16_t value ) : Instruction( LOAD_CONST,value,regno) {
+    OpLoadConst( byte regno, int16_t value ) : Instruction( LOAD_CONST,value,regno) {
     }
 };
 

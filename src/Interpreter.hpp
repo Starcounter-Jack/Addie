@@ -36,6 +36,7 @@ public:
         }
         
         Symbol sym;
+        int relative;
         
         while (true) {
             
@@ -73,6 +74,14 @@ public:
                    p++;
 
                    break;
+                case (JMP):
+                    p += i.A3;
+                    break;
+                case (JMP_IF_TRUE):
+                    if (r[0].Integer) {
+                        p += i.A3;
+                    }
+                    break;
                case (MOVE):
                    std::cout << "MOVE";
                    std::cout << "        (";

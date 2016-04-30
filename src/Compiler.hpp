@@ -77,6 +77,7 @@ public:
             //*(c++) = OpMove(0,5);       // retval -> intermediate1
             *(c++) = Instruction(EXIT_WITH_CONTINUATION);
             *(c++) = OpCall(2,0);       // 3=Print 5=internadiate1
+            //*(c++) = Instruction(JMP_IF_TRUE,(int32_t)-1);       // 3=Print 5=internadiate1
             uninitatedRegisters = 1;
         }
         else {
