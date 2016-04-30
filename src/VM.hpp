@@ -114,9 +114,12 @@ struct Compilation {
 };
 
 // Frames contain registers. They can be garbage collected and they can be referenced
-// by continuations.
-class Frame : Object {
-    
+// by continuations. You can view frames as a spaghetti stack where each node is the
+// exact size needed by a function. The frame is like a stack with direct addressing rather
+// than pushing and popping.
+class Frame : public Object {
+public:
+    Frame* Parent;
 };
 
 

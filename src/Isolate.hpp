@@ -186,7 +186,7 @@ public:
         return SymbolStrings[id];
     }
   
-    uint RegisterNamespace( Symbol sym ) {
+    Symbol RegisterNamespace( Symbol sym ) {
         
         auto x = Namespaces.find(sym);
         
@@ -194,10 +194,11 @@ public:
             throw std::runtime_error("Namespace does already exist");
         
         Namespaces[sym] = new Namespace(); // TODO! GC
+        return sym;
     }
 
 
-    uint RegisterSymbol( const char* str, size_t size, int known ) {
+    Symbol RegisterSymbol( const char* str, size_t size, int known ) {
 //        std::cout << std::string( str, size );
         
         auto s = std::string(str,size);

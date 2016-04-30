@@ -62,6 +62,8 @@ public:
         
         registers = r = (VALUE*)p;
         
+        std::cout << "\nCompiling (print (+ 10 20))\n";
+        
         if (form.IsCons()) {
             *((VALUE*)r++) = NIL();             // R0 retval
             *((VALUE*)r++) = SYMBOL(SymPlus);   // R1
@@ -72,9 +74,9 @@ public:
             
             code = c = (Instruction*)r;
             *(c++) = OpCall(1,3,4);     // CODE START 0=SymPlus 1=10 2=20
-            *(c++) = OpMove(0,5);       // retval -> intermediate1
+            //*(c++) = OpMove(0,5);       // retval -> intermediate1
             *(c++) = Instruction(EXIT_WITH_CONTINUATION);
-            *(c++) = OpCall(2,5);       // 3=Print 5=internadiate1
+            *(c++) = OpCall(2,0);       // 3=Print 5=internadiate1
             uninitatedRegisters = 1;
         }
         else {
