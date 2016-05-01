@@ -39,7 +39,7 @@ $ ./addie
 
 ##### OS X
 
-Optionally, you can use CMake to create a XCode project
+You can use the same instructions as for the Linux build. Optionally, you can use CMake to create a XCode project
 
 ```bash
 $ cmake -G Xcode
