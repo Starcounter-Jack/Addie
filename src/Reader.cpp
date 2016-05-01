@@ -9,7 +9,7 @@
 //  Copyright © 2016 Starcounter AB.
 //
 
-#include "Parser.hpp"
+#include "Reader.hpp"
 
 // All our reserved characters lives in ASCII space except for our extended
 // begin/end parenthesis unicode symbols ⏜ ⏝ (9180 and 9181).

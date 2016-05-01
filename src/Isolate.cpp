@@ -8,7 +8,7 @@
 
 #include "Isolate.hpp"
 #include "Compiler.hpp"
-#include "Parser.hpp"
+#include "Reader.hpp"
 #include "Interpreter.hpp"
 
 

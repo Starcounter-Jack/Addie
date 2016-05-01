@@ -9,7 +9,7 @@
 
 
 #include "Main.hpp"
-#include "Parser.hpp"
+#include "Reader.hpp"
 #include <iostream>
 #include "../tests/TestHashTrie.hpp"
 #include "Compiler.hpp"
