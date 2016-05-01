@@ -50,7 +50,6 @@ int main(int argc, const char * argv[]) {
     
     std::cout << str.ToString();
 
-    std::cout << "\n\n";
     Continuation c = Interpreter::Interpret(code);
     
     // str = Compiler::Disassemble(code);

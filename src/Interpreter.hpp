@@ -25,7 +25,7 @@ public:
         Instruction* start = p;
         VALUE* r = cont.frame->GetStartOfRegisters();
         
-        std::cout << "\nResuming execution at " << p << "\n";
+        std::cout << "Resuming execution at " << p << "\n";
         
         int regCount = cont.frame->Comp->SizeOfRegisters/sizeof(VALUE);
         
