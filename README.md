@@ -1,6 +1,6 @@
 # Addie
 
-⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
+⚠ DEVELOPMENT HAS JUST BEGUN. ⚠ DOES NOT WORK YET!<br>
 
 <table border=0>
 <tr>
