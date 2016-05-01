@@ -18,6 +18,7 @@
 
 enum Symbols {
     END,
+//    SET_REGISTER_WINDOW,
     EXIT_WITH_CONTINUATION,
     RETURN,
     LOAD_CONST,
@@ -45,6 +46,7 @@ enum Symbols {
 };
 static const char *SymStrings[] = {
     "end",
+//    "set-register-window",
     "exit-with-continuation",
     "return",
     "load-const",

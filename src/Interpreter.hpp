@@ -22,21 +22,15 @@ public:
     static Continuation Interpret( Continuation cont ) {
         
         Instruction* p = cont.PC;
+        Instruction* start = p;
         VALUE* r = (VALUE*)(((byte*)cont.frame) + sizeof(Frame));
         
         std::cout << "\nResuming execution at " << p << "\n";
         
-        int regCount = cont.Comp->SizeOfRegisters/sizeof(VALUE);
-        for (int t=0;t<regCount;t++) {
-            std::cout << "R[";
-            std::cout << t;
-            std::cout << "]=";
-            std::cout << r[t].Integer;
-            std::cout << "\n";
-        }
+        int regCount = cont.frame->Comp->SizeOfRegisters/sizeof(VALUE);
         
         Symbol sym;
-        int relative;
+        uintptr_t address;
         
         while (true) {
             
@@ -47,24 +41,42 @@ public:
 
             switch (i.OP) {
                case END:
-//                   throw std::runtime_error("Illegal OP code");
                    goto end;
+                    /*
+                case SET_REGISTER_WINDOW:
+                    p++;
+                    std::cout << "set-reg-win";
+                    std::cout << "      (";
+                    std::cout << (*((VALUE*)p)).Integer;
+                    std::cout << ")";
+                    address = (uintptr_t)(*((VALUE*)p)).Integer;
+                    r = (VALUE*)address;
+                    p = (Instruction*)(((VALUE*)p) + 1); // Move IP past the address
+                    
+                    for (int t=0;t<regCount;t++) {
+                        std::cout << "R[";
+                        std::cout << t;
+                        std::cout << "]=";
+                        std::cout << r[t].Integer;
+                        std::cout << "\n";
+                    }
+
+                    break;
+                     */
+
                case EXIT_WITH_CONTINUATION:
-                   std::cout << "\nexit-with-continuation @(" << p;
-                   p++;
-                   cont.PC = p;
-                   std::cout << "==" << cont.PC << ")\n";
-                   return cont;
-                   break;
+                    p++;
+                   //std::cout << "\nexit-with-continuation @(" << p << ")";
+                    goto end;
                case (CALL_0):
-                   std::cout << "CALL-0";
-                   std::cout << " Symbol=";
-                   std::cout << r[i.A].Integer;
-                   std::cout << "\n";
+                   //std::cout << "CALL-0";
+                   //std::cout << " Symbol=";
+                   //std::cout << r[i.A].Integer;
+                   //std::cout << "\n";
                    p++;
                    break;
                case (CALL_1):
-                   std::cout << "CALL-1";
+                   //std::cout << "CALL-1";
                    sym = r[i.A].Integer;
                    if (sym == SymPrint) {
                        std::cout << "\nPrinting ";
@@ -93,7 +105,7 @@ public:
 
                    break;
                case (CALL_2):
-                   std::cout << "CALL-2";
+//                   std::cout << "CALL-2";
 
                     sym = r[i.A].Integer;
                    if (sym == SymPlus) {

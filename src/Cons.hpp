@@ -23,17 +23,20 @@ class CONS : public VALUE {
 public:
     CONS() {
         Type = TCons;
+        Flag = true; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };
 
     CONS( VALUE _car, VALUE _cdr) {
         Type = TCons;
+        Flag = true; // See VALUE::IsClassicalParenthesis
         __allocateCons( _car, _cdr );
     }
     
     
     CONS( Cons* cons ) {
         Integer = (uint64_t)cons;
+        Flag = true; // See VALUE::IsClassicalParenthesis
     }
     
     // Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because

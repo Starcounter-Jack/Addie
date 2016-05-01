@@ -30,19 +30,23 @@ class Object;
 class Isolate;
 class Continuation;
 
-enum ValueType : int {
-    PNil        =  0b0000,    // 1 bit integer
+
+/** 
+ * Most significat bit is means the object is allocated on the heap
+ * Second most significant bit means this is a list
+ */
+enum ValueType : unsigned int {
+    PNil        =  0b0000,    // Lisp nil
     PBool       =  0b0001,    // 1 bit integer
     PSymbol     =  0b0010,    // Symbol
-    PInteger    =  0b0011,    // 60 bit signed integer
-    PFloat      =  0b0100,    // 60 bit signed float????
-    PFraction   =  0b0101,
-    PReserved1   =  0b0110,
-    PReserved2   =  0b0111,
-    TVector     =  0b1000,
-    TString     =  0b1001,
-    TCons       =  0b1010,  // List
-    TLambda     =  0b1011,
+    PInteger    =  0b0011,    // 56 bit signed integer
+    PFraction   =  0b0100,    // Floating point (any base)
+    TLambda     =  0b1000,    // Compiled code
+    TVector     =  0b1001,    // Bitmapped Vector Trie
+    TString     =  0b1010,    // Byte array
+    TCons       =  0b1011,    // Linked list
+    TMap        =  0b1100,    // Hashtable
+    TArray      =  0b1101     // Compact VALUE array (default)
 };
 
 /*
@@ -76,8 +80,9 @@ public:
     union {
         uint64_t Whole;
         struct {
-            uint8_t Type : 4;
-            int64_t Integer: 60;
+            ValueType Type : 4;
+            bool Flag : 1;
+            uint64_t Integer: 59;
         };
     };
     
@@ -86,6 +91,13 @@ public:
     
     bool IsHeapObject() {
         return Type & 0b1000;
+    }
+    
+    // In Addie, any list type can have any implementation.
+    // But lists expressed with parenthesis does not evaluate to themselves as
+    // they represent a function evaluation.
+    bool IsClassicalParenthesis() {
+        return IsHeapObject() && Flag;
     }
 
     uint8_t* OtherBytes();
@@ -180,7 +192,7 @@ public:
         Integer = 0;
     }
     
-    INTEGER( int i ) {
+    INTEGER( uint64_t i ) {
         Type = PInteger;
         Integer = i;
 

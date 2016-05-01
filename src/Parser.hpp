@@ -282,7 +282,6 @@ class Parser {
    static VALUE ParseList( StreamReader* r) {
        CONS list;
        CONS previous;
-       
        r->Read(); // Skip first parenthesis
         while (true) {
             
