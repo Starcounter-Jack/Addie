@@ -48,7 +48,7 @@ public:
         return Integer == 0;
     }
     
-    void Print();
+    std::string Print();
     
     Cons* GetCons() {
         return (class Cons*)Integer;

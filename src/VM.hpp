@@ -120,6 +120,11 @@ struct Compilation {
     Instruction* StartOfInstructions() {
         return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters);
     }
+    
+    int GetInitializedRegisterCount() {
+        return SizeOfInitializedRegisters / sizeof(VALUE);
+    }
+    
     //Instruction* Code;
     // VALUE v1; VALUE v2....
 };

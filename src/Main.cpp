@@ -22,7 +22,7 @@ VALUE IllustrateParse( const char* str ) {
     
     auto teststr = StringReader(str,strlen(str));
     VALUE v = Parser::ParseForm( &teststr );
-    v.Print();
+    std::cout << v.Print();
     std::cout << "\n\n";
     return v;
 }

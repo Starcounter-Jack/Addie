@@ -149,6 +149,7 @@ public:
         std::ostringstream res;
         int symbol;
         const char* str;
+        VALUE* R = code->StartOfConstants();
 
         int prefix = 6;
         res << "============================================================\n";
@@ -223,7 +224,17 @@ public:
             prefix = 0;
         }
     end:
-        res << "\n============================================================\n";
+        int regCount = code->GetInitializedRegisterCount();
+        res << "\n------------------------------------------------------------\n";
+        for (int t=0;t<regCount;t++) {
+            res << "R";
+            res << t;
+            res << ":         ";
+            res << R[t].Print();
+            res << "\n";
+        }
+        res << "============================================================\n";
+
 
         return STRING(res.str());
     }

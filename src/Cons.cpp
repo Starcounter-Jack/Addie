@@ -12,13 +12,15 @@
 //
 
 #include "Cons.hpp"
+#include <sstream>
 
 
 
-void CONS::Print() {
+std::string CONS::Print() {
+    std::ostringstream res;
     if (Integer == 0) {
-        std::cout << "()";
-        return;
+        res << "()";
+        return res.str();
     }
     Cons* self = GetCons();
     char startParen;
@@ -31,30 +33,31 @@ void CONS::Print() {
         endParen = ']';
     }
     if (self->Cdr.IsCons()) {
-        std::cout << startParen;
-        self->Car.Print();
+        res << startParen;
+        res << self->Car.Print();
         VALUE next = self->Cdr;
         while (next.IsCons()) {
-            std::cout << " ";
+            res << " ";
             Cons* pnext = (Cons*)next.OtherBytes();
-            pnext->Car.Print();
+            res << pnext->Car.Print();
             next = pnext->Cdr;
         }
         if (!next.IsNil()) {
-            std::cout << " . ";
-            next.Print();
+            res << " . ";
+            res << next.Print();
         }
-        std::cout << endParen;
+        res << endParen;
     }
     else {
-        std::cout << startParen;
-        self->Car.Print();
+        res << startParen;
+        res << self->Car.Print();
         if (!self->Cdr.IsNil()) {
-           std::cout << " . ";
-           self->Cdr.Print();
+           res << " . ";
+           res << self->Cdr.Print();
         }
-        std::cout << endParen;
+        res << endParen;
     }
+    return res.str();
 }
 
 // Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because

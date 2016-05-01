@@ -9,7 +9,7 @@
 #include "Value.hpp"
 #include "Cons.hpp"
 //#include "Isolate.hpp"
-
+#include <sstream>
 
 std::string STRING::ToString() {
     if (Integer == 0) {
@@ -30,10 +30,12 @@ uint8_t* STRING::StringBytes() {
 }
 
 
-void STRING::Print() {
-    std::cout << "\"";
-    std::cout << ToString();
-    std::cout << "\"";
+std::string STRING::Print() {
+        std::ostringstream res;
+    res << "\"";
+    res << ToString();
+    res << "\"";
+    return res.str();
 }
 
 void STRING::AllocateString( const char* original, size_t size ) {
@@ -69,45 +71,49 @@ std::string SYMBOL::ToString() {
     return CurrentIsolate->GetStringFromSymbolId(Integer); // vectors are zero based. symbols start with 1
 }
 
-void SYMBOL::Print() {
-    std::cout << ToString();
+std::string SYMBOL::Print() {
+    std::ostringstream res;
+    res << ToString();
     // std::cout << "#";       // Uncomment these to see symbol integer
     // std::cout << Integer;   // Uncomment these to see symbol integer
+    return res.str();
 }
 
 
-void NIL::Print() {
-    std::cout << "nil";
+std::string NIL::Print() {
+    std::ostringstream res;
+    res << "nil";
+    return res.str();
 }
 
 
-void VALUE::Print() {
+std::string VALUE::Print() {
         switch (Type) {
             case (TString) :
-                ((STRING*)this)->Print();
-                return;
+                return ((STRING*)this)->Print();
             case (TCons) :
-                ((CONS*)this)->Print();
-                return;
+                return ((CONS*)this)->Print();
             case (PSymbol) :
-                ((SYMBOL*)this)->Print();
-                return;
+                return ((SYMBOL*)this)->Print();
             case (PNil) :
-                ((NIL*)this)->Print();
-                return;
+                return ((NIL*)this)->Print();
             case (PInteger) :
-                ((INTEGER*)this)->Print();
-                return;
+                return ((INTEGER*)this)->Print();
             default:
                 break;
         }
-    std::cout << "I dont know how to print a heap=";
-    std::cout << " type=";
-    std::cout << Type;
+    
+        std::ostringstream res;
+    res << "I dont know how to print a heap=";
+    res << " type=";
+    res << Type;
+    return res.str();
 }
 
-void INTEGER::Print() {
-    std::cout << Integer;
+std::string INTEGER::Print() {
+        std::ostringstream res;
+    res << Integer;
+    return res.str();
 }
 
 

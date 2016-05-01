@@ -125,7 +125,7 @@ public:
     }
 
     
-    void Print();
+    std::string Print();
 };
 
 
@@ -152,7 +152,7 @@ public:
     uint8_t* StringBytes();
 
     std::string ToString();
-    void Print();
+    std::string Print();
     
     
     
@@ -166,7 +166,7 @@ public:
         Type = PNil;
     }
     
-    void Print();
+    std::string Print();
 };
 
 class SYMBOL : public VALUE {
@@ -182,7 +182,7 @@ public:
     SYMBOL( const char* str, size_t len );
     
     std::string ToString();
-    void Print();
+    std::string Print();
 };
 
 class INTEGER : public VALUE {
@@ -199,7 +199,7 @@ public:
     }
     
     std::string ToString();
-    void Print();
+    std::string Print();
 };
 
 class CONTINUATION : public VALUE {

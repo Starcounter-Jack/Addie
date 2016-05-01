@@ -79,7 +79,7 @@ public:
                    //std::cout << "CALL-1";
                    sym = r[i.A].Integer;
                    if (sym == SymPrint) {
-                       std::cout << "\nPrinting ";
+                       std::cout << "\nPrinting " << r[0].Print();
                        r[0].Print();
                    }
 
