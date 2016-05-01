@@ -57,6 +57,7 @@ public:
         int uninitatedRegisters;
         
         Compilation* header = (Compilation*)p;
+        new (header) Compilation(); // No constructor, but just for correctness
         p += sizeof(Compilation);
         
         registers = r = (VALUE*)p;
@@ -69,7 +70,7 @@ public:
         
             header->SizeOfInitializedRegisters = 1;
             header->SizeOfRegisters = 1 * sizeof(VALUE);
-            header->Code = code;
+            //header->Code = code;
 
             p = (byte*)c;
             CurrentIsolate->NextOnConstant = (u64)p; // TODO! GC! Mark the memory as used
@@ -133,7 +134,7 @@ public:
         }
         
         header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-        header->Code = code;
+        //header->Code = code;
         header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
         
         CurrentIsolate->NextOnConstant = (u64)p; // Mark the memory as used
@@ -152,7 +153,9 @@ public:
         int prefix = 6;
         res << "============================================================\n";
         res << "START:";
-        Instruction* p = code->Code;
+        
+        
+        Instruction* p = code->StartOfInstructions();
         
         while (true) {
             

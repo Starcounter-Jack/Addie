@@ -62,13 +62,14 @@ private:
 };
 
 
-class Cons : public Object {
+class Cons : public List {
 public:
     VALUE Car;   // Aka CAR
     VALUE Cdr;    // Aka CDR
 
     Cons( VALUE _car, VALUE _cdr ) {
 //        Type = CurrentIsolate->ConsType;
+       // IsClassicalParenthesis = isParenthesis;
         Car = _car;
         Cdr = _cdr;
     }

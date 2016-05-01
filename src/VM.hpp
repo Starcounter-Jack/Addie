@@ -111,7 +111,17 @@ public:
 struct Compilation {
     u32 SizeOfRegisters;
     u32 SizeOfInitializedRegisters;
-    Instruction* Code;
+    
+    
+    VALUE* StartOfConstants() {
+        return (VALUE*)((byte*)this + sizeof(Compilation));
+    }
+    
+    Instruction* StartOfInstructions() {
+        return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters);
+    }
+    //Instruction* Code;
+    // VALUE v1; VALUE v2....
 };
 
 // Frames are register windows pertaining to a particular compilation.
@@ -126,6 +136,11 @@ class Frame : public Object {
 public:
     Frame* Parent;
     Compilation* Comp;
+    // VALUE v1; VALUE v2....
+    
+    VALUE* GetStartOfRegisters() {
+        return (VALUE*)(((byte*)this) + sizeof(Frame));
+    }
 };
 
 

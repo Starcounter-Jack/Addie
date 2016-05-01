@@ -221,6 +221,10 @@ public:
 //    SYMBOL SetSpecifiers[32];
 };
 
+class List : public Object {
+    
+};
+
 
 class NamedEntity : public Object {
 public:

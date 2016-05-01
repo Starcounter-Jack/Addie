@@ -118,6 +118,26 @@ class Parser {
         return NIL();
     }
     
+    
+    static bool CheckForVerticalStartBracket( StreamReader* r ) {
+        unsigned char c;
+        c = r->Read();
+        if (c == 226 ) { // First part of unicode ⎴ or ⎵ (9140,9141)
+            c = r->Read();
+            if ( c == 142 ) { // Second part of unicode ⎴ or ⎵ (9140,9141)
+                c = r->Read();
+                if ( c == 180 ) { // Third part of unicode ⎴ (9140)
+                    return true;
+                }
+                r->UnRead();
+            }
+            r->UnRead();
+        }
+        r->UnRead();
+        return false;
+    }
+
+    
     static bool CheckForVerticalStartParenthesis( StreamReader* r ) {
         unsigned char c;
         c = r->Read();
@@ -184,10 +204,36 @@ class Parser {
 
     
     
-    static VALUE ParseVector( StreamReader* r ) {
-        throw std::runtime_error("Encountered a vector");
-        return NIL();
+    static VALUE ParseVector( StreamReader* r) {
+        CONS list;
+        list.Flag = false;
+        CONS previous;
+        r->Read(); // Skip first parenthesis
+        while (true) {
+            
+            try {
+                StreamReader::SkipWhitespace(r);
+            }
+            catch (UnexpectedEOF e) {
+                throw std::runtime_error("Missing ]");
+            }
+            
+            if (CheckForEndBracket(r)) {
+                return list;
+            }
+            
+            VALUE elem = ParseForm( r );
+            if (previous.IsEmptyList()) {
+                list = CONS( elem, NIL());
+                list.Flag = false;
+                previous = list;
+            }
+            else {
+                previous = previous.SnocBANG( elem );
+            }
+        }
     }
+
     
     static VALUE ParseComment( StreamReader* r ) {
         throw std::runtime_error("Encountered a comment");
@@ -207,6 +253,8 @@ class Parser {
             r->UnRead();
             if (CheckForVerticalStartParenthesis(r)) {
                 return Parser::ParseList(r);
+            } else if (CheckForVerticalStartBracket(r)) {
+                return Parser::ParseVector(r);
             }
             return Parser::ParseSymbol(r);
         }
@@ -278,6 +326,32 @@ class Parser {
         r->UnRead(); // This was not a vertical end paren
         return false;
     }
+    
+    
+    // We support some exotic unicode end parenthesis
+    static bool CheckForEndBracket( StreamReader* r ) {
+        unsigned char c = r->Read();
+        if (c == ']' ) {
+            return true;
+        }
+        else if ( c == 226 ) { // Potential vertical end parenthesis
+            c = r->Read();
+            if ( c== 142 ) { // Second part of unicode ⎵(9141)
+                c = r->Read();
+                if ( c== 181 ) { // Third part of unicode ⎵ (9141)
+                    return true; // Eureka! Vertical end paren
+                }
+                r->UnRead(); // This was not a vertical end paren
+            }
+            r->UnRead(); // This was not a vertical end paren
+        }
+        r->UnRead(); // This was not a vertical end paren
+        return false;
+    }
+    
+
+
+
 
    static VALUE ParseList( StreamReader* r) {
        CONS list;

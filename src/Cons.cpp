@@ -21,8 +21,17 @@ void CONS::Print() {
         return;
     }
     Cons* self = GetCons();
+    char startParen;
+    char endParen;
+    if (IsClassicalParenthesis()) {
+        startParen = '(';
+        endParen = ')';
+    } else {
+        startParen = '[';
+        endParen = ']';
+    }
     if (self->Cdr.IsCons()) {
-        std::cout << "(";
+        std::cout << startParen;
         self->Car.Print();
         VALUE next = self->Cdr;
         while (next.IsCons()) {
@@ -35,16 +44,16 @@ void CONS::Print() {
             std::cout << " . ";
             next.Print();
         }
-        std::cout << ")";
+        std::cout << endParen;
     }
     else {
-        std::cout << "(";
+        std::cout << startParen;
         self->Car.Print();
         if (!self->Cdr.IsNil()) {
            std::cout << " . ";
            self->Cdr.Print();
         }
-        std::cout << ")";
+        std::cout << endParen;
     }
 }
 

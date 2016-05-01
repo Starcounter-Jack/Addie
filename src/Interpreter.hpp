@@ -23,7 +23,7 @@ public:
         
         Instruction* p = cont.PC;
         Instruction* start = p;
-        VALUE* r = (VALUE*)(((byte*)cont.frame) + sizeof(Frame));
+        VALUE* r = cont.frame->GetStartOfRegisters();
         
         std::cout << "\nResuming execution at " << p << "\n";
         
@@ -134,7 +134,7 @@ public:
     static Continuation Interpret( Compilation* code ) {
         Continuation c;
         c.EnterIntoNewFrame(code, NULL);
-        c.PC = code->Code;
+        c.PC = code->StartOfInstructions();
         return Interpreter::Interpret( c );
     }
     
