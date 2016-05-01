@@ -12,7 +12,7 @@
 #include "Isolate.hpp"
 #include "Vector.hpp"
 #include "Value.hpp"
-
+#include <assert.h>
 
 // Contains fixed registers (used for variables instead of stack)
 // Registers are preloaded with constants
@@ -133,9 +133,10 @@ public:
 class Continuation {
 public:
     Instruction* PC;                    // Program Counter (aka Instruction Pointer).
-    Frame* frame;
+    Frame* frame = NULL;
     
-    void AllocateFrame( Compilation* code) {
+    void EnterIntoNewFrame( Compilation* code, Frame* parent ) {
+        assert( frame == NULL );
         // The compiled code contains the size of the register machine needed for the
         // code. It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
@@ -144,6 +145,7 @@ public:
         //Registers = (VALUE*)(((byte*)frame) + sizeof(Frame));
         memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(Compilation), code->SizeOfInitializedRegisters );
         frame->Comp = code;
+        frame->Parent = parent;
     }
 };
 

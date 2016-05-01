@@ -133,7 +133,7 @@ public:
     
     static Continuation Interpret( Compilation* code ) {
         Continuation c;
-        c.AllocateFrame(code);
+        c.EnterIntoNewFrame(code, NULL);
         c.PC = code->Code;
         return Interpreter::Interpret( c );
     }
