@@ -119,7 +119,7 @@ public:
         
         addr = mmap((void *) addr, size,
                     PROT_WRITE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        printf("%p\n", addr);
+        //printf("%p\n", addr);
         if(addr == MAP_FAILED)
             throw std::runtime_error("Addie is trying to reserving 3TB of fixed memory addresses and fails. Jack was being a little bit too optimisitic.");
         return (byte*)addr;

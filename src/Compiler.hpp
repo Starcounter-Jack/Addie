@@ -183,33 +183,33 @@ public:
                      */
                 case (CALL_0):
                     res << str;
-                    res << "      (";
+                    res << "      (r";
                     res << (int)p->A;
                     res << ")";
                     break;
                 case (CALL_1):
                     res << str;
-                    res << "      (";
+                    res << "      (r";
                     res << (int)p->A;
-                    res << ",";
+                    res << ",r";
                     res << (int)p->B;
                     res << ")";
                     break;
                 case (MOVE):
                     res << str;
-                    res << "        (";
+                    res << "        (r";
                     res << (int)p->A;
-                    res << ",";
+                    res << ",r";
                     res << (int)p->B;
                     res << ")";
                     break;
                 case (CALL_2):
                     res << str;
-                    res << "      (";
+                    res << "      (r";
                     res << (int)p->A;
-                    res << ",";
+                    res << ",r";
                     res << (int)p->B;
-                    res << ",";
+                    res << ",r";
                     res << (int)p->C;
                     res << ")";
                     break;
@@ -227,7 +227,7 @@ public:
         int regCount = code->GetInitializedRegisterCount();
         res << "\n------------------------------------------------------------\n";
         for (int t=0;t<regCount;t++) {
-            res << "R";
+            res << "r";
             res << t;
             res << ":         ";
             res << R[t].Print();
