@@ -1,6 +1,6 @@
 # Addie
 
-
+⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
 
 <table border=0>
 <tr>
@@ -16,7 +16,6 @@
 6. Supports vertical parentheses to relax your brain 🍺<br>
 <br>
 <img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/example.png" width="50%"><br>
-⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
 </td>
 </tr>
 <table>
