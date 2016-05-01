@@ -15,19 +15,12 @@
 5. Simple single threaded isolates for simple embedding<br>
 6. Supports vertical parentheses to relax your brain 🍺<br>
 <br>
+<img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/example.png" width="50%"><br>
 ⚠ DEVELOPMENT HAS JUST BEGUN.<br>⚠ DOES NOT WORK YET!<br>
 </td>
 </tr>
 <table>
 
-### Example
-```clojure
-⏜
-if (= einstein genius)
-  (print "e=mc²")
-  (print "e!=mc²")
-⏝
-```
 
 
 
