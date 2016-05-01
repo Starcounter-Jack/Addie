@@ -20,13 +20,6 @@
 </tr>
 <table>
 
-## Update!
-
-The interal VM bytecode is being layed out in the [wiki](https://github.com/Starcounter-Jack/Addie/wiki). Please leave a comment as work on the interpreter is about to begin.
-
-
-
-
 ### Example
 ```clojure
 ⏜
