@@ -10,7 +10,6 @@
 
 #include "Reader.hpp"
 #include <iostream>
-#include "../tests/TestHashTrie.hpp"
 #include "Compiler.hpp"
 #include "Interpreter.hpp"
 
@@ -22,7 +21,7 @@ VALUE IllustrateParse( const char* str ) {
     auto teststr = StringReader(str,strlen(str));
     VALUE v = Parser::ParseForm( &teststr );
     std::cout << v.Print();
-    std::cout << "\n\n";
+    std::cout << "\n";
     return v;
 }
 
@@ -49,16 +48,18 @@ int main(int argc, const char * argv[]) {
     TestParse( "⏜⏝","()");
 //    TestParse( "⏞ ⏟","{}");
 //    TestParse("︷ ︸","{}");
-    IllustrateParse( "\"Jack Gök Wester\"" );
-    IllustrateParse("(\"Jack\" \"Wester\")");
-    IllustrateParse( "⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝" );
+    TestParse( "\"Jack Gök Wester\"", "\"Jack Gök Wester\"" );
+    TestParse("(\"Jack\" \"Wester\")","(\"Jack\" \"Wester\")");
+    TestParse( "⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝",
+                    "(if (= einstein genius) (print \"e=mc²\") (print \"e!=mc²\"))");
    
     VALUE v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n[n] (fn [x[x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))"
 
                         );
 
-    v = IllustrateParse("⏜\nlet ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝");
+    v = TestParse("⏜\nlet ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
+                  "(let [a 10 b 20] (print (+ a b)))");
    
     
     
