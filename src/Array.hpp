@@ -16,15 +16,20 @@
 
 #include "Isolate.hpp"
 
+#define ONLY_USE_RAW_ARRAYS
+                // For tracking down bugs, we can create a naive version of Addie.
+                // If defined, we will always create fresh new arrays instead of using the
+                // persistent vector optimizations.
+
 enum ArrayElementType {
-    Any = 0b0,
-    IntegersOnly = 0b1,
+    Any = 0b0,           // Each element can be of any Addie type
+    IntegersOnly = 0b1,  // Use this one for strings or integer arrays
 };
 
 struct ArrayHeader {
     ArrayElementType Type : 1;      // Important for efficiency for things like strings
     unsigned int ElementSize : 4;   // Important for efficiency for things like strings
-    unsigned int Count : 27;
+    unsigned int Count : 27; // The number of elements in the list.
 };
 
 // Arrays are allocated on the heap with the values directly attached after the count variable.
@@ -36,16 +41,69 @@ template <class T>
 class Array : public List {
 public:
     ArrayHeader Header;
-    // T Values[n];
+    // Will be followed by: T Values[n];
     
-    static void BeginWrite() {
+    // Let's just cooperate with the memory allocator to make things REALLY fast.
+    static void __beginWrite() {
         *((ArrayHeader*)CurrentIsolate->NextOnHeap) = ArrayHeader { Any, 8, 0 };
         CurrentIsolate->NextOnHeap += sizeof(ArrayHeader);
     }
     
-    void Write( T v ) {
+    // It is only legal to call __write following __beginWrite given that
+    // there are NO other allocations being done inbetween.
+    void __write( T v ) {
         (*((T*)CurrentIsolate->NextOnHeap)) = v;
         CurrentIsolate->NextOnHeap += sizeof(T);
+    }
+    
+    // The actual elements are stored immediately after the header
+    VALUE* __values() {
+        return (VALUE*)(((uint8_t*)this) + sizeof(Array));
+    }
+    
+    // Override of the List interface
+    VALUE GetAt( int i ) {
+        assert( i < Header.Count );
+        return __values()[i];
+    }
+    
+    // Override of the List interface
+    List* ReplaceAt( int i, VALUE v ) {
+        assert( i < Header.Count );
+        if (RefCount == 0) {
+            __values()[i] = v;
+            return this;
+        }
+        
+#ifdef ONLY_USE_RAW_ARRAYS
+        // Make a copy of the list
+        size_t size = sizeof(ArrayHeader) + Header.Count * sizeof(T);
+        Array* newList = (Array*)CurrentIsolate->NextOnHeap;
+        memcpy( newList, this, size );
+        CurrentIsolate->NextOnHeap += size;
+        return newList;
+#else
+        // Upgrade to a bitmapped vector trie as it is faster for
+        // deriving new lists.
+        throw std::runtime_error("Not implemented yet");
+#endif
+    }
+    
+    // Override of the List interface
+    List* Append( VALUE v ) {
+#ifdef ONLY_USE_RAW_ARRAYS
+        // Make a copy of the list
+        size_t size = sizeof(ArrayHeader) + Header.Count * sizeof(T);
+        Array* newList = (Array*)CurrentIsolate->NextOnHeap;
+        memcpy( newList, this, size );
+        __values()[Header.Count-1] = v;
+        CurrentIsolate->NextOnHeap += size + sizeof(T);
+        return newList;
+#else
+        // Upgrade to a bitmapped vector trie as it is faster for
+        // deriving new lists.
+        throw std::runtime_error("Not implemented yet");
+#endif
     }
 
 };
