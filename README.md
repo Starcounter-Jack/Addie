@@ -9,7 +9,7 @@
 </td>
 <td valign="top"><h4>A modern clojure style embeddable Lisp.</h4>
 1. Pure functional<br>
-2. Based on Clojure<br>
+2. Inspired by Clojure<br>
 3. Embeddable<br>
 4. Fast<br>
 5. Simple single threaded isolates for simple embedding<br>
