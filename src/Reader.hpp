@@ -119,14 +119,41 @@ class Parser {
     }
     
     
-    static bool CheckForVerticalStartBracket( StreamReader* r ) {
+    static bool ConsumeVerticalStartBracket( StreamReader* r, bool eatit ) {
         unsigned char c;
         c = r->Read();
-        if (c == 226 ) { // First part of unicode ⎴ or ⎵ (9140,9141)
+        if (c == '[') {
+            if (!eatit) {
+                r->UnRead();
+            }
+            return true;
+        }
+        if (c == 226 ) { // First part of unicode ⎴ 9140 or ⎵ 9141)
             c = r->Read();
-            if ( c == 142 ) { // Second part of unicode ⎴ or ⎵ (9140,9141)
+            if ( c == 142 ) { // Second part
                 c = r->Read();
-                if ( c == 180 ) { // Third part of unicode ⎴ (9140)
+                if ( c == 180 ) { // Third part
+                    if (!eatit) {
+                       r->UnRead();
+                       r->UnRead();
+                       r->UnRead();
+                    }
+                    return true;
+                }
+                r->UnRead();
+            }
+            r->UnRead();
+        }
+        else if (c == 239 ) { // First part of unicode 65095 ﹇ 65096﹈)
+            c = r->Read();
+            if ( c == 185 ) { // Second part
+                c = r->Read();
+                if ( c == 135 ) { // Third part
+                    if (!eatit) {
+                        r->UnRead();
+                        r->UnRead();
+                        r->UnRead();
+                    }
                     return true;
                 }
                 r->UnRead();
@@ -138,14 +165,25 @@ class Parser {
     }
 
     
-    static bool CheckForVerticalStartParenthesis( StreamReader* r ) {
+    static bool ConsumeVerticalStartParenthesis( StreamReader* r, bool eatIt ) {
         unsigned char c;
         c = r->Read();
+        if (c == '(' ) {
+            if (!eatIt) {
+                r->UnRead();
+            }
+            return true;
+        }
         if (c == 226 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
             c = r->Read();
             if ( c== 143 ) { // Second part of unicode ⏜⏝ (9180,9181)
                 c = r->Read();
                 if ( c== 156 ) { // Third part of unicode ⏜ (9180)
+                    if (!eatIt) {
+                       r->UnRead();
+                       r->UnRead();
+                       r->UnRead();
+                    }
                     return true;
                 }
                 r->UnRead();
@@ -208,7 +246,8 @@ class Parser {
         CONS list;
         list.Flag = false;
         CONS previous;
-        r->Read(); // Skip first parenthesis
+        ConsumeVerticalStartBracket(r, true);
+//        r->Read(); // Skip first parenthesis
         while (true) {
             
             try {
@@ -251,9 +290,9 @@ class Parser {
         unsigned char c = r->Read();
         if (c > 127 ) {
             r->UnRead();
-            if (CheckForVerticalStartParenthesis(r)) {
+            if (ConsumeVerticalStartParenthesis(r,false)) {
                 return Parser::ParseList(r);
-            } else if (CheckForVerticalStartBracket(r)) {
+            } else if (ConsumeVerticalStartBracket(r,false)) {
                 return Parser::ParseVector(r);
             }
             return Parser::ParseSymbol(r);
@@ -345,6 +384,18 @@ class Parser {
             }
             r->UnRead(); // This was not a vertical end paren
         }
+        else if ( c == 239 ) { // Potential vertical end parenthesis
+            c = r->Read();
+            if ( c== 185 ) { // Second part of unicode ⎵(9141)
+                c = r->Read();
+                if ( c== 136 ) { // Third part of unicode ⎵ (9141)
+                    return true; // Eureka! Vertical end paren
+                }
+                r->UnRead(); // This was not a vertical end paren
+            }
+            r->UnRead(); // This was not a vertical end paren
+        }
+
         r->UnRead(); // This was not a vertical end paren
         return false;
     }
@@ -356,7 +407,8 @@ class Parser {
    static VALUE ParseList( StreamReader* r) {
        CONS list;
        CONS previous;
-       r->Read(); // Skip first parenthesis
+//       r->Read(); // Skip first parenthesis
+       ConsumeVerticalStartParenthesis(r, true);
         while (true) {
             
             try {

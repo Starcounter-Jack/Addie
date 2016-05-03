@@ -18,10 +18,6 @@
 
 std::string CONS::Print() {
     std::ostringstream res;
-    if (Integer == 0) {
-        res << "()";
-        return res.str();
-    }
     Cons* self = GetCons();
     char startParen;
     char endParen;
@@ -31,6 +27,10 @@ std::string CONS::Print() {
     } else {
         startParen = '[';
         endParen = ']';
+    }
+    if (Integer == 0) {
+        res << startParen << endParen;
+        return res.str();
     }
     if (self->Cdr.IsCons()) {
         res << startParen;
