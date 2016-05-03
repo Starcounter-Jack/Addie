@@ -12,57 +12,11 @@
 //
 
 #include "Cons.hpp"
-#include <sstream>
 
 
 
-std::string LIST::Print() {
-    std::ostringstream res;
-    Cons* self = GetCons();
-    char startParen;
-    char endParen;
-    if (IsClassicalParenthesis()) {
-        startParen = '(';
-        endParen = ')';
-    } else {
-        startParen = '[';
-        endParen = ']';
-    }
-    if (Integer == 0) {
-        res << startParen << endParen;
-        return res.str();
-    }
-    if (self->GetCdr().IsCons()) {
-        res << startParen;
-        res << self->GetCar().Print();
-        VALUE next = self->GetCdr();
-        while (next.IsCons()) {
-            res << " ";
-            Cons* pnext = (Cons*)next.OtherBytes();
-            res << pnext->GetCar().Print();
-            next = pnext->GetCdr();
-        }
-        if (!next.IsNil()) {
-            res << " . ";
-            res << next.Print();
-        }
-        res << endParen;
-    }
-    else {
-        res << startParen;
-        res << self->GetCar().Print();
-        if (!self->GetCdr().IsNil()) {
-           res << " . ";
-           res << self->GetCdr().Print();
-        }
-        res << endParen;
-    }
-    return res.str();
-}
 
-LIST LIST::Append( VALUE elem ) {
-    return GetCons()->Append( elem );
-}
+
 
 
 Cons* LIST::__allocateCons( VALUE car, VALUE cdr ) {
@@ -71,3 +25,5 @@ Cons* LIST::__allocateCons( VALUE car, VALUE cdr ) {
     Integer = (uint64_t)c;
     return c;
 }
+
+
