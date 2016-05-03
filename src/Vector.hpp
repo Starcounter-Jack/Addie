@@ -24,19 +24,23 @@
 #include <vector>
 #include "List.hpp"
 
-template <class T>
 
 // TODO! Replace which Bitmap Vector Trie
 class PVector : public List {
     
 public:
-    std::vector<T> Items;
     
-    T GetAt( int t ) {
-        return Items[t];
-    }
+
     
-    PVector<T>* SetAt( int t, VALUE v ) {
+    /*
+     template <class T>
+    
+     std::vector<T> Items;
+     T GetAt( int t ) {
+     return Items[t];
+     }
+     
+    PVector<T>* ReplaceAt( int t, VALUE v ) {
         if (RefCount==1) {
             // There is only one value observing this vector materialization,
             // this means that we do not have to keep the old version.
@@ -60,6 +64,7 @@ public:
         Items.push_back(v);
         return v;
     }
+     */
 
 };
 

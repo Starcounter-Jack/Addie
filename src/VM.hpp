@@ -28,15 +28,14 @@ typedef uint8_t Op;
 class Instruction {
 public:
     union {
-        int32_t Whole;
+        uint32_t Whole;
         int32_t A3 : 24;
         struct {
-        char A;
-        char B;
-        char C;
+        int8_t A;
+        int8_t B;
+        int8_t C;
         Op OP;
         };
-
     };
     
     Instruction( Op op ) {

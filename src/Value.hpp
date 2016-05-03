@@ -29,6 +29,7 @@ typedef uint16_t Symbol;
 class Object;
 class Isolate;
 class Continuation;
+class List;
 
 
 
@@ -88,7 +89,7 @@ public:
         struct {
             ValueType Type : 3;
             ValueStyle Style : 2;
-            uint64_t Integer: 59;
+            int64_t Integer: 59;
         };
     };
     
@@ -226,6 +227,7 @@ class Type;
 class Object {
 public:
     int RefCount = 0;
+    List* Meta;
 //    SYMBOL SetSpecifiers[32];
 };
 
@@ -247,15 +249,6 @@ public:
         Name = symbol;
     }
 };
-
-//#define PUSH_INTEGER(x) INTEGER(x)
-//#define CALL(x,y) SYMBOL(x,y)
-//#define CALL(x) SYMBOL(x)
-
-class Cons;
-
-
-
 
 
 

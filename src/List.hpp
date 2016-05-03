@@ -9,13 +9,11 @@
 #ifndef List_hpp
 #define List_hpp
 
-
 #include "Value.hpp"
 #include "Isolate.hpp"
 
 class List;
-
-
+class Cons;
 
 class LIST : public VALUE {
 public:
