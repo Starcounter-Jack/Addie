@@ -27,20 +27,37 @@ VALUE IllustrateParse( const char* str ) {
     return v;
 }
 
+VALUE TestParse( const char* input, const char* expectedOutput ) {
+    VALUE v = IllustrateParse( input );
+    const char* output = v.Print().c_str();;
+    assert( strcmp( expectedOutput, output ) == 0 );
+    return v;
+}
+
+
 int main(int argc, const char * argv[]) {
     
     Isolate isolate;
     CurrentIsolate = &isolate;
     
-    std::cout << "\nSize of value:" << sizeof(VALUE);
-    std::cout << "\nSize of instruction:" << sizeof(Instruction) << "\n\n";
+    assert( sizeof(VALUE) == sizeof(uintptr_t) ); // If we are on a 64 bit machine we want 64
+                                                  // bit values
+    assert( sizeof(Instruction) == 4 );           // Our byte instructions are 32 bit
     
 //    IllustrateParse( "[]" );
-    IllustrateParse( "﹇﹈" );
+    TestParse( "﹇﹈","[]");
+    TestParse( "⎴ ⎵ ","[]");
+    TestParse( "⏜⏝","()");
+//    TestParse( "⏞ ⏟","{}");
+//    TestParse("︷ ︸","{}");
     IllustrateParse( "\"Jack Gök Wester\"" );
     IllustrateParse("(\"Jack\" \"Wester\")");
     IllustrateParse( "⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝" );
-    VALUE v = IllustrateParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝");
+   
+    VALUE v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
+          "((defn pow [n[n] (fn [x[x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))"
+
+                        );
 
     v = IllustrateParse("⏜\nlet ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝");
    

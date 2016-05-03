@@ -9,8 +9,9 @@
 #ifndef List_hpp
 #define List_hpp
 
-#include "Value.hpp"
 
+#include "Value.hpp"
+#include "Isolate.hpp"
 
 class List;
 
@@ -24,10 +25,10 @@ public:
         Integer = 0;
     };
     
-    LIST( VALUE _car, VALUE _cdr) {
+    LIST( VALUE _first, VALUE _rest) {
         Type = PList;
         Style = QParenthesis; // See VALUE::IsClassicalParenthesis
-        MaterializeAsCons( _car, _cdr );
+        MaterializeAsCons( _first, _rest );
     }
     
     
@@ -46,11 +47,22 @@ public:
     
     std::string Print();
     
-    Cons* MaterializeAsCons( VALUE car, VALUE cdr );
+    Cons* MaterializeAsCons( VALUE first, VALUE rest );
+
+    void BeginWriteArray() {
+        Integer = CurrentIsolate->NextOnHeap;
+        *((int*)CurrentIsolate->NextOnHeap) = 0;
+        CurrentIsolate->NextOnHeap += sizeof(int);
+    }
     
-    //Cons* GetCons() {
-    //    return (Cons*)Integer;
-    //}
+    void ArrayWrite( VALUE v ) {
+        (*((VALUE*)CurrentIsolate->NextOnHeap)) = v;
+        CurrentIsolate->NextOnHeap += sizeof(VALUE);
+        (*((int*)Integer))++;
+    }
+    
+    LIST SetAt( int i, VALUE v );    
+    VALUE GetAt( int i );
     
     List* GetList() {
         return (List*)Integer;
@@ -62,18 +74,21 @@ public:
 
 class List : public Object {
 public:
-    virtual VALUE GetCar() = 0;
-    virtual VALUE GetCdr() = 0;
+    virtual VALUE GetFirst() = 0;
+    virtual VALUE GetRest() = 0;
+    
     virtual LIST Append( VALUE v ) = 0;
-//    virtual VALUE Prepend( VALUE v );
-    /*    virtual VALUE GetAt( int i ) = 0;
-     virtual VALUE SetAt( int i, VALUE v ) = 0;
-     virtual VALUE SetCar(VALUE v) = 0;
-     virtual VALUE SetCdr(VALUE v) = 0;
-     virtual int Count() = 0;
+    virtual LIST Prepend( VALUE v ) = 0;
+    
+    virtual VALUE GetAt( int i ) = 0;
+    virtual LIST SetAt( int i, VALUE v ) = 0;
+    
+    virtual int Count() = 0;
+    /*
+     virtual VALUE SetFirst(VALUE v) = 0;
+     virtual VALUE SetRest(VALUE v) = 0;
      virtual VALUE RemoveAt( int i );
      virtual VALUE InsertAt( int i, VALUE v );
-     virtual Iterator GetIterator() = 0;
      virtual VALUE Concatenate( VALUE v );
      virtual VALUE Reverse();
      virtual VALUE Replace( VALUE v1, VALUE v2 );

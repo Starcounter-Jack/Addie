@@ -18,37 +18,55 @@
 
 class Cons : public List {
 public:
-    VALUE Car;
-    VALUE Cdr;
+    VALUE First;
+    VALUE Rest;
 public:
-    VALUE GetCar() {
-        return Car;
+    VALUE GetFirst() {
+        return First;
     }
     
-    VALUE GetCdr() {
-        return Cdr;
+    VALUE GetRest() {
+        return Rest;
     };
     
-    Cons( VALUE _car, VALUE _cdr ) {
-        Car = _car;
-        Cdr = _cdr;
+    
+    Cons( VALUE _first, VALUE _rest ) {
+        First = _first;
+        Rest = _rest;
     }
     
+    int Count() {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    LIST Prepend( VALUE elem ) {
+        throw std::runtime_error("Not implemented yet");
+    }
     
     LIST Append( VALUE elem ) {
-        if (RefCount==0 && GetCdr() == NIL()) {
+        if (RefCount==0 && GetRest() == NIL()) {
             // We can optimize things as we can reuse this materalization.
             // Nobody is referencing it.
-//           if (GetCdr() != NIL()) {
+//           if (GetRest() != NIL()) {
 //               throw std::runtime_error("Can only append at the end of a list");
 //           }
            LIST c;
            auto x = c.MaterializeAsCons( elem, NIL() );
-           Cdr = c;
+           Rest = c;
            return LIST(x);
         }
         throw std::runtime_error("Not implemented yet");
     }
+    
+    VALUE GetAt( int i ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+    
+    
+    LIST SetAt( int i, VALUE v ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
 };
 
 #endif /* List_hpp */

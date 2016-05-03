@@ -43,23 +43,23 @@ std::string LIST::Print() {
         return res.str();
     }
     res << startParen;
-    VALUE next = self->GetCdr();
+    VALUE next = self->GetRest();
     if (Style == QString) {
-        res << (char)(self->GetCar().Integer);
+        res << (char)(self->GetFirst().Integer);
         while (next.IsCons()) {
             List* pnext = (List*)next.OtherBytes();
-            res << (char)(pnext->GetCar().Integer);
-            next = pnext->GetCdr();
+            res << (char)(pnext->GetFirst().Integer);
+            next = pnext->GetRest();
         }
     }
     else {
-       res << self->GetCar().Print();
-       if (self->GetCdr().IsCons()) {
+       res << self->GetFirst().Print();
+       if (self->GetRest().IsCons()) {
            while (next.IsCons()) {
                res << " ";
                List* pnext = (List*)next.OtherBytes();
-               res << pnext->GetCar().Print();
-               next = pnext->GetCdr();
+               res << pnext->GetFirst().Print();
+               next = pnext->GetRest();
            }
            if (!next.IsNil()) {
                res << " . ";
@@ -68,13 +68,24 @@ std::string LIST::Print() {
        }
        else {
            res << startParen;
-           res << self->GetCar().Print();
-           if (!self->GetCdr().IsNil()) {
+           res << self->GetFirst().Print();
+           if (!self->GetRest().IsNil()) {
                res << " . ";
-               res << self->GetCdr().Print();
+               res << self->GetRest().Print();
            }
        }
     }
     res << endParen;
     return res.str();
 }
+
+
+
+LIST LIST::SetAt( int i, VALUE v ) {
+    return ((List*)Integer)->SetAt(i,v);
+}
+
+VALUE LIST::GetAt( int i ) {
+    return ((List*)Integer)->GetAt(i);
+}
+

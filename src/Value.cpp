@@ -87,28 +87,38 @@ std::string NIL::Print() {
 }
 
 
+
 std::string VALUE::Print() {
     
-        switch (Type) {
-            case (PList) :
-                return ((LIST*)this)->Print();
-            case (PSymbol) :
-                return ((SYMBOL*)this)->Print();
-            case (PNil) :
-                return ((NIL*)this)->Print();
-            case (PNumber) :
-                return ((INTEGER*)this)->Print();
-            case (PStringOld) :
-                return ((STRINGOLD*)this)->Print();
-            default:
-                break;
-        }
+    switch (Type) {
+        case (PList) :
+            return ((LIST*)this)->Print();
+        case (PSymbol) :
+            return ((SYMBOL*)this)->Print();
+        case (PNil) :
+            return ((NIL*)this)->Print();
+        case (PNumber) :
+            return ((INTEGER*)this)->Print();
+        case (PStringOld) :
+            return ((STRINGOLD*)this)->Print();
+        default:
+            break;
+    }
     
-        std::ostringstream res;
+    std::ostringstream res;
     res << "I dont know how to print a heap=";
     res << " type=";
     res << Type;
     return res.str();
+}
+
+
+std::string VALUE::ToString() {
+    
+    if (Type == PList && Style == QString ) {
+        return "hello";
+    }
+    return Print();
 }
 
 std::string INTEGER::Print() {

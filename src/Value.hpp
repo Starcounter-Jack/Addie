@@ -129,6 +129,8 @@ public:
     bool IsCons() {
         return Type == PList;
     }
+    
+    std::string ToString();
 
     
     std::string Print();
