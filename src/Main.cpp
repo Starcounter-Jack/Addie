@@ -12,6 +12,17 @@
 #include <iostream>
 #include "Compiler.hpp"
 #include "Interpreter.hpp"
+#include "Array.hpp"
+
+void TestArrays() {
+    Array<VALUE>* arr = Array<VALUE>::__beginWrite();
+    arr->__write(INTEGER(123));
+    arr->__write(INTEGER(456));
+    arr->__endWrite();
+    assert( arr->Count() == 2 );
+    assert( arr->GetAt(0).Integer == 123 );
+    assert( arr->GetAt(1).Integer == 456 );
+}
 
 
 VALUE IllustrateParse( const char* str ) {
@@ -56,6 +67,8 @@ int main(int argc, const char * argv[]) {
           "((defn pow [n[n] (fn [x[x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
     v = TestParse("⏜\nlet ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
                   "(let [a 10 b 20] (print (+ a b)))");
+    
+    TestArrays();
    
     
     Compilation* code = Compiler::Compile( v );

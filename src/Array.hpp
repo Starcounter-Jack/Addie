@@ -40,13 +40,22 @@ struct ArrayHeader {
 template <class T>
 class Array : public List {
 public:
+    Array() {
+        Header.Type = Any;
+        Header.ElementSize = sizeof(T);
+        Header.Count = 0;
+    }
+    
     ArrayHeader Header;
     // Will be followed by: T Values[n];
     
     // Let's just cooperate with the memory allocator to make things REALLY fast.
-    static void __beginWrite() {
-        *((ArrayHeader*)CurrentIsolate->NextOnHeap) = ArrayHeader { Any, 8, 0 };
-        CurrentIsolate->NextOnHeap += sizeof(ArrayHeader);
+    static Array* __beginWrite() {
+        Array* arr = (Array*)CurrentIsolate->NextOnHeap;
+        new (arr) Array();
+//        *((ArrayHeader*)arr) = ArrayHeader { Any, 8, 0 };
+        CurrentIsolate->NextOnHeap += sizeof(Array);
+        return (arr);
     }
     
     // It is only legal to call __write following __beginWrite given that
@@ -54,12 +63,33 @@ public:
     void __write( T v ) {
         (*((T*)CurrentIsolate->NextOnHeap)) = v;
         CurrentIsolate->NextOnHeap += sizeof(T);
+        Header.Count++;
+    }
+    
+    void __endWrite() {
+        CurrentIsolate->AlignNextHeap();
     }
     
     // The actual elements are stored immediately after the header
     VALUE* __values() {
         return (VALUE*)(((uint8_t*)this) + sizeof(Array));
     }
+    
+    // Override of the List interface
+    VALUE First() {
+        throw std::runtime_error("Not implemented yet");
+    }
+    
+    // Override of the List interface
+    VALUE Rest() {
+        throw std::runtime_error("Not implemented yet");
+    }
+    
+    // Override of the List interface
+    int Count() {
+        return Header.Count;
+    }
+
     
     // Override of the List interface
     VALUE GetAt( int i ) {
@@ -77,10 +107,10 @@ public:
         
 #ifdef ONLY_USE_RAW_ARRAYS
         // Make a copy of the list
-        size_t size = sizeof(ArrayHeader) + Header.Count * sizeof(T);
+        size_t size = sizeof(Array) + Header.Count * sizeof(T);
         Array* newList = (Array*)CurrentIsolate->NextOnHeap;
         memcpy( newList, this, size );
-        CurrentIsolate->NextOnHeap += size;
+        CurrentIsolate->ReportHeapWrite(size);
         return newList;
 #else
         // Upgrade to a bitmapped vector trie as it is faster for
@@ -93,17 +123,79 @@ public:
     List* Append( VALUE v ) {
 #ifdef ONLY_USE_RAW_ARRAYS
         // Make a copy of the list
-        size_t size = sizeof(ArrayHeader) + Header.Count * sizeof(T);
+        size_t size = sizeof(Array) + Header.Count * sizeof(T);
         Array* newList = (Array*)CurrentIsolate->NextOnHeap;
         memcpy( newList, this, size );
-        __values()[Header.Count-1] = v;
-        CurrentIsolate->NextOnHeap += size + sizeof(T);
+        __values()[newList->Header.Count] = v;
+        newList->Header.Count++;
+        CurrentIsolate->ReportHeapWrite(size + sizeof(T));
+
         return newList;
 #else
         // Upgrade to a bitmapped vector trie as it is faster for
         // deriving new lists.
         throw std::runtime_error("Not implemented yet");
 #endif
+    }
+    
+    
+    // Override of the List interface
+    List* Prepend( VALUE v ) {
+#ifdef ONLY_USE_RAW_ARRAYS
+        // Make a copy of the list
+        size_t elemsize = Header.Count * sizeof(T);
+        byte* newList = (byte*)CurrentIsolate->NextOnHeap;
+        memcpy( newList, this, sizeof(Array) );
+        memcpy( newList + sizeof(Array) + sizeof(T), this, elemsize );
+        __values()[0] = v;
+        CurrentIsolate->ReportHeapWrite(sizeof(Array) + elemsize + sizeof(T));
+        ((Array*)newList)->Header.Count++;
+        return (Array*)newList;
+#else
+        // Upgrade to a bitmapped vector trie as it is faster for
+        // deriving new lists.
+        throw std::runtime_error("Not implemented yet");
+#endif
+    }
+
+    List* RemoveAt( int i ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+    
+    List* InsertAt( int i, VALUE v ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Concatenate( VALUE v ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Reverse() {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Replace( VALUE v1, VALUE v2 ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Sort( VALUE fun ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Map( VALUE fun ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* First( int i ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Last( int i ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    List* Skip( int i ) {
+        throw std::runtime_error("Not implemented yet");
     }
 
 };

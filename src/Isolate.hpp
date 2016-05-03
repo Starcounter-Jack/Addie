@@ -131,13 +131,21 @@ public:
         }
     }
     
+    inline void AlignNextHeap() {
+        NextOnHeap = (NextOnHeap + 0b01111) & ~0b01111; // Round up for alignment
+    }
+    
+    inline void AlignNextConstant() {
+        NextOnConstant = (NextOnConstant + 0b01111) & ~0b01111; // Round up for alignment
+    }
+    
     
     void* MallocConstant( size_t size ) {
         void* newAddress = (void*)NextOnConstant;
         BytesAllocated += size;
         NumberOfAllocations++;
         NextOnConstant += size;
-        NextOnConstant = (NextOnConstant + 0b01111) & ~0b01111; // Round up for alignment
+        AlignNextConstant();
         CheckAddress(newAddress);
         return newAddress;
     }
@@ -164,13 +172,19 @@ public:
         return newAddress;
     }
     
+    inline void ReportHeapWrite( size_t size ) {
+        NextOnHeap += size;
+        AlignNextHeap();
+    }
+    
     
     void* MallocHeap( size_t size ) {
         void* newAddress = (void*)NextOnHeap;
         BytesAllocated += size;
         NumberOfAllocations++;
         NextOnHeap += size;
-        NextOnHeap = (NextOnHeap + 0b01111) & ~0b01111; // Round up for alignment
+//        NextOnHeap = (NextOnHeap + 0b01111) & ~0b01111; // Round up for alignment
+        AlignNextHeap();
         CheckAddress(newAddress);
         return newAddress;
     }

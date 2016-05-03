@@ -24,7 +24,7 @@
 
 typedef uint8_t Op;
 
-
+// Represents a byte code instruction. Addie bytecodes are dispatched in 32 bit blocks (instruction words). You can read more about it [here](https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code)
 class Instruction {
 public:
     union {
@@ -153,7 +153,7 @@ struct Frame
 };
 
 
-// Continuations are used by value as it is only 16 bytes in size.
+// Continuations are used by value as it is only 16 bytes in size (on 64 bits architectures).
 class Continuation {
 public:
     Instruction* PC;                    // Program Counter (aka Instruction Pointer).
