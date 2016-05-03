@@ -20,20 +20,20 @@ class LIST : public VALUE {
 public:
     LIST() {
         Type = PList;
-        Flag = true; // See VALUE::IsClassicalParenthesis
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };
     
     LIST( VALUE _car, VALUE _cdr) {
         Type = PList;
-        Flag = true; // See VALUE::IsClassicalParenthesis
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
         __allocateCons( _car, _cdr );
     }
     
     
     LIST( List* cons ) {
         Integer = (uint64_t)cons;
-        Flag = true; // See VALUE::IsClassicalParenthesis
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
     }
     
     LIST Append( VALUE elem );

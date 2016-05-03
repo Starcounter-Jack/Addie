@@ -32,8 +32,8 @@ int main(int argc, const char * argv[]) {
     Isolate isolate;
     CurrentIsolate = &isolate;
     
-//    std::cout << "\nSize of value:" << sizeof(VALUE);
-//    std::cout << "\nSize of instruction:" << sizeof(Instruction) << "\n\n";
+    std::cout << "\nSize of value:" << sizeof(VALUE);
+    std::cout << "\nSize of instruction:" << sizeof(Instruction) << "\n\n";
     
 //    IllustrateParse( "[]" );
     IllustrateParse( "﹇﹈" );
@@ -49,7 +49,7 @@ int main(int argc, const char * argv[]) {
     
     
     Compilation* code = Compiler::Compile( v );
-    STRING str = Compiler::Disassemble(code);
+    STRINGOLD str = Compiler::Disassemble(code);
     
     
     std::cout << str.ToString();

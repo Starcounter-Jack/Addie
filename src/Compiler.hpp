@@ -63,7 +63,7 @@ public:
         registers = r = (VALUE*)p;
 
         
-        if (!form.IsClassicalParenthesis()) {
+        if (form.Style != QParenthesis ) {
             *((VALUE*)r++) = form;             // R0 retval
             code = c = (Instruction*)r;
             *(c++) = Instruction(END);
@@ -142,7 +142,7 @@ public:
         return header;
     }
     
-    static STRING Disassemble( Compilation* code ) {
+    static STRINGOLD Disassemble( Compilation* code ) {
         
         //Compilation* header = (Compilation*)code;
         VALUE* temp;
@@ -236,7 +236,7 @@ public:
         res << "============================================================\n";
 
 
-        return STRING(res.str());
+        return STRINGOLD(res.str());
     }
 };
 

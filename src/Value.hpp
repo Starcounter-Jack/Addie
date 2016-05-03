@@ -31,23 +31,28 @@ class Isolate;
 class Continuation;
 
 
+
+enum ValueStyle {
+    QParenthesis = 0b00,
+    QNumber = 0b00,
+    QBrackets = 0b01,
+    QBool = 0b01,
+    QCurly = 0b10,
+    QString = 0b11,
+};
+
 /** 
  * Most significat bit is means the object is allocated on the heap
  * Second most significant bit means this is a list
  */
 enum ValueType : unsigned int {
-    PNil        =  0b0000,    // Lisp nil
-    PBool       =  0b0001,    // 1 bit integer
-    PSymbol     =  0b0010,    // Symbol
-    PInteger    =  0b0011,    // 56 bit signed integer
-    PFraction   =  0b0100,    // Floating point (any base)
-    TLambda     =  0b1000,    // Compiled code
-    PList       =  0b1001,
-//    TVector     =  0b1001,    // Bitmapped Vector Trie
-    TString     =  0b1010,    // Byte array
-//    TCons       =  0b1011,    // Linked list
-//    TMap        =  0b1100,    // Hashtable
-//    TArray      =  0b1101     // Compact VALUE array (default)
+    PNil              =  0b000,    // Lisp nil
+    PSymbol           =  0b010,    // Symbol
+    PNumber           =  0b011,    // Integer/Ratio
+    PList             =  0b100,    // List/vector/array/string/map
+    PLambda           =  0b101,    // Function/procedure/code
+    PContinuation     =  0b110,    // Execution thread
+    PStringOld        =  0b111     // TODO! REMOVE!
 };
 
 /*
@@ -81,8 +86,8 @@ public:
     union {
         uint64_t Whole;
         struct {
-            ValueType Type : 4;
-            bool Flag : 1;
+            ValueType Type : 3;
+            ValueStyle Style : 2;
             uint64_t Integer: 59;
         };
     };
@@ -91,14 +96,14 @@ public:
     }
     
     bool IsHeapObject() {
-        return Type & 0b1000;
+        return Type & 0b100;
     }
     
     // In Addie, any list type can have any implementation.
     // But lists expressed with parenthesis does not evaluate to themselves as
     // they represent a function evaluation.
     bool IsClassicalParenthesis() {
-        return IsHeapObject() && Flag;
+        return IsHeapObject() && Style == QParenthesis;
     }
 
     uint8_t* OtherBytes();
@@ -131,15 +136,15 @@ public:
 
 
 
-class STRING : public VALUE {
+class STRINGOLD : public VALUE {
 public:
-    STRING(std::string str ) {
-        Type = TString;
+    STRINGOLD(std::string str ) {
+        Style = QString;
         AllocateString( str.c_str(), str.length() );
     }
     
-    STRING(char* c, size_t size ) {
-        Type = TString;
+    STRINGOLD(char* c, size_t size ) {
+        Style = QString;
         AllocateString( c, size );
     }
     
@@ -189,12 +194,12 @@ public:
 class INTEGER : public VALUE {
 public:
     INTEGER() {
-        Type = PInteger;
+        Type = PNumber;
         Integer = 0;
     }
     
     INTEGER( uint64_t i ) {
-        Type = PInteger;
+        Type = PNumber;
         Integer = i;
 
     }

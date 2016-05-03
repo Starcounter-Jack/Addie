@@ -11,7 +11,7 @@
 //#include "Isolate.hpp"
 #include <sstream>
 
-std::string STRING::ToString() {
+std::string STRINGOLD::ToString() {
     if (Integer == 0) {
         return "\"\"";
     }
@@ -25,12 +25,12 @@ uint8_t* VALUE::OtherBytes() {
     return (uint8_t*)(Integer);
 }
 
-uint8_t* STRING::StringBytes() {
+uint8_t* STRINGOLD::StringBytes() {
     return (uint8_t*)(Integer+sizeof(String));
 }
 
 
-std::string STRING::Print() {
+std::string STRINGOLD::Print() {
         std::ostringstream res;
     res << "\"";
     res << ToString();
@@ -38,7 +38,7 @@ std::string STRING::Print() {
     return res.str();
 }
 
-void STRING::AllocateString( const char* original, size_t size ) {
+void STRINGOLD::AllocateString( const char* original, size_t size ) {
     
     size_t totalSize = size + sizeof(String) + 1;
     String* obj = (String*)CurrentIsolate->MallocHeap(totalSize+1); // We add a zero termination so we have a
@@ -55,7 +55,7 @@ void STRING::AllocateString( const char* original, size_t size ) {
 
 }
 
-uint32_t STRING::Length() {
+uint32_t STRINGOLD::Length() {
     return ((String*)StringBytes())->Length;
 }
 
@@ -88,17 +88,18 @@ std::string NIL::Print() {
 
 
 std::string VALUE::Print() {
+    
         switch (Type) {
-            case (TString) :
-                return ((STRING*)this)->Print();
             case (PList) :
                 return ((LIST*)this)->Print();
             case (PSymbol) :
                 return ((SYMBOL*)this)->Print();
             case (PNil) :
                 return ((NIL*)this)->Print();
-            case (PInteger) :
+            case (PNumber) :
                 return ((INTEGER*)this)->Print();
+            case (PStringOld) :
+                return ((STRINGOLD*)this)->Print();
             default:
                 break;
         }

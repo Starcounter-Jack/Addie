@@ -20,41 +20,61 @@ std::string LIST::Print() {
     List* self = GetList();
     char startParen;
     char endParen;
-    if (IsClassicalParenthesis()) {
-        startParen = '(';
-        endParen = ')';
-    } else {
-        startParen = '[';
-        endParen = ']';
+    switch (Style) {
+        case (QParenthesis):
+            startParen = '(';
+            endParen = ')';
+            break;
+        case (QBrackets):
+            startParen = '[';
+            endParen = ']';
+            break;
+        case (QCurly):
+            startParen = '{';
+            endParen = '}';
+            break;
+        case (QString):
+            startParen = '"';
+            endParen = '"';
+            break;
     }
     if (Integer == 0) {
         res << startParen << endParen;
         return res.str();
     }
-    if (self->GetCdr().IsCons()) {
-        res << startParen;
-        res << self->GetCar().Print();
-        VALUE next = self->GetCdr();
+    res << startParen;
+    VALUE next = self->GetCdr();
+    if (Style == QString) {
+        res << (char)(self->GetCar().Integer);
         while (next.IsCons()) {
-            res << " ";
             List* pnext = (List*)next.OtherBytes();
-            res << pnext->GetCar().Print();
+            res << (char)(pnext->GetCar().Integer);
             next = pnext->GetCdr();
         }
-        if (!next.IsNil()) {
-            res << " . ";
-            res << next.Print();
-        }
-        res << endParen;
     }
     else {
-        res << startParen;
-        res << self->GetCar().Print();
-        if (!self->GetCdr().IsNil()) {
-            res << " . ";
-            res << self->GetCdr().Print();
-        }
-        res << endParen;
+       res << self->GetCar().Print();
+       if (self->GetCdr().IsCons()) {
+           while (next.IsCons()) {
+               res << " ";
+               List* pnext = (List*)next.OtherBytes();
+               res << pnext->GetCar().Print();
+               next = pnext->GetCdr();
+           }
+           if (!next.IsNil()) {
+               res << " . ";
+               res << next.Print();
+           }
+       }
+       else {
+           res << startParen;
+           res << self->GetCar().Print();
+           if (!self->GetCdr().IsNil()) {
+               res << " . ";
+               res << self->GetCdr().Print();
+           }
+       }
     }
+    res << endParen;
     return res.str();
 }

@@ -24,13 +24,13 @@ class ARRAY : public VALUE {
 public:
     ARRAY() {
         Type = PList;
-        Flag = true; // See VALUE::IsClassicalParenthesis
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };
     
     ARRAY( Array* array ) {
         Integer = (uint64_t)array;
-        Flag = true; // See VALUE::IsClassicalParenthesis
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
     }
     
     bool IsEmptyList() {

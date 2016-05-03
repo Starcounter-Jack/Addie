@@ -244,7 +244,7 @@ class Parser {
     
     static VALUE ParseVector( StreamReader* r) {
         LIST list;
-        list.Flag = false;
+        list.Style = QParenthesis;
         LIST previous;
         ConsumeVerticalStartBracket(r, true);
 //        r->Read(); // Skip first parenthesis
@@ -264,7 +264,7 @@ class Parser {
             VALUE elem = ParseForm( r );
             if (previous.IsEmptyList()) {
                 list = LIST( elem, NIL());
-                list.Flag = false;
+                list.Style = QParenthesis;
                 previous = list;
             }
             else {
@@ -316,8 +316,33 @@ class Parser {
       //  }
         return NIL();
     }
+    
+    
+    static VALUE ParseString( StreamReader* r) {
+        LIST list;
+        LIST previous;
+        //       r->Read(); // Skip first parenthesis
+        r->Read(); // Skip the intitial "
+        while (true) {
+            
+            unsigned char c = r->Read();
+            if (c == '"' ) {
+                list.Style = QString;
+                return list;
+            }
+            
+            VALUE elem = INTEGER(c);
+            if (previous.IsEmptyList()) {
+                list = LIST( elem, NIL());
+                previous = list;
+            }
+            else {
+                previous = previous.Append( elem );
+            }
+        }
+    }
 
-   static VALUE ParseString( StreamReader* r) {
+   static VALUE ParseStringOld( StreamReader* r) {
         
         std::ostringstream res;
        r->Read(); // Skip first "
@@ -328,7 +353,7 @@ class Parser {
                 switch (v) {
                     case '"':
                         // We've reached the end of the string literal
-                        return STRING(res.str());
+                        return STRINGOLD(res.str());
                     case '\\':
                         throw std::invalid_argument( "escape characters not implemented yet" );
                     default:
