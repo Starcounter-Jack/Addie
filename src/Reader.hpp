@@ -243,9 +243,9 @@ class Parser {
     
     
     static VALUE ParseVector( StreamReader* r) {
-        CONS list;
+        LIST list;
         list.Flag = false;
-        CONS previous;
+        LIST previous;
         ConsumeVerticalStartBracket(r, true);
 //        r->Read(); // Skip first parenthesis
         while (true) {
@@ -263,12 +263,12 @@ class Parser {
             
             VALUE elem = ParseForm( r );
             if (previous.IsEmptyList()) {
-                list = CONS( elem, NIL());
+                list = LIST( elem, NIL());
                 list.Flag = false;
                 previous = list;
             }
             else {
-                previous = previous.SnocBANG( elem );
+                previous = previous.Append( elem );
             }
         }
     }
@@ -405,8 +405,8 @@ class Parser {
 
 
    static VALUE ParseList( StreamReader* r) {
-       CONS list;
-       CONS previous;
+       LIST list;
+       LIST previous;
 //       r->Read(); // Skip first parenthesis
        ConsumeVerticalStartParenthesis(r, true);
         while (true) {
@@ -424,11 +424,11 @@ class Parser {
             
             VALUE elem = ParseForm( r );
             if (previous.IsEmptyList()) {
-                list = CONS( elem, NIL());
+                list = LIST( elem, NIL());
                 previous = list;
             }
             else {
-                previous = previous.SnocBANG( elem );
+                previous = previous.Append( elem );
             }
         }
    }

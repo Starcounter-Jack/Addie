@@ -12,6 +12,7 @@
 
 #include "Array.hpp"
 #include "Value.hpp"
+#include "Cons.hpp"
 
 
 #include "Isolate.hpp"
@@ -22,7 +23,7 @@ class Array;
 class ARRAY : public VALUE {
 public:
     ARRAY() {
-        Type = TArray;
+        Type = PList;
         Flag = true; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };

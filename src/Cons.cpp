@@ -16,7 +16,7 @@
 
 
 
-std::string CONS::Print() {
+std::string LIST::Print() {
     std::ostringstream res;
     Cons* self = GetCons();
     char startParen;
@@ -32,15 +32,15 @@ std::string CONS::Print() {
         res << startParen << endParen;
         return res.str();
     }
-    if (self->Cdr.IsCons()) {
+    if (self->GetCdr().IsCons()) {
         res << startParen;
-        res << self->Car.Print();
-        VALUE next = self->Cdr;
+        res << self->GetCar().Print();
+        VALUE next = self->GetCdr();
         while (next.IsCons()) {
             res << " ";
             Cons* pnext = (Cons*)next.OtherBytes();
-            res << pnext->Car.Print();
-            next = pnext->Cdr;
+            res << pnext->GetCar().Print();
+            next = pnext->GetCdr();
         }
         if (!next.IsNil()) {
             res << " . ";
@@ -50,31 +50,22 @@ std::string CONS::Print() {
     }
     else {
         res << startParen;
-        res << self->Car.Print();
-        if (!self->Cdr.IsNil()) {
+        res << self->GetCar().Print();
+        if (!self->GetCdr().IsNil()) {
            res << " . ";
-           res << self->Cdr.Print();
+           res << self->GetCdr().Print();
         }
         res << endParen;
     }
     return res.str();
 }
 
-// Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because
-// this should only be done on mutable lists.
-CONS CONS::SnocBANG( VALUE elem ) {
-    Cons* cons = GetCons();
-    if (cons->Cdr != NIL()) {
-        throw std::runtime_error("Can only append at the end of a list");
-    }
-    CONS c;
-    auto x = c.__allocateCons( elem, NIL() );
-    GetCons()->Cdr = c;
-    return CONS(x);
+LIST LIST::Append( VALUE elem ) {
+    return GetCons()->Append( elem );
 }
 
 
-Cons* CONS::__allocateCons( VALUE car, VALUE cdr ) {
+Cons* LIST::__allocateCons( VALUE car, VALUE cdr ) {
     Cons* c = MALLOC_HEAP(Cons); // * c = (Cons*)CurrentIsolate->Memory.MallocHeap(sizeof(Cons));
     new (c) Cons(car,cdr);  // Calling constructor
     Integer = (uint64_t)c;

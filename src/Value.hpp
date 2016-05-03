@@ -42,11 +42,12 @@ enum ValueType : unsigned int {
     PInteger    =  0b0011,    // 56 bit signed integer
     PFraction   =  0b0100,    // Floating point (any base)
     TLambda     =  0b1000,    // Compiled code
-    TVector     =  0b1001,    // Bitmapped Vector Trie
+    PList       =  0b1001,
+//    TVector     =  0b1001,    // Bitmapped Vector Trie
     TString     =  0b1010,    // Byte array
-    TCons       =  0b1011,    // Linked list
-    TMap        =  0b1100,    // Hashtable
-    TArray      =  0b1101     // Compact VALUE array (default)
+//    TCons       =  0b1011,    // Linked list
+//    TMap        =  0b1100,    // Hashtable
+//    TArray      =  0b1101     // Compact VALUE array (default)
 };
 
 /*
@@ -121,7 +122,7 @@ public:
     }
     
     bool IsCons() {
-        return Type == TCons;
+        return Type == PList;
     }
 
     
@@ -217,12 +218,13 @@ class Type;
 // The root heap object
 class Object {
 public:
-    int RefCount = 1;
+    int RefCount = 0;
 //    SYMBOL SetSpecifiers[32];
 };
 
-class List : public Object {
-    
+class Iterator {
+    virtual bool hasNext() = 0;
+    virtual VALUE next() = 0;
 };
 
 
@@ -242,6 +244,11 @@ public:
 //#define PUSH_INTEGER(x) INTEGER(x)
 //#define CALL(x,y) SYMBOL(x,y)
 //#define CALL(x) SYMBOL(x)
+
+class Cons;
+
+
+
 
 
 

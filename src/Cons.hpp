@@ -17,31 +17,34 @@
 #include "Isolate.hpp"
 
 
+
+
+
 class Cons;
 
-class CONS : public VALUE {
+
+
+class LIST : public VALUE {
 public:
-    CONS() {
-        Type = TCons;
+    LIST() {
+        Type = PList;
         Flag = true; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };
 
-    CONS( VALUE _car, VALUE _cdr) {
-        Type = TCons;
+    LIST( VALUE _car, VALUE _cdr) {
+        Type = PList;
         Flag = true; // See VALUE::IsClassicalParenthesis
         __allocateCons( _car, _cdr );
     }
     
     
-    CONS( Cons* cons ) {
+    LIST( Cons* cons ) {
         Integer = (uint64_t)cons;
         Flag = true; // See VALUE::IsClassicalParenthesis
     }
     
-    // Snoc is the reverse of Cons. Stolen from Emacs terminology. Bang! is because
-    // this should only be done on mutable lists.
-    CONS SnocBANG( VALUE elem );
+    LIST Append( VALUE elem );
 
     
     bool IsEmptyList() {
@@ -50,23 +53,47 @@ public:
     
     std::string Print();
     
-    Cons* GetCons() {
-        return (class Cons*)Integer;
-    }
-    
-private:
     Cons* __allocateCons( VALUE car, VALUE cdr );
     
+    Cons* GetCons() {
+        return (Cons*)Integer;
+    }
     
     
 };
 
 
+class List : public Object {
+    virtual VALUE GetCar() = 0;
+    virtual VALUE GetCdr() = 0;
+    virtual LIST Append( VALUE v ) = 0;
+    /*    virtual VALUE GetAt( int i ) = 0;
+     virtual VALUE SetAt( int i, VALUE v ) = 0;
+     virtual VALUE SetCar(VALUE v) = 0;
+     virtual VALUE SetCdr(VALUE v) = 0;
+     virtual int Count() = 0;
+     virtual VALUE Prepend( VALUE v );
+     virtual VALUE RemoveAt( int i );
+     virtual VALUE InsertAt( int i, VALUE v );
+     virtual Iterator GetIterator() = 0;
+     */
+};
+
+
+
 class Cons : public List {
 public:
-    VALUE Car;   // Aka CAR
-    VALUE Cdr;    // Aka CDR
-
+    VALUE Car;
+    VALUE Cdr;
+public:
+    VALUE GetCar() {
+        return Car;
+    }
+    
+    VALUE GetCdr() {
+        return Cdr;
+    };
+    
     Cons( VALUE _car, VALUE _cdr ) {
 //        Type = CurrentIsolate->ConsType;
        // IsClassicalParenthesis = isParenthesis;
@@ -75,9 +102,18 @@ public:
     }
     
     
-
+    LIST Append( VALUE elem ) {
+        if (RefCount==0) {
+           if (GetCdr() != NIL()) {
+               throw std::runtime_error("Can only append at the end of a list");
+           }
+           LIST c;
+           auto x = c.__allocateCons( elem, NIL() );
+           Cdr = c;
+           return LIST(x);
+        }
+        throw std::runtime_error("Not implemented yet");
+    }
 };
-
-
 
 #endif /* List_hpp */

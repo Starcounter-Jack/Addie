@@ -79,7 +79,7 @@ public:
 
 class OpLoadConst : public Instruction {
 public:
-    OpLoadConst( byte regno, int16_t value ) : Instruction( LOAD_CONST,value,regno) {
+    OpLoadConst( byte regno, int16_t value ) : Instruction( LOAD_LISTT,value,regno) {
     }
 };
 

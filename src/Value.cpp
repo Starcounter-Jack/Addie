@@ -91,8 +91,8 @@ std::string VALUE::Print() {
         switch (Type) {
             case (TString) :
                 return ((STRING*)this)->Print();
-            case (TCons) :
-                return ((CONS*)this)->Print();
+            case (PList) :
+                return ((LIST*)this)->Print();
             case (PSymbol) :
                 return ((SYMBOL*)this)->Print();
             case (PNil) :

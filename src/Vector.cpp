@@ -40,7 +40,7 @@
 #define ROTL32(x,y)    _rotl(x,y)
 #define ROTL64(x,y)    _rotl64(x,y)
 
-#define BIG_CONSTANT(x) (x)
+#define BIG_LISTTANT(x) (x)
 
 // Other compilers
 
@@ -61,7 +61,7 @@ inline uint64_t rotl64( uint64_t x, int8_t r )
 //#define ROTL32(x,y)    rotl32(x,y)
 //#define ROTL64(x,y)    rotl64(x,y)
 
-#define BIG_CONSTANT(x) (x##LLU)
+#define BIG_LISTTANT(x) (x##LLU)
 
 #endif // !defined(_MSC_VER)
 
@@ -94,9 +94,9 @@ FORCE_INLINE uint32_t fmix(uint32_t h) {
 
 FORCE_INLINE uint64_t fmix(uint64_t k) {
     k ^= k >> 33;
-    k *= BIG_CONSTANT(0xff51afd7ed558ccd);
+    k *= BIG_LISTTANT(0xff51afd7ed558ccd);
     k ^= k >> 33;
-    k *= BIG_CONSTANT(0xc4ceb9fe1a85ec53);
+    k *= BIG_LISTTANT(0xc4ceb9fe1a85ec53);
     k ^= k >> 33;
     
     return k;

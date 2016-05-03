@@ -21,7 +21,7 @@ enum Symbols {
 //    SET_REGISTER_WINDOW,
     EXIT_WITH_CONTINUATION,
     RETURN,
-    LOAD_CONST,
+    LOAD_LISTT,
     MOVE,
     CALL_0,
     CALL_1,
