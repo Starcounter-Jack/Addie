@@ -44,7 +44,7 @@ public:
     }
     
     LIST Append( VALUE elem ) {
-        if (RefCount==0 && Rest() == NIL()) {
+        if (RefCount==0 && Rest().IsNil()) {
             // We can optimize things as we can reuse this materalization.
             // Nobody is referencing it.
 //           if (GetRest() != NIL()) {

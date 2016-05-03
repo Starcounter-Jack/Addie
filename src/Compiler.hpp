@@ -46,7 +46,7 @@ class Compiler {
 public:
     
     static Compilation* Compile( VALUE form ) {
-        int type = form.Type;
+//        int type = form.Type;
         byte* start = (byte*)CurrentIsolate->NextOnConstant;
         byte* p = (byte*)start;
         
@@ -54,7 +54,7 @@ public:
         Instruction* c;
         VALUE* registers;
         VALUE* r;
-        int uninitatedRegisters;
+//        int uninitatedRegisters;
         
         Compilation* header = (Compilation*)p;
         new (header) Compilation(); // No constructor, but just for correctness
@@ -98,7 +98,7 @@ public:
         
         std::cout << "\nCompiling (print (+ 10 20))\n";
         
-        if (form.IsCons()) {
+        if (form.IsList()) {
             *((VALUE*)r++) = NIL();             // R0 retval
             *((VALUE*)r++) = SYMBOL(SymPlus);   // R1
             *((VALUE*)r++) = SYMBOL(SymPrint);  // R2
@@ -145,9 +145,7 @@ public:
     static STRINGOLD Disassemble( Compilation* code ) {
         
         //Compilation* header = (Compilation*)code;
-        VALUE* temp;
         std::ostringstream res;
-        int symbol;
         const char* str;
         VALUE* R = code->StartOfConstants();
 
@@ -164,7 +162,6 @@ public:
             
             res << ".";
             str = CurrentIsolate->GetStringFromSymbolId((*p).OP).c_str();
-            int i;
             
             switch (p->OP) {
                 case (END):

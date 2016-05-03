@@ -46,7 +46,7 @@ std::string LIST::Print() {
     VALUE next = self->Rest();
     if (Style == QString) {
         res << (char)(self->First().Integer);
-        while (next.IsCons()) {
+        while (next.IsList()) {
             List* pnext = (List*)next.OtherBytes();
             res << (char)(pnext->First().Integer);
             next = pnext->Rest();
@@ -54,8 +54,8 @@ std::string LIST::Print() {
     }
     else {
        res << self->First().Print();
-       if (self->Rest().IsCons()) {
-           while (next.IsCons()) {
+       if (self->Rest().IsList()) {
+           while (next.IsList()) {
                res << " ";
                List* pnext = (List*)next.OtherBytes();
                res << pnext->First().Print();

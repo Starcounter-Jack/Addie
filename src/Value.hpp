@@ -78,17 +78,22 @@ class VALUE32 {
 };
  */
 
-// Let's make use of the fact that Starcounter only operates on modern operating systems.
-// Let's pack real pointers together with primitive value representations that all fit
-// in a single 64 register.
+// Addie fits numbers, nil, booleans and pointers to larger objects in a fixed size
+// structure that fits in a single 64 bit register on the CPU.
 class VALUE {
 public:
     
     union {
         uint64_t Whole;
         struct {
+            // The materialized type
             ValueType Type : 3;
+            // The percieved type. I.e. a percieved type can be a map while the
+            // materialized type is a linked list. Another example is that the percieved
+            // type is a string whereas the materialized type is a bitmapped vector.
+            // Most list materialization can represent most percieved list type.
             ValueStyle Style : 2;
+            // The actual data forming the numbers or pointers are stored here.
             int64_t Integer: 59;
         };
     };
@@ -96,28 +101,23 @@ public:
     VALUE() : Whole(0) { // Everything is zero by default
     }
     
+    // Lists and Lambdas obviously do not fit in a value.
     bool IsHeapObject() {
         return Type & 0b100;
     }
     
-    // In Addie, any list type can have any implementation.
-    // But lists expressed with parenthesis does not evaluate to themselves as
-    // they represent a function evaluation.
-    bool IsClassicalParenthesis() {
-        return IsHeapObject() && Style == QParenthesis;
-    }
-
     uint8_t* OtherBytes();
     
-    bool operator==( const VALUE& rhs)
-    {
-        return Whole == rhs.Whole;
-    };
+//    bool operator==( const VALUE& rhs)
+//    {
+//        return Whole == rhs.Whole;
+//    };
     
-    bool operator!=(const VALUE& rhs)
-    {
-        return Whole != rhs.Whole;
-    };
+    // Values are the same if the bits are the same
+//    bool operator!=(const VALUE& rhs)
+//    {
+//        return Whole != rhs.Whole;
+//    };
     
     Object* GetObject() {
         return (Object*)Integer;
@@ -127,7 +127,7 @@ public:
         return Type == PNil;
     }
     
-    bool IsCons() {
+    bool IsList() {
         return Type == PList;
     }
     

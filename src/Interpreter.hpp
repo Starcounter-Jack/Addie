@@ -22,15 +22,15 @@ public:
     static Continuation Interpret( Continuation cont ) {
         
         Instruction* p = cont.PC;
-        Instruction* start = p;
+//        Instruction* start = p;
         VALUE* r = cont.frame->GetStartOfRegisters();
         
         std::cout << "Resuming execution at " << p << "\n";
         
-        int regCount = cont.frame->Comp->SizeOfRegisters/sizeof(VALUE);
+//        int regCount = cont.frame->Comp->SizeOfRegisters/sizeof(VALUE);
         
         Symbol sym;
-        uintptr_t address;
+//        uintptr_t address;
         
         while (true) {
             
