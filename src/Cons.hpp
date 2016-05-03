@@ -17,22 +17,22 @@
 
 
 class Cons : public List {
+private:
+    VALUE _first;
+    VALUE _rest;
 public:
-    VALUE First;
-    VALUE Rest;
-public:
-    VALUE GetFirst() {
-        return First;
+    VALUE First() {
+        return _first;
     }
     
-    VALUE GetRest() {
-        return Rest;
+    VALUE Rest() {
+        return _rest;
     };
     
     
-    Cons( VALUE _first, VALUE _rest ) {
-        First = _first;
-        Rest = _rest;
+    Cons( VALUE first, VALUE rest ) {
+        _first = first;
+        _rest = rest;
     }
     
     int Count() {
@@ -44,7 +44,7 @@ public:
     }
     
     LIST Append( VALUE elem ) {
-        if (RefCount==0 && GetRest() == NIL()) {
+        if (RefCount==0 && Rest() == NIL()) {
             // We can optimize things as we can reuse this materalization.
             // Nobody is referencing it.
 //           if (GetRest() != NIL()) {
@@ -52,7 +52,7 @@ public:
 //           }
            LIST c;
            auto x = c.MaterializeAsCons( elem, NIL() );
-           Rest = c;
+           _rest = c;
            return LIST(x);
         }
         throw std::runtime_error("Not implemented yet");

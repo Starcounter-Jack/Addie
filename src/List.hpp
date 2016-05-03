@@ -74,8 +74,8 @@ public:
 
 class List : public Object {
 public:
-    virtual VALUE GetFirst() = 0;
-    virtual VALUE GetRest() = 0;
+    virtual VALUE First() = 0;
+    virtual VALUE Rest() = 0;
     
     virtual LIST Append( VALUE v ) = 0;
     virtual LIST Prepend( VALUE v ) = 0;
@@ -85,8 +85,6 @@ public:
     
     virtual int Count() = 0;
     /*
-     virtual VALUE SetFirst(VALUE v) = 0;
-     virtual VALUE SetRest(VALUE v) = 0;
      virtual VALUE RemoveAt( int i );
      virtual VALUE InsertAt( int i, VALUE v );
      virtual VALUE Concatenate( VALUE v );

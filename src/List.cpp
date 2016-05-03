@@ -43,23 +43,23 @@ std::string LIST::Print() {
         return res.str();
     }
     res << startParen;
-    VALUE next = self->GetRest();
+    VALUE next = self->Rest();
     if (Style == QString) {
-        res << (char)(self->GetFirst().Integer);
+        res << (char)(self->First().Integer);
         while (next.IsCons()) {
             List* pnext = (List*)next.OtherBytes();
-            res << (char)(pnext->GetFirst().Integer);
-            next = pnext->GetRest();
+            res << (char)(pnext->First().Integer);
+            next = pnext->Rest();
         }
     }
     else {
-       res << self->GetFirst().Print();
-       if (self->GetRest().IsCons()) {
+       res << self->First().Print();
+       if (self->Rest().IsCons()) {
            while (next.IsCons()) {
                res << " ";
                List* pnext = (List*)next.OtherBytes();
-               res << pnext->GetFirst().Print();
-               next = pnext->GetRest();
+               res << pnext->First().Print();
+               next = pnext->Rest();
            }
            if (!next.IsNil()) {
                res << " . ";
@@ -68,10 +68,10 @@ std::string LIST::Print() {
        }
        else {
            res << startParen;
-           res << self->GetFirst().Print();
-           if (!self->GetRest().IsNil()) {
+           res << self->First().Print();
+           if (!self->Rest().IsNil()) {
                res << " . ";
-               res << self->GetRest().Print();
+               res << self->Rest().Print();
            }
        }
     }
