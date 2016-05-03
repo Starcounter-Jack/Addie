@@ -5,15 +5,15 @@
 //
 //  Persistent (immutable) vector (array).
 //
-//  Leaning heavily on Phil Bagwells original algorith (ideal hashes) and the implementation by
-//  Chae Seong Lim. See HashTrie.h for more details.
+//  Leaning heavily on Phil Bagwells original algorith (ideal hashes).
 //
-//  This persistent vector/hashmap is made popular by Clojure and Rich Hickey.
+//  I will look for a good implementation.
+//
+//  This use of persistent vector/hashmap is made popular by Clojure and Rich Hickey.
 //
 //  Created by Joachim Wester on 22/04/16.
 //
 //  Copyright © 2016 Starcounter AB.
-//
 //
 
 
@@ -22,13 +22,12 @@
 #define Vector_hpp
 
 #include <vector>
-#include "Value.hpp"
-#include "Isolate.hpp"
+#include "List.hpp"
 
 template <class T>
 
 // TODO! Replace which Bitmap Vector Trie
-class PVector : public Object {
+class PVector : public List {
     
 public:
     std::vector<T> Items;
@@ -38,7 +37,7 @@ public:
     }
     
     PVector<T>* SetAt( int t, VALUE v ) {
-        if (RefCount==0) {
+        if (RefCount==1) {
             // There is only one value observing this vector materialization,
             // this means that we do not have to keep the old version.
             // Let's turn the old version into the new version and forget about
@@ -63,40 +62,6 @@ public:
     }
 
 };
-
-
-#ifndef _PVEC_H
-#define _PVEC_H
-
-#include <stdint.h>
-#define BITS 5
-#define WIDTH (1 << BITS)
-#define MASK (WIDTH - 1)
-
-struct PVecNode_ {
-    struct PVecNode_ *children[WIDTH];
-    void *elements[WIDTH];
-};
-
-typedef struct PVecNode_ PVecNode;
-
-typedef struct{
-    PVecNode *head;
-    PVecNode *tail;
-    uint64_t tail_length;
-    uint64_t length;
-    uint64_t depth;
-} PersistentVector;
-
-PersistentVector *pvec_new(void);
-void pvec_free(PersistentVector *vec);
-PersistentVector *pvec_cons(PersistentVector *vec, void *data);
-PersistentVector *pvec_assoc(PersistentVector *vec, uint64_t key, void *data);
-void *pvec_nth(PersistentVector *vec, uint64_t key);
-PersistentVector *pvec_pop(PersistentVector *vec, uint64_t key);
-#endif
-
-
 
 
 

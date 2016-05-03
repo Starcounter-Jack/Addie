@@ -49,17 +49,6 @@ public:
     
     Cons* MaterializeAsCons( VALUE first, VALUE rest );
 
-    void BeginWriteArray() {
-        Integer = CurrentIsolate->NextOnHeap;
-        *((int*)CurrentIsolate->NextOnHeap) = 0;
-        CurrentIsolate->NextOnHeap += sizeof(int);
-    }
-    
-    void ArrayWrite( VALUE v ) {
-        (*((VALUE*)CurrentIsolate->NextOnHeap)) = v;
-        CurrentIsolate->NextOnHeap += sizeof(VALUE);
-        (*((int*)Integer))++;
-    }
     
     LIST SetAt( int i, VALUE v );    
     VALUE GetAt( int i );
