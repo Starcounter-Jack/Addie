@@ -1,10 +1,9 @@
 //
-//  Starcounter Lisp
-//
 //  Cons.hpp
+//  Addie
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB.
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
 #ifndef Cons_hpp
@@ -16,6 +15,9 @@
 #include "List.hpp"
 
 
+// This list materialization is based on the classical Lisp linked list.
+// The names first and rest are used instead of car and cdr as is also the
+// case in Clojure.
 class Cons : public List {
 private:
     VALUE _first;
@@ -29,7 +31,7 @@ public:
         return _rest;
     };
     
-    
+
     Cons( VALUE first, VALUE rest ) {
         _first = first;
         _rest = rest;

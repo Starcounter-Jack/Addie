@@ -1,12 +1,11 @@
 //
+//  Reader.cpp
 //  Starcounter Lisp
 //
-//  Parser.cpp
 //  Parses Clojure syntax given UTF-8 input.
-//  Needs unit tests badly.
 //
 //  Created by Joachim Wester on 21/04/16.
-//  Copyright © 2016 Starcounter AB.
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
 #include "Reader.hpp"

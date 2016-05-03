@@ -3,7 +3,7 @@
 //  Addie
 //
 //  Created by Joachim Wester on 03/05/16.
-//
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
 #include "List.hpp"
@@ -81,7 +81,7 @@ std::string LIST::Print() {
 
 
 
-LIST LIST::SetAt( int i, VALUE v ) {
+LIST LIST::ReplaceAt( int i, VALUE v ) {
     return ((List*)Integer)->ReplaceAt(i,v);
 }
 

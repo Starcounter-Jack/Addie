@@ -1,14 +1,13 @@
 //
 //  Main.cpp
-//  Starcounter Lisp
+//  Addie
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB.
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 #include "Helpers.h"
 
 
-#include "Main.hpp"
 #include "Reader.hpp"
 #include <iostream>
 #include "../tests/TestHashTrie.hpp"

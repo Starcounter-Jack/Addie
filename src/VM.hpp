@@ -1,9 +1,9 @@
 //
-//  Continuation.hpp
+//  VM.hpp
 //  Addie
 //
 //  Created by Joachim Wester on 28/04/16.
-//
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
 #ifndef VM_hpp

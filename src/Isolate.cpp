@@ -1,9 +1,9 @@
 //
 //  Isolate.cpp
-//  Starcounter Lisp
+//  Addie
 //
 //  Created by Joachim Wester on 22/04/16.
-//  Copyright © 2016 Starcounter AB.
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
 #include "Isolate.hpp"

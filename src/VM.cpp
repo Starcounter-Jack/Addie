@@ -3,7 +3,7 @@
 //  Addie
 //
 //  Created by Joachim Wester on 28/04/16.
-//
+//  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
 #include "VM.hpp"
