@@ -37,12 +37,12 @@ int main(int argc, const char * argv[]) {
     
     Isolate isolate;
     CurrentIsolate = &isolate;
+    VALUE v;
     
     assert( sizeof(VALUE) == sizeof(uintptr_t) ); // If we are on a 64 bit machine we want 64
                                                   // bit values
     assert( sizeof(Instruction) == 4 );           // Our byte instructions are 32 bit
     
-//    IllustrateParse( "[]" );
     TestParse( "﹇﹈","[]");
     TestParse( "⎴ ⎵ ","[]");
     TestParse( "⏜⏝","()");
@@ -52,31 +52,18 @@ int main(int argc, const char * argv[]) {
     TestParse("(\"Jack\" \"Wester\")","(\"Jack\" \"Wester\")");
     TestParse( "⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝",
                     "(if (= einstein genius) (print \"e=mc²\") (print \"e!=mc²\"))");
-   
-    VALUE v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
-          "((defn pow [n[n] (fn [x[x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))"
-
-                        );
-
+    v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
+          "((defn pow [n[n] (fn [x[x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
     v = TestParse("⏜\nlet ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
                   "(let [a 10 b 20] (print (+ a b)))");
    
     
-    
-    
-    
     Compilation* code = Compiler::Compile( v );
     STRINGOLD str = Compiler::Disassemble(code);
-    
     
     std::cout << str.ToString();
 
     Continuation c = Interpreter::Interpret(code);
-    
-    // str = Compiler::Disassemble(code);
-    
-    
-    //std::cout << str.ToString();
     
     Interpreter::Interpret(c);
     std::cout << "\n\n";
