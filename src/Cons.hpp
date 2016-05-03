@@ -63,9 +63,51 @@ public:
     }
     
     
-    LIST SetAt( int i, VALUE v ) final {
+    LIST ReplaceAt( int i, VALUE v ) final {
         throw std::runtime_error("Not implemented yet");
     }
+    
+    VALUE RemoveAt( int i ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE InsertAt( int i, VALUE v ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Concatenate( VALUE v ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Reverse() final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Replace( VALUE v1, VALUE v2 ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Sort( VALUE fun ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Map( VALUE fun ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE First( int i = 1 ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Last( int i = 1 ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+    VALUE Skip( int i ) final {
+        throw std::runtime_error("Not implemented yet");
+    }
+
+
 
 };
 

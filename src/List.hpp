@@ -81,21 +81,20 @@ public:
     virtual LIST Prepend( VALUE v ) = 0;
     
     virtual VALUE GetAt( int i ) = 0;
-    virtual LIST SetAt( int i, VALUE v ) = 0;
+    virtual LIST ReplaceAt( int i, VALUE v ) = 0;
     
     virtual int Count() = 0;
-    /*
-     virtual VALUE RemoveAt( int i );
-     virtual VALUE InsertAt( int i, VALUE v );
-     virtual VALUE Concatenate( VALUE v );
-     virtual VALUE Reverse();
-     virtual VALUE Replace( VALUE v1, VALUE v2 );
-     virtual VALUE Sort( VALUE fun );
-     virtual VALUE Map( VALUE fun );
-     virtual VALUE First( int i = 1 );
-     virtual VALUE Last( int i = 1 );
-     virtual VALUE Skip( int i );
-     */
+
+    virtual VALUE RemoveAt( int i ) = 0;
+    virtual VALUE InsertAt( int i, VALUE v ) = 0;
+    virtual VALUE Concatenate( VALUE v ) = 0;
+    virtual VALUE Reverse() = 0;
+    virtual VALUE Replace( VALUE v1, VALUE v2 ) = 0;
+    virtual VALUE Sort( VALUE fun ) = 0;
+    virtual VALUE Map( VALUE fun ) = 0;
+    virtual VALUE First( int i ) = 0;
+    virtual VALUE Last( int i ) = 0;
+    virtual VALUE Skip( int i ) = 0;
 };
 
 

@@ -82,7 +82,7 @@ std::string LIST::Print() {
 
 
 LIST LIST::SetAt( int i, VALUE v ) {
-    return ((List*)Integer)->SetAt(i,v);
+    return ((List*)Integer)->ReplaceAt(i,v);
 }
 
 VALUE LIST::GetAt( int i ) {
