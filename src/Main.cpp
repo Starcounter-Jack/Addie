@@ -14,14 +14,23 @@
 #include "Interpreter.hpp"
 #include "Array.hpp"
 
-void TestArrays() {
+Array<VALUE>* CreateSimpleArray() {
     Array<VALUE>* arr = Array<VALUE>::__beginWrite();
     arr->__write(INTEGER(123));
-    arr->__write(INTEGER(456));
+    arr->__write(INTEGER(789));
     arr->__endWrite();
     assert( arr->Count() == 2 );
     assert( arr->GetAt(0).Integer == 123 );
-    assert( arr->GetAt(1).Integer == 456 );
+    assert( arr->GetAt(1).Integer == 789 );
+    return arr;
+}
+
+void TestArrays() {
+    Array<VALUE>* arr = CreateSimpleArray();
+    arr->RefCount++;
+    List* arr2 = arr->ReplaceAt(1,INTEGER(456));
+    assert( arr->GetAt(1).Integer == 789 );
+    assert( arr2->GetAt(1).Integer == 456 );
 }
 
 

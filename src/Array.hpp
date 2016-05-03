@@ -111,6 +111,7 @@ public:
         Array* newList = (Array*)CurrentIsolate->NextOnHeap;
         memcpy( newList, this, size );
         CurrentIsolate->ReportHeapWrite(size);
+        newList->__values()[i] = v;
         return newList;
 #else
         // Upgrade to a bitmapped vector trie as it is faster for
