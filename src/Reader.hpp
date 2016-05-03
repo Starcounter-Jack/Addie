@@ -244,7 +244,7 @@ class Parser {
     
     static VALUE ParseVector( StreamReader* r) {
         LIST list;
-        list.Style = QParenthesis;
+        list.Style = QBrackets;
         LIST previous;
         ConsumeVerticalStartBracket(r, true);
 //        r->Read(); // Skip first parenthesis
@@ -264,7 +264,7 @@ class Parser {
             VALUE elem = ParseForm( r );
             if (previous.IsEmptyList()) {
                 list = LIST( elem, NIL());
-                list.Style = QParenthesis;
+                list.Style = QBrackets;
                 previous = list;
             }
             else {
