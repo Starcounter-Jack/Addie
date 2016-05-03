@@ -21,7 +21,6 @@ enum Symbols {
 //    SET_REGISTER_WINDOW,
     EXIT_WITH_CONTINUATION,
     RETURN,
-    LOAD_LISTT,
     MOVE,
     CALL_0,
     CALL_1,
@@ -49,7 +48,6 @@ static const char *SymStrings[] = {
 //    "set-register-window",
     "exit-with-continuation",
     "return",
-    "load-const",
     "move",
     "call-0",
     "call-1",
@@ -101,12 +99,12 @@ class Continuation;
 class Isolate {
     
 public:
-    //byte* Code;
+    byte* Stack;
     byte* Constants;
     byte* Heap;
     
+    uint64_t NextOnStack;
     uint64_t NextOnHeap;
-    //uint64_t NextOnCode;
     uint64_t NextOnConstant;
     
     
@@ -154,6 +152,18 @@ public:
 //        CheckAddress(newAddress);
 //        return newAddress;
 //    }
+    
+    
+    void* AdvanceStack( size_t size ) {
+        void* newAddress = (void*)NextOnStack;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnStack += size;
+        NextOnStack = (NextOnStack + 0b01111) & ~0b01111; // Round up for alignment
+        CheckAddress(newAddress);
+        return newAddress;
+    }
+    
     
     void* MallocHeap( size_t size ) {
         void* newAddress = (void*)NextOnHeap;

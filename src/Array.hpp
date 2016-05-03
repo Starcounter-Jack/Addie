@@ -18,32 +18,6 @@
 #include "Isolate.hpp"
 
 
-class Array;
-
-class ARRAY : public VALUE {
-public:
-    ARRAY() {
-        Type = PList;
-        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
-        Integer = 0;
-    };
-    
-    ARRAY( Array* array ) {
-        Integer = (uint64_t)array;
-        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
-    }
-    
-    bool IsEmptyList() {
-        return Integer == 0;
-    }
-    
-    void Print();
-    
-    Array* GetArray() {
-        return (class Array*)Integer;
-    }
-    
-};
 
 
 // Arrays are allocated on the heap with the VALUEs directly attached after the count variable.
@@ -54,7 +28,7 @@ public:
 class Array : public List {
 public:
     uint32_t count; // The count of VALUE objects following this integer.
-    // VALUE v1; VALUE v2....    
+    // VALUE Values[n];
 };
 
 

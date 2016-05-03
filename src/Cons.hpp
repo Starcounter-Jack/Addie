@@ -43,7 +43,7 @@ public:
 //               throw std::runtime_error("Can only append at the end of a list");
 //           }
            LIST c;
-           auto x = c.__allocateCons( elem, NIL() );
+           auto x = c.MaterializeAsCons( elem, NIL() );
            Cdr = c;
            return LIST(x);
         }

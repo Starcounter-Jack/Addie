@@ -19,7 +19,7 @@
 
 
 
-Cons* LIST::__allocateCons( VALUE car, VALUE cdr ) {
+Cons* LIST::MaterializeAsCons( VALUE car, VALUE cdr ) {
     Cons* c = MALLOC_HEAP(Cons); // * c = (Cons*)CurrentIsolate->Memory.MallocHeap(sizeof(Cons));
     new (c) Cons(car,cdr);  // Calling constructor
     Integer = (uint64_t)c;

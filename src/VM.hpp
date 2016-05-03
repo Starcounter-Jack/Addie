@@ -77,11 +77,6 @@ public:
 
 };
 
-class OpLoadConst : public Instruction {
-public:
-    OpLoadConst( byte regno, int16_t value ) : Instruction( LOAD_LISTT,value,regno) {
-    }
-};
 
 
 class OpCall : public Instruction {
@@ -133,15 +128,16 @@ struct Compilation {
 // Here the actual register values are kept.
 // As frames are referenced by continuations. The user can create many continuation objects.
 // Each frame is linked to its parent frame (it can be likened with a spaghetti stack).
-// As such, frames are objects that needs to be garbage collected.
 // You can view frames as a spaghetti stack where each node is the
 // exact size needed by a function. The frame is like a stack with direct addressing rather
 // than pushing and popping.
-class Frame : public Object {
-public:
+// Frames are NOT using the garbage collector as frames can more cheaply allocated and
+// deallocated.
+struct Frame
+{
     Frame* Parent;
     Compilation* Comp;
-    // VALUE v1; VALUE v2....
+    // VALUE Registers[n];
     
     VALUE* GetStartOfRegisters() {
         return (VALUE*)(((byte*)this) + sizeof(Frame));
@@ -160,9 +156,7 @@ public:
         // The compiled code contains the size of the register machine needed for the
         // code. It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
-        frame = (Frame*)CurrentIsolate->MallocHeap(sizeof(Frame) + code->SizeOfRegisters);
-        new (frame) Frame();
-        //Registers = (VALUE*)(((byte*)frame) + sizeof(Frame));
+        frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->SizeOfRegisters);
         memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(Compilation), code->SizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;

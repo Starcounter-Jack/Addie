@@ -17,12 +17,13 @@ Isolate::Isolate() {
     
     // TODO! This needs to change. We cannot expect these ranges to be available.
     // Nice for debugging however.
-    //Code = ReserveMemoryBlock(0xaaffe000000, 0x10000000000);
+    Stack = ReserveMemoryBlock(0xaaffe000000, 0x10000000000);
     Constants = ReserveMemoryBlock(0xbaffe000000, 0x10000000000);
     Heap = ReserveMemoryBlock(0xcaffe000000,0x10000000000);
     
-    NextOnHeap = (uint64_t)Heap;
-    NextOnConstant = (uint64_t)Constants;
+    NextOnStack = (uintptr_t)Stack;
+    NextOnHeap = (uintptr_t)Heap;
+    NextOnConstant = (uintptr_t)Constants;
     
     StringType = new Type( SymString );
     ConsType = new Type( SymCons );
