@@ -9,10 +9,8 @@
 #ifndef Value_hpp
 #define Value_hpp
 
-//#include <string>
 #include <iostream>
-
-
+#include <assert.h>
 #include <cstdint>
 
 typedef uint8_t byte;
@@ -201,10 +199,10 @@ public:
         Integer = 0;
     }
     
-    INTEGER( uint64_t i ) {
+    INTEGER( int64_t i ) {
         Type = PNumber;
         Integer = i;
-
+        assert( Integer == i );
     }
     
     std::string ToString();

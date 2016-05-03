@@ -47,27 +47,36 @@ public:
         A = a2 & 0x00FF;
         B = a2 & 0xFF00;
         C = c;
+        assert( A2() == a2 );
+        assert( C == c );
     }
     
-    Instruction( Op op, int32_t a3  ) {
+    Instruction( Op op, int a3  ) {
         A3 = a3;
         OP = op;
+        assert( A3 == a3 );
     }
     
-    Instruction( Op op,byte a, byte b, byte c ) {
+    Instruction( Op op, int a, int b, int c ) {
         OP = op;
         A = a;
         B = b;
         C = c;
+        assert( A == a );
+        assert( B == b );
+        assert( C == c );
     }
     Instruction( Op op, byte a, byte b ) {
         OP = op;
         A = a;
         B = b;
+        assert( A == a );
+        assert( B == b );
     }
     Instruction( Op op, byte a ) {
         OP = op;
         A = a;
+        assert( A == a );
     }
     
     int32_t A2() {
