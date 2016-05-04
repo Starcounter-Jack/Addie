@@ -14,6 +14,7 @@
 
 class List;
 class Cons;
+class Array;
 
 // This value represents all kinds of lists (including strings and maps). If the list is empty,
 // there will only be this value. If the list is non-empty, it will have a representation
@@ -28,18 +29,22 @@ public:
         Integer = 0;
     };
     
+#ifdef USE_CONS
     // Create a list that points to a Cons (a classical lisp linked list pair node)
     LIST( VALUE _first, VALUE _rest) {
         Type = PList;
         Style = QParenthesis; // See VALUE::IsClassicalParenthesis
         MaterializeAsCons( _first, _rest );
     }
+#endif
+    
+    VALUE Rest();
     
     
-    LIST( List* list ) {
+    LIST( ValueStyle style, List* list ) {
+        Type = PList;
         Integer = (uint64_t)list;
-        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
-    }
+        Style = style;    }
     
     
     // Append to the end of this list. As this is slow in persistent linked lists,
@@ -54,14 +59,15 @@ public:
     
     std::string Print();
     
+#ifdef USE_CONS
     Cons* MaterializeAsCons( VALUE first, VALUE rest );
+#endif
+#ifdef USE_ARRAY
+    Array* MaterializeAsArray( VALUE first, VALUE rest );
+#endif
     
     LIST ReplaceAt( int i, VALUE v );
     VALUE GetAt( int i );
-    
-    List* GetList() {
-        return (List*)Integer;
-    }
     
     
 };
@@ -69,27 +75,71 @@ public:
 
 class List : public Object {
 public:
+
+    
     virtual VALUE First() = 0;
     virtual VALUE Rest() = 0;
     
+    
+#ifdef USE_CONS
+    virtual List* Append( VALUE v );
+    virtual List* Prepend( VALUE v );
+#else
     virtual List* Append( VALUE v ) = 0;
     virtual List* Prepend( VALUE v ) = 0;
+#endif
     
-    virtual VALUE GetAt( int i ) = 0;
+    virtual List* Skip( int index ) {
+        List* list = this;
+        for (int i = 0 ; i < index ; i++ ) {
+            list = list->Rest().GetList();
+        }
+        return list;
+    }
+
+    virtual VALUE GetAt( int index ) {
+        return Skip(index)->First();
+    }
+    
     virtual List* ReplaceAt( int i, VALUE v ) = 0;
     
-    virtual int Count() = 0;
+    virtual int Count() {
+        int i = 1;
+        VALUE list = this->Rest();
+        while (!list.IsNil()) {
+            i++;
+            list = list.GetList()->Rest();
+        }
+        return i;
+    }
+    
+    virtual List* Last( int n ) {
+        int cnt = Count();
+        return Skip(cnt-n);
+    }
 
     virtual List* RemoveAt( int i ) = 0;
     virtual List* InsertAt( int i, VALUE v ) = 0;
-    virtual List* Concatenate( VALUE v ) = 0;
     virtual List* Reverse() = 0;
     virtual List* Replace( VALUE v1, VALUE v2 ) = 0;
     virtual List* Sort( VALUE fun ) = 0;
     virtual List* Map( VALUE fun ) = 0;
     virtual List* First( int i ) = 0;
-    virtual List* Last( int i ) = 0;
-    virtual List* Skip( int i ) = 0;
+    
+#ifdef USE_OPTIMIZATIONS
+    virtual bool AttemptDirtyAdd( VALUE v ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+#endif
+    
+    bool AtEnd() {
+        return Rest().IsNil();
+    }
+    
+    List* RestL() {
+        return Rest().GetList();
+    }
+
 };
 
 

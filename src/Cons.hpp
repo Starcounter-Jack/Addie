@@ -6,6 +6,8 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
+#ifdef USE_CONS
+
 #ifndef Cons_hpp
 #define Cons_hpp
 
@@ -17,7 +19,9 @@
 
 // This list materialization is based on the classical Lisp linked list.
 // The names first and rest are used instead of car and cdr as is also the
-// case in Clojure.
+// case in Clojure. A major difference is that Addie sees both First and Rest
+// as functions that are lazily evaluated. If the function has zero arguments, it will
+// be evaluated on the call First or Rest.
 class Cons : public List {
 private:
     VALUE _first;
@@ -30,38 +34,56 @@ public:
     VALUE Rest() {
         return _rest;
     };
-    
 
+    
     Cons( VALUE first, VALUE rest ) {
         _first = first;
         _rest = rest;
     }
     
-    int Count() {
-        throw std::runtime_error("Not implemented yet");
-    }
 
-    List* Prepend( VALUE elem ) {
-        throw std::runtime_error("Not implemented yet");
-    }
     
     // Override of the List interface
     List* Append( VALUE elem ) {
-        if (RefCount==0 && Rest().IsNil()) {
+#ifdef USE_CONS_OPTIMIZATIONS
+        List* tail = this;
+        while (!tail->Rest().IsNil() ) {
+            tail = tail->Rest().GetList();
+        }
+        if (tail->RefCount==0 && tail->Rest().IsNil()) {
             // We can optimize things as we can reuse this materalization.
             // Nobody is referencing it.
-           LIST c;
-           auto x = c.MaterializeAsCons( elem, NIL() );
-           _rest = c;
-           return x;
+            if (tail->AttemptDirtyAdd(elem)) {
+                return this;
+            };
         }
-        throw std::runtime_error("Not implemented yet");
+#endif
+        int originalCount = Count();
+        int last = Count()-1;
+        List* c = LIST(elem,NIL()).GetList();
+        while (last >= 0) {
+            c = c->Prepend( GetAt(last) );
+            last--;
+        }
+        int newCount = c->Count();
+        assert( newCount == originalCount + 1 );
+//        std::cout << "\nBefore:" << LIST(this).Print() << "\n";
+//        std::cout << "After:" << LIST(c).Print() << "\n";
+        return c;
     }
     
-    // Override of the List interface
-    VALUE GetAt( int i ) final {
-        throw std::runtime_error("Not implemented yet");
+#ifdef USE_OPTIMIZATIONS
+    bool AttemptDirtyAdd( VALUE v ) {
+        if (RefCount != 0 || !_rest.IsNil()) {
+            return false;        
+        }
+        LIST c;
+        c.MaterializeAsCons( v, NIL() );
+        _rest = c;
+        return true;
     }
+#endif
+    
     
     
     List* ReplaceAt( int i, VALUE v ) final {
@@ -76,9 +98,6 @@ public:
         throw std::runtime_error("Not implemented yet");
     }
 
-    List* Concatenate( VALUE v ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
 
     List* Reverse() final {
         throw std::runtime_error("Not implemented yet");
@@ -104,12 +123,9 @@ public:
         throw std::runtime_error("Not implemented yet");
     }
 
-    List* Skip( int i ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-
-
-
 };
 
+
 #endif /* List_hpp */
+
+#endif

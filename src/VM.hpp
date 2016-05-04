@@ -10,7 +10,7 @@
 #define VM_hpp
 
 #include "Isolate.hpp"
-#include "Vector.hpp"
+#include "Optimized_Vector.hpp"
 #include "Value.hpp"
 #include <assert.h>
 

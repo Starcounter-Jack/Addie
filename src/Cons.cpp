@@ -10,10 +10,13 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
+#include "Addie.hpp"
+#include "Optimized_Array.hpp"
+
+#ifdef USE_CONS
+
 #include "Cons.hpp"
-
-
-
+#include "Optimized_Array.hpp"
 
 
 
@@ -24,5 +27,16 @@ Cons* LIST::MaterializeAsCons( VALUE first, VALUE rest ) {
     Integer = (uint64_t)c;
     return c;
 }
+#endif
 
+/*
+#ifdef USE_ARRAY
+Array* LIST::MaterializeAsArray( VALUE first, VALUE rest ) {
+    auto arr = MALLOC_HEAP(Array);
+    new (arr) Array( first, rest );
+    Integer = (uintptr_t)arr;
+    return arr;
+}
+#endif
+*/
 

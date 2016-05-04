@@ -2,6 +2,9 @@
 //  Vector.cpp
 //  Addie
 //
+//  This code is optional. It will only be used if you compile with USE_OPTIMIZATIONS.
+//  Skip this when you first want to learn about working with the Addie codebase.
+//
 //  Persistent (immutable) vector (array).
 //
 //  Leaning heavily on Phil Bagwells original algorith (ideal hashes).
@@ -15,6 +18,7 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
+#ifdef USE_VECTOR
 
 
 #ifndef Vector_hpp
@@ -70,3 +74,5 @@ public:
 
 
 #endif /* Vector_hpp */
+
+#endif

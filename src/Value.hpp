@@ -9,6 +9,7 @@
 #ifndef Value_hpp
 #define Value_hpp
 
+#include "Addie.hpp"
 #include <iostream>
 #include <assert.h>
 #include <cstdint>
@@ -31,7 +32,7 @@ class List;
 
 
 
-enum ValueStyle {
+enum ValueStyle : unsigned int  {
     QParenthesis = 0b00,
     QNumber = 0b00,
     QBrackets = 0b01,
@@ -104,6 +105,15 @@ public:
         return Type & 0b100;
     }
     
+    List* GetList() {
+        if (Type != PList ) {
+            throw std::runtime_error("Not a list");
+        }
+        return (List*)Integer;
+    }
+    
+
+    
     uint8_t* OtherBytes();
     
 //    bool operator==( const VALUE& rhs)
@@ -127,6 +137,10 @@ public:
     
     bool IsList() {
         return Type == PList;
+    }
+    
+    bool IsInteger() {
+        return Type == PNumber;
     }
     
     std::string ToString();

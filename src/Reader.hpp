@@ -17,9 +17,10 @@
 #include <sstream> // for std::ostringstream
 
 #include "Cons.hpp"
-#include "Vector.hpp"
+#include "Optimized_Vector.hpp"
 #include "Isolate.hpp"
 #include "Value.hpp"
+#include "Optimized_Array.hpp"
 
 
 class UnexpectedEOF: public std::exception
@@ -245,7 +246,6 @@ class Parser {
     static VALUE ParseVector( StreamReader* r) {
         LIST list;
         list.Style = QBrackets;
-        LIST previous;
         ConsumeVerticalStartBracket(r, true);
 //        r->Read(); // Skip first parenthesis
         while (true) {
@@ -262,14 +262,8 @@ class Parser {
             }
             
             VALUE elem = ParseForm( r );
-            if (previous.IsEmptyList()) {
-                list = LIST( elem, NIL());
-                list.Style = QBrackets;
-                previous = list;
-            }
-            else {
-                previous = previous.Append( elem );
-            }
+            list = list.Append(elem);
+            //list.Style = QBrackets;
         }
     }
 
@@ -319,27 +313,40 @@ class Parser {
     
     
     static VALUE ParseString( StreamReader* r) {
+#ifdef USE_INTARRAY
+        IntArray<char>* arr = IntArray<char>::__beginWrite();
+        LIST list(QString,arr);
+        try {
+           r->Read(); // Skip the intitial "
+           while (true) {
+               unsigned char c = r->Read();
+               if (c == '"' ) {
+                   arr->__endWrite();
+                   return list;
+               }
+               arr->__write(c);
+           }
+        }
+        catch (...) {
+            arr->__endWrite();
+            throw;
+        }
+        arr->__endWrite();
+        return list;
+#else
         LIST list;
-        LIST previous;
-        //       r->Read(); // Skip first parenthesis
         r->Read(); // Skip the intitial "
         while (true) {
-            
             unsigned char c = r->Read();
             if (c == '"' ) {
                 list.Style = QString;
                 return list;
             }
-            
             VALUE elem = INTEGER(c);
-            if (previous.IsEmptyList()) {
-                list = LIST( elem, NIL());
-                previous = list;
-            }
-            else {
-                previous = previous.Append( elem );
-            }
+            list = list.Append( elem );
         }
+        return list;
+#endif
     }
 
    static VALUE ParseStringOld( StreamReader* r) {
@@ -431,8 +438,7 @@ class Parser {
 
    static VALUE ParseList( StreamReader* r) {
        LIST list;
-       LIST previous;
-//       r->Read(); // Skip first parenthesis
+       
        ConsumeVerticalStartParenthesis(r, true);
         while (true) {
             
@@ -448,13 +454,7 @@ class Parser {
             }
             
             VALUE elem = ParseForm( r );
-            if (previous.IsEmptyList()) {
-                list = LIST( elem, NIL());
-                previous = list;
-            }
-            else {
-                previous = previous.Append( elem );
-            }
+            list = list.Append( elem );
         }
    }
 };
