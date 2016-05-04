@@ -12,8 +12,8 @@
 #define USE_OPTIMIZATIONS
 
 #ifdef USE_OPTIMIZATIONS
-//#define USE_CONS
-//#define USE_CONS_OPTIMIZATIONS
+#define USE_CONS
+#define USE_CONS_OPTIMIZATIONS
 #define USE_INTARRAY
 #define USE_INTARRAY_OPTIMIZATIONS
 #define USE_ARRAY
@@ -270,6 +270,63 @@ public:
         Name = symbol;
     }
 };
+
+
+
+enum Symbols {
+    END,
+    //    SET_REGISTER_WINDOW,
+    EXIT_WITH_CONTINUATION,
+    RETURN,
+    MOVE,
+    CALL_0,
+    CALL_1,
+    CALL_2,
+    CALL_3,
+    CALL_4,
+    CALL_5,
+    CALL_6,
+    JMP,
+    JMP_IF_TRUE,
+    SymNil,
+    SymFalse,
+    SymTrue,
+    SymString,
+    SymPlus,
+    SymMinus,
+    SymStar,
+    SymSlash,
+    SymCons,
+    SymPrint,
+    Sym_Count
+};
+static const char *SymStrings[] = {
+    "end",
+    //    "set-register-window",
+    "exit-with-continuation",
+    "return",
+    "move",
+    "call-0",
+    "call-1",
+    "call-2",
+    "call-3",
+    "call-4",
+    "call-5",
+    "call-6",
+    "jmp",
+    "jmp-if-true",
+    "nil",
+    "false",
+    "true",
+    "string",
+    "+",
+    "-",
+    "*",
+    "/",
+    "Cons",
+    "print"
+};
+
 
 
 #endif /* Addie_hpp */
