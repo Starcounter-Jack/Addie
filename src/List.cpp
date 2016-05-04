@@ -18,9 +18,7 @@ LIST LIST::Append( VALUE elem ) {
         v.Style = this->Style;
         return v;
     }
-    LIST ret(GetList()->Append( elem ));
-    ret.Style = Style;
-    return ret;
+    return LIST(Style,GetList()->Append( elem ));
 }
 #else
 #ifdef USE_ARRAY
@@ -35,7 +33,7 @@ LIST LIST::Append( VALUE elem ) {
 
 #ifdef USE_CONS
 List* List::Prepend( VALUE v ) {
-        LIST newList(v,LIST(this));
+        LIST newList(v,LIST(QParenthesis,this));
         return newList.GetList();
 }
 #endif

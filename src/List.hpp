@@ -62,9 +62,9 @@ public:
 #ifdef USE_CONS
     Cons* MaterializeAsCons( VALUE first, VALUE rest );
 #endif
-#ifdef USE_ARRAY
-    Array* MaterializeAsArray( VALUE first, VALUE rest );
-#endif
+//#ifdef USE_ARRAY
+//    Array* MaterializeAsArray( VALUE first, VALUE rest );
+//#endif
     
     LIST ReplaceAt( int i, VALUE v );
     VALUE GetAt( int i );
@@ -79,13 +79,11 @@ public:
     
     virtual VALUE First() = 0;
     virtual VALUE Rest() = 0;
-    
+    virtual List* Append( VALUE v ) = 0;
     
 #ifdef USE_CONS
-    virtual List* Append( VALUE v );
     virtual List* Prepend( VALUE v );
 #else
-    virtual List* Append( VALUE v ) = 0;
     virtual List* Prepend( VALUE v ) = 0;
 #endif
     
