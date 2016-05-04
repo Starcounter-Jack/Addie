@@ -14,7 +14,7 @@
 #ifndef IntArray_hpp
 #define IntArray_hpp
 
-#include "Value.hpp"
+#include "Addie.hpp"
 #include "List.hpp"
 //#include "Cons.hpp"
 

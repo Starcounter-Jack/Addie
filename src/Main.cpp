@@ -10,8 +10,7 @@
 
 #include "Reader.hpp"
 #include <iostream>
-#include "Compiler.hpp"
-#include "Interpreter.hpp"
+#include "VM.hpp"
 
 #ifdef USE_INTARRAY
 

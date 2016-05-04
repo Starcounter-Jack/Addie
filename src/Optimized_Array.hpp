@@ -14,9 +14,9 @@
 #ifndef Array_hpp
 #define Array_hpp
 
+#include "Addie.hpp"
 #include "Optimized_IntArray.hpp"
 #include "Optimized_Array.hpp"
-#include "Value.hpp"
 #include "Cons.hpp"
 
 

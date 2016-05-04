@@ -9,7 +9,7 @@
 #ifndef List_hpp
 #define List_hpp
 
-#include "Value.hpp"
+#include "Addie.hpp"
 #include "Isolate.hpp"
 
 class List;

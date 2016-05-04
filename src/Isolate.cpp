@@ -7,9 +7,8 @@
 //
 
 #include "Isolate.hpp"
-#include "Compiler.hpp"
 #include "Reader.hpp"
-#include "Interpreter.hpp"
+#include "VM.hpp"
 
 
 Isolate::Isolate() {

@@ -9,9 +9,9 @@
 #ifndef VM_hpp
 #define VM_hpp
 
+#include "Addie.hpp"
 #include "Isolate.hpp"
 #include "Optimized_Vector.hpp"
-#include "Value.hpp"
 #include <assert.h>
 
 // Contains fixed registers (used for variables instead of stack)
@@ -169,6 +169,29 @@ public:
         frame->Comp = code;
         frame->Parent = parent;
     }
+};
+
+class Compiler {
+public:
+    static Compilation* Compile( VALUE form );
+    static Compilation* CompilePrototype( VALUE form );
+    static STRINGOLD Disassemble( Compilation* code );
+};
+
+
+class Interpreter {
+public:
+    
+    static Continuation Interpret( Continuation cont );
+    
+    
+    static Continuation Interpret( Compilation* code ) {
+        Continuation c;
+        c.EnterIntoNewFrame(code, NULL);
+        c.PC = code->StartOfInstructions();
+        return Interpreter::Interpret( c );
+    }
+    
 };
 
 

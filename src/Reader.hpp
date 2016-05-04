@@ -16,10 +16,10 @@
 //#include <numeric> // for std::accumulate
 #include <sstream> // for std::ostringstream
 
+#include "Addie.hpp"
 #include "Cons.hpp"
 #include "Optimized_Vector.hpp"
 #include "Isolate.hpp"
-#include "Value.hpp"
 #include "Optimized_Array.hpp"
 #include "Cons.hpp"
 

@@ -9,7 +9,7 @@
 #ifndef Isolate_hpp
 #define Isolate_hpp
 
-#include "Value.hpp"
+#include "Addie.hpp"
 #include <map>
 #include <vector>
 #include <sys/mman.h>
