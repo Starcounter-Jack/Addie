@@ -248,5 +248,94 @@ public:
 };
 
 
+//class Compilation {
+//public:
+//    Instruction* Code;
+//    VALUE* Registers;
+//};
+
+
+struct Compilation {
+    u32 SizeOfRegisters;
+    u32 SizeOfInitializedRegisters;
+    
+    
+    VALUE* StartOfConstants() {
+        return (VALUE*)((byte*)this + sizeof(Compilation));
+    }
+    
+    Instruction* StartOfInstructions() {
+        return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters);
+    }
+    
+    int GetInitializedRegisterCount() {
+        return SizeOfInitializedRegisters / sizeof(VALUE);
+    }
+    
+    //Instruction* Code;
+    // VALUE v1; VALUE v2....
+};
+
+// Frames are register windows pertaining to a particular compilation.
+// Here the actual register values are kept.
+// As frames are referenced by continuations. The user can create many continuation objects.
+// Each frame is linked to its parent frame (it can be likened with a spaghetti stack).
+// You can view frames as a spaghetti stack where each node is the
+// exact size needed by a function. The frame is like a stack with direct addressing rather
+// than pushing and popping.
+// Frames are NOT using the garbage collector as frames can more cheaply allocated and
+// deallocated.
+struct Frame
+{
+    Frame* Parent;
+    Compilation* Comp;
+    // VALUE Registers[n];
+    
+    VALUE* GetStartOfRegisters() {
+        return (VALUE*)(((byte*)this) + sizeof(Frame));
+    }
+};
+
+
+// Continuations are used by value as it is only 16 bytes in size (on 64 bits architectures).
+class Continuation {
+public:
+    Instruction* PC;                    // Program Counter (aka Instruction Pointer).
+    Frame* frame = NULL;
+    
+    void EnterIntoNewFrame( Compilation* code, Frame* parent ) {
+        assert( frame == NULL );
+        // The compiled code contains the size of the register machine needed for the
+        // code. It also contains the initial values for the registers that are either
+        // invariant or that have a initial value.
+        frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->SizeOfRegisters);
+        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(Compilation), code->SizeOfInitializedRegisters );
+        frame->Comp = code;
+        frame->Parent = parent;
+    }
+};
+
+class Compiler {
+public:
+    static Compilation* Compile( VALUE form );
+    static Compilation* CompilePrototype( VALUE form );
+    static STRINGOLD Disassemble( Compilation* code );
+};
+
+
+class Interpreter {
+public:
+    
+    static Continuation Interpret( Continuation cont );
+    
+    
+    static Continuation Interpret( Compilation* code ) {
+        Continuation c;
+        c.EnterIntoNewFrame(code, NULL);
+        c.PC = code->StartOfInstructions();
+        return Interpreter::Interpret( c );
+    }
+    
+};
 
 #endif /* Isolate_hpp */

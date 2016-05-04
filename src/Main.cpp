@@ -10,7 +10,7 @@
 
 #include "Reader.hpp"
 #include <iostream>
-#include "VM.hpp"
+#include "Isolate.hpp"
 
 #ifdef USE_INTARRAY
 

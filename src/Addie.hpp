@@ -24,7 +24,7 @@
 
 
 
-#include "Addie.hpp"
+//#include "Isolate.hpp"
 #include <iostream>
 #include <assert.h>
 #include <cstdint>
@@ -326,6 +326,98 @@ static const char *SymStrings[] = {
     "Cons",
     "print"
 };
+
+
+// Contains fixed registers (used for variables instead of stack)
+// Registers are preloaded with constants
+//class Frame : Object {
+//public:
+//    VALUE Variants[10]; // Variant variables/registers
+//    VALUE Invariants[10]; // Invariant variables/registers and constants
+//};
+
+typedef uint8_t Op;
+
+// Represents a byte code instruction. Addie bytecodes are dispatched in 32 bit blocks (instruction words). You can read more about it [here](https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code)
+class Instruction {
+public:
+    union {
+        uint32_t Whole;
+        int32_t A3 : 24;
+        struct {
+            int8_t A;
+            int8_t B;
+            int8_t C;
+            Op OP;
+        };
+    };
+    
+    Instruction( Op op ) {
+        OP = op;
+    }
+    
+    Instruction( Op op, int16_t a2, byte c  ) {
+        OP = op;
+        A = a2 & 0x00FF;
+        B = a2 & 0xFF00;
+        C = c;
+        assert( A2() == a2 );
+        assert( C == c );
+    }
+    
+    Instruction( Op op, int a3  ) {
+        A3 = a3;
+        OP = op;
+        assert( A3 == a3 );
+    }
+    
+    Instruction( Op op, int a, int b, int c ) {
+        OP = op;
+        A = a;
+        B = b;
+        C = c;
+        assert( A == a );
+        assert( B == b );
+        assert( C == c );
+    }
+    Instruction( Op op, byte a, byte b ) {
+        OP = op;
+        A = a;
+        B = b;
+        assert( A == a );
+        assert( B == b );
+    }
+    Instruction( Op op, byte a ) {
+        OP = op;
+        A = a;
+        assert( A == a );
+    }
+    
+    int32_t A2() {
+        return A + (B<<8);
+    }
+    
+};
+
+
+
+class OpCall : public Instruction {
+public:
+    OpCall( byte symreg, byte p1reg, byte p2reg ) : Instruction( CALL_2, symreg, p1reg, p2reg ) {     }
+    OpCall( byte symreg, byte p1reg ) : Instruction( CALL_1, symreg, p1reg ) {
+    }
+    OpCall( byte symreg ) : Instruction( CALL_0, symreg )   { }
+};
+class OpMove : public Instruction {
+public:
+    OpMove( byte reg1, byte reg2 ) : Instruction( MOVE, reg1, reg2 ) {
+    }
+};
+
+
+
+
+
 
 
 

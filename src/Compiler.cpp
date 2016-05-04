@@ -6,7 +6,7 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "VM.hpp"
+#include "Isolate.hpp"
 #include <sstream>
 
 

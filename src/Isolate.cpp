@@ -8,7 +8,6 @@
 
 #include "Isolate.hpp"
 #include "Reader.hpp"
-#include "VM.hpp"
 
 
 Isolate::Isolate() {
