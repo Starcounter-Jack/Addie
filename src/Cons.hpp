@@ -41,6 +41,12 @@ public:
         _rest = rest;
     }
     
+    static Cons* Create( VALUE first, VALUE rest ) {
+        Cons* c = MALLOC_HEAP(Cons);
+        new (c) Cons(first,rest);  // Calling constructor
+        return c;
+    }
+    
 
     
     // Override of the List interface

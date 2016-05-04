@@ -129,4 +129,11 @@ VALUE LIST::GetAt( int i ) {
 }
 
 
+Cons* LIST::MaterializeAsCons( VALUE first, VALUE rest ) {
+    auto c = Cons::Create(first,rest);
+    Integer = (uint64_t)c;
+    return c;
+}
+
+
 
