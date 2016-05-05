@@ -19,18 +19,18 @@ std::string STRINGOLD::ToString() {
     if (Integer == 0) {
         return "\"\"";
     }
-    auto str =  (char*) Integer;
+    auto str =  (char*) GetPointer();
     str += sizeof(String);
     return str;
 }
 
 
 uint8_t* VALUE::OtherBytes() {
-    return (uint8_t*)(Integer);
+    return (uint8_t*)GetPointer();
 }
 
 uint8_t* STRINGOLD::StringBytes() {
-    return (uint8_t*)(Integer+sizeof(String));
+    return (uint8_t*)(GetPointer()+sizeof(String));
 }
 
 
@@ -53,7 +53,7 @@ void STRINGOLD::AllocateString( const char* original, size_t size ) {
     
     memcpy(str, original, size);
     str[size] = 0;
-    this->Integer = (uint64_t)obj;
+    SetPointer( (uint64_t)obj );
     
     new (obj) String(size);
     
@@ -210,7 +210,7 @@ std::string LIST::Print() {
            res << self->First().Print();
            while (next.IsList()) {
                res << " ";
-               List* pnext = (List*)next.OtherBytes();
+               List* pnext = next.GetList();
                res << pnext->First().Print();
                next = pnext->Rest();
            }
@@ -240,7 +240,7 @@ LIST LIST::ReplaceAt( int i, VALUE v ) {
 }
 
 VALUE LIST::GetAt( int i ) {
-    return ((List*)Integer)->GetAt(i);
+    return GetList()->GetAt(i);
 }
 
 #ifdef USE_CONS

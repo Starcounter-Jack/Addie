@@ -90,6 +90,17 @@ enum ValueType : unsigned int {
     PContinuation     =  0b110,    // Execution thread
     PStringOld        =  0b111     // TODO! REMOVE!
 };
+    
+enum ValueType2 : unsigned int {
+    TNil              =  0b0000,    // Lisp nil
+    TSymbol           =  0b0010,    // Symbol
+    TNumber           =  0b0011,    // Integer/Ratio
+    TList             =  0b1000,    // List/vector/array/string/map
+    TString           =  0b1001,    // List/vector/array/string/map
+    TVector           =  0b1010,    // List/vector/array/string/map
+    TMap              =  0b1011,    // List/vector/array/string/map
+    TOther            =  0b1100,    // Function/procedure/code
+};
 
 /*
  class VALUE8 {
@@ -131,6 +142,13 @@ public:
             // The actual data forming the numbers or pointers are stored here.
             int64_t Integer: 59;
         };
+        struct {
+            ValueType2 Type2 : 5;
+            uintptr_t Pointer : 33;
+            uint16_t Start : 10;
+            uint16_t Stop : 10;
+        };
+
     };
     
     VALUE() : Whole(0) { // Everything is zero by default
@@ -146,12 +164,21 @@ public:
         return (List*)GetObject();
     }
     
+    inline void SetPointer( uintptr_t p ) {
+        Pointer = (p >> 4);
+    }
+    
+    inline Object* GetPointer() {
+        uintptr_t p = (Pointer << 4);
+        return (Object*)p;
+    }
+    
     Object* GetObject() {
         if (!IsHeapObject()) {
             throw std::runtime_error("Not a heap object");
         }
-        assert( Integer != 0 );
-        Object* o = (Object*)Integer;
+        assert( Pointer != 0 );
+        Object* o = GetPointer();
         o->CheckIntegrety();
         return o;
     }

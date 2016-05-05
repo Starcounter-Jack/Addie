@@ -101,7 +101,7 @@ public:
             return false;        
         }
         LIST c;
-        c.Integer = (uintptr_t)Cons::Create( v, NIL() );
+        c.SetPointer( (uintptr_t)Cons::Create( v, NIL() ) );
 //        c.MaterializeAsCons( v, NIL() );
         SetRest(c);
         return true;

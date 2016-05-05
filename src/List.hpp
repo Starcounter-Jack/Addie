@@ -36,7 +36,7 @@ public:
     LIST( ValueStyle style, VALUE _first) {
         Type = PList;
         Style = style;
-        Integer = (uintptr_t)CreateDefaultList( _first );
+        SetPointer( (uintptr_t)CreateDefaultList( _first ) );
         CheckIntegrety();
     }
     
@@ -62,7 +62,7 @@ public:
     
     LIST( ValueStyle style, List* list ) {
         Type = PList;
-        Integer = (uint64_t)list;
+        SetPointer( (uint64_t)list );
         Style = style;    }
     
     

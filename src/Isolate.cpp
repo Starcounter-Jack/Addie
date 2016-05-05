@@ -19,7 +19,7 @@ Isolate::Isolate() {
     // Nice for debugging however.
     Stack = ReserveMemoryBlock(0xaaffe000000, 0x10000000000);
     Constants = ReserveMemoryBlock(0xbaffe000000, 0x10000000000);
-    Heap = ReserveMemoryBlock(0xcaffe000000,0x10000000000);
+    Heap = ReserveMemoryBlock(0xcaffe0000,0x10000000000);
     
     NextOnStack = (uintptr_t)Stack;
     NextOnHeap = (uintptr_t)Heap;

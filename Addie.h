@@ -13,6 +13,11 @@ namespace Addie {
 
     class Isolate {
     }
+    
+    
+    template <class T>
+    class Local {
+    }
 }
 
 #endif /* Addie_h */
