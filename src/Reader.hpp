@@ -22,6 +22,7 @@
 #include "Isolate.hpp"
 #include "Optimized_Array.hpp"
 #include "Cons.hpp"
+#include "Optimized_IntArray.hpp"
 
 
 class UnexpectedEOF: public std::exception

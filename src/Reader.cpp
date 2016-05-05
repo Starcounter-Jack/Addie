@@ -8,6 +8,7 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
+#include "Addie.hpp"
 #include "Reader.hpp"
 
 // All our reserved characters lives in ASCII space except for our extended

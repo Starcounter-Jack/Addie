@@ -5,9 +5,10 @@
 //  Created by Joachim Wester on 22/04/16.
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
-#include "Helpers.h"
 
 
+#include "Addie.hpp"
+#include "List.hpp"
 #include "Reader.hpp"
 #include <iostream>
 #include "Isolate.hpp"
@@ -30,7 +31,7 @@ IntArray<int>* CreateSimpleArray() {
 
 void TestIntArrays() {
     IntArray<int>* arr = CreateSimpleArray();
-    arr->RefCount++;
+    arr->RefCount += 2;
     List* arr2 = arr->ReplaceAt(1,INTEGER(456));
     assert( arr->GetAt(1).Integer == 789 );
     assert( arr2->Count() == 2 );
@@ -45,6 +46,7 @@ void TestCons() {
 
     std::cout << "Test Cons:";
     LIST str(INTEGER(107),NIL());
+    str.CheckIntegrety();
     LIST str2(INTEGER(99),str);
     LIST str3(INTEGER(97),str2);
     LIST str4(INTEGER(74),str3);

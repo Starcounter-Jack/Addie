@@ -6,6 +6,7 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
+#include "Addie.hpp"
 #include "List.hpp"
 #include "Cons.hpp"
 #include <sstream>
@@ -175,7 +176,6 @@ VALUE LIST::Rest() {
 
 std::string LIST::Print() {
     std::ostringstream res;
-    List* self = GetList();
     char startParen;
     char endParen;
     switch (Style) {
@@ -200,12 +200,14 @@ std::string LIST::Print() {
         res << startParen << endParen;
         return res.str();
     }
+    List* self = GetList();
+    
     res << startParen;
     VALUE next = self->Rest();
     if (Style == QString) {
         res << (char)(self->First().Integer);
         while (next.IsList()) {
-            List* pnext = (List*)next.OtherBytes();
+            List* pnext = next.GetList();
             res << (char)(pnext->First().Integer);
             next = pnext->Rest();
         }
@@ -248,12 +250,18 @@ VALUE LIST::GetAt( int i ) {
     return ((List*)Integer)->GetAt(i);
 }
 
-
-Cons* LIST::MaterializeAsCons( VALUE first, VALUE rest ) {
+#ifdef USE_CONS
+void LIST::MaterializeAsCons( VALUE first, VALUE rest ) {
     auto c = Cons::Create(first,rest);
-    Integer = (uint64_t)c;
-    return c;
+    //Cons* c = new Cons(first,rest);
+    Integer = (uintptr_t)c;
+    assert( c == (Cons*)Integer );
+    c->CheckIntegrety();
+    Cons* obj = (Cons*)Integer;
+    assert( obj->MemoryCheck == 123456789 );
+    CheckIntegrety();
 }
+#endif
 
 
 

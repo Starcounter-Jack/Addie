@@ -35,15 +35,30 @@ public:
         return _rest;
     };
 
-    
-    Cons( VALUE first, VALUE rest ) {
-        _first = first;
+    void SetRest( VALUE rest ) {
+        if (rest.IsHeapObject()) {
+            rest.GetObject()->RefCount++;
+        }
         _rest = rest;
+    }
+    
+    void SetFirst( VALUE first ) {
+        if (first.IsHeapObject()) {
+            first.GetObject()->RefCount++;
+        }
+        _first = first;
+    }
+
+
+    Cons( VALUE first, VALUE rest ) : List() {
+        SetFirst( first );
+        SetRest( rest );
     }
     
     static Cons* Create( VALUE first, VALUE rest ) {
         Cons* c = MALLOC_HEAP(Cons);
         new (c) Cons(first,rest);  // Calling constructor
+        c->CheckIntegrety();
         return c;
     }
     
@@ -56,7 +71,7 @@ public:
         while (!tail->Rest().IsNil() ) {
             tail = tail->Rest().GetList();
         }
-        if (tail->RefCount==0 && tail->Rest().IsNil()) {
+        if (tail->RefCount < 2 && tail->Rest().IsNil()) {
             // We can optimize things as we can reuse this materalization.
             // Nobody is referencing it.
             if (tail->AttemptDirtyAdd(elem)) {
@@ -73,19 +88,20 @@ public:
         }
         int newCount = c->Count();
         assert( newCount == originalCount + 1 );
-//        std::cout << "\nBefore:" << LIST(this).Print() << "\n";
-//        std::cout << "After:" << LIST(c).Print() << "\n";
+        std::cout << "\nBefore:" << LIST(QParenthesis,this).Print();
+        std::cout << "\nAdded:" << elem.Print();
+        std::cout << "\nAfter:" << LIST(QParenthesis,c).Print() << "\n";
         return c;
     }
     
 #ifdef USE_OPTIMIZATIONS
     bool AttemptDirtyAdd( VALUE v ) {
-        if (RefCount != 0 || !_rest.IsNil()) {
+        if (RefCount > 1 || !_rest.IsNil()) {
             return false;        
         }
         LIST c;
         c.MaterializeAsCons( v, NIL() );
-        _rest = c;
+        SetRest(c);
         return true;
     }
 #endif

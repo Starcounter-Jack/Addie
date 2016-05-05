@@ -6,7 +6,7 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "Isolate.hpp"
+#include "Addie.hpp"
 #include "Reader.hpp"
 
 

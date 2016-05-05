@@ -6,6 +6,7 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
+#include "Addie.hpp"
 #include "Isolate.hpp"
 
 // VM byte-codes are described here

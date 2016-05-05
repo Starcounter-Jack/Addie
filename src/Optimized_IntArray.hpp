@@ -15,99 +15,9 @@
 #define IntArray_hpp
 
 #include "Addie.hpp"
-#include "List.hpp"
-//#include "Cons.hpp"
+#include "Optimized_Array.hpp"
 
 
-#include "Isolate.hpp"
-
-
-
-
-class VectorRest : public List {
-public:
-    List* _host;
-    int _pos;
-    
-    VectorRest( List* host, int pos ) {
-        _host = host;
-        _pos = pos;
-    }
-    
-    VALUE First() {
-        return _host->GetAt(_pos);
-    }
-    
-    VALUE Rest() {
-        if (RefCount == 0) {
-            if (_pos == _host->Count()-1) {
-                return NIL();
-            }
-            _pos++;
-            return LIST(QParenthesis,this);
-        }
-        throw std::runtime_error("Not Implemented yet");
-    }
-    
-public:
-    
-    List* Prepend( VALUE elem ) {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    // Override of the List interface
-    List* Append( VALUE elem ) {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    // Override of the List interface
-    VALUE GetAt( int i ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    
-    List* ReplaceAt( int i, VALUE v ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* RemoveAt( int i ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* InsertAt( int i, VALUE v ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    
-    List* Reverse() final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* Replace( VALUE v1, VALUE v2 ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* Sort( VALUE fun ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* Map( VALUE fun ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* First( int i = 1 ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* Last( int i = 1 ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-    List* Skip( int i ) final {
-        throw std::runtime_error("Not implemented yet");
-    }
-    
-};
 
 
 struct ArrayHeader {
@@ -190,7 +100,7 @@ public:
     List* ReplaceAt( int i, VALUE v ) {
         assert( i < Header.Count );
         CheckType(v);
-        if (RefCount == 0) {
+        if (RefCount < 2) {
             __values()[i] = v.Integer;
             return this;
         }

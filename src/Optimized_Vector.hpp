@@ -44,7 +44,7 @@ public:
      }
      
     PVector<T>* ReplaceAt( int t, VALUE v ) {
-        if (RefCount==1) {
+        if (RefCount < 2) {
             // There is only one value observing this vector materialization,
             // this means that we do not have to keep the old version.
             // Let's turn the old version into the new version and forget about

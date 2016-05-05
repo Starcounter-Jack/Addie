@@ -14,10 +14,10 @@
 #ifdef USE_OPTIMIZATIONS
 #define USE_CONS
 #define USE_CONS_OPTIMIZATIONS
+//#define USE_ARRAY
+//#define USE_ARRAY_OPTIMIZATIONS
 #define USE_INTARRAY
 #define USE_INTARRAY_OPTIMIZATIONS
-#define USE_ARRAY
-#define USE_ARRAY_OPTIMIZATIONS
 //#define USE_VECTOR
 //#define USE_VECTOR_OPTIMIZATIONS
 #endif
@@ -40,12 +40,25 @@ typedef uint16_t Symbol;
 // * c = (Cons*)CurrentIsolate->Memory.MallocHeap(sizeof(Cons));
 
 
-class Object;
 class Isolate;
 class Continuation;
 class List;
 
+// The root heap object
+class Object {
+public:
+    uint64_t MemoryCheck = 123456789; // 0xABBACAFFE;
+    int RefCount = 0;
+    List* Meta;
+    //    SYMBOL SetSpecifiers[32];
+    
+    virtual void CheckIntegrety() {
+        if (MemoryCheck != 123456789 ) { // 0xABBACAFFE ) {
+            throw std::runtime_error("Memory is compromised");
+        }
+    }
 
+};
 
 enum ValueStyle : unsigned int  {
     QParenthesis = 0b00,
@@ -117,14 +130,22 @@ public:
     
     // Lists and Lambdas obviously do not fit in a value.
     bool IsHeapObject() {
-        return Type & 0b100;
+        return Type & 0b100 && Integer != 0;
     }
     
     List* GetList() {
-        if (Type != PList ) {
-            throw std::runtime_error("Not a list");
+        assert( Type == PList );
+        return (List*)GetObject();
+    }
+    
+    Object* GetObject() {
+        if (!IsHeapObject()) {
+            throw std::runtime_error("Not a heap object");
         }
-        return (List*)Integer;
+        assert( Integer != 0 );
+        Object* o = (Object*)Integer;
+        o->CheckIntegrety();
+        return o;
     }
     
     
@@ -141,10 +162,7 @@ public:
     //    {
     //        return Whole != rhs.Whole;
     //    };
-    
-    Object* GetObject() {
-        return (Object*)Integer;
-    }
+
     
     bool IsNil() {
         return Type == PNil;
@@ -250,13 +268,7 @@ public:
 class Type;
 
 
-// The root heap object
-class Object {
-public:
-    int RefCount = 0;
-    List* Meta;
-    //    SYMBOL SetSpecifiers[32];
-};
+
 
 class NamedEntity : public Object {
 public:
@@ -415,8 +427,472 @@ public:
 };
 
 
+#include "Addie.hpp"
+#include <map>
+#include <vector>
+#include <sys/mman.h>
+#include <cstring>
 
 
+#define MALLOC_HEAP(type) (type*)CurrentIsolate->MallocHeap(sizeof(type));
+
+
+class Evaluateable : public NamedEntity {
+public:
+    virtual VALUE Evaluate() = 0;
+};
+
+class Variable : public Evaluateable {
+};
+
+class Namespace : public NamedEntity {
+public:
+    std::map<Symbol,Variable*> Variables;
+};
+
+
+class Function : public NamedEntity {
+};
+
+class Continuation;
+
+
+// To allow multiple VMs in the same process.
+class Isolate {
+    
+public:
+    byte* Stack;
+    byte* Constants;
+    byte* Heap;
+    
+    uint64_t NextOnStack;
+    uint64_t NextOnHeap;
+    uint64_t NextOnConstant;
+    
+    
+    int NumberOfAllocations = 0;
+    int BytesAllocated = 0;
+    
+    
+    byte* ReserveMemoryBlock(uint64_t address, size_t size) {
+        void* addr = (void*)address;
+        
+        addr = mmap((void *) addr, size,
+                    PROT_WRITE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        //printf("%p\n", addr);
+        if(addr == MAP_FAILED)
+            throw std::runtime_error("Addie is trying to reserving 3TB of fixed memory addresses and fails. Jack was being a little bit too optimisitic.");
+        return (byte*)addr;
+    }
+    
+    
+    void CheckAddress(void* addr) {
+        uint64_t i = (uint64_t)addr;
+        if ( i & 0b0000000000000000000000000000000000000000000000000000000000001111 ) {
+            throw std::runtime_error( "Addresses must be aligned" );
+        }
+    }
+    
+    inline void AlignNextHeap() {
+        NextOnHeap = (NextOnHeap + 0b01111) & ~0b01111; // Round up for alignment
+    }
+    
+    inline void AlignNextConstant() {
+        NextOnConstant = (NextOnConstant + 0b01111) & ~0b01111; // Round up for alignment
+    }
+    
+    
+    void* MallocConstant( size_t size ) {
+        void* newAddress = (void*)NextOnConstant;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnConstant += size;
+        AlignNextConstant();
+        CheckAddress(newAddress);
+        return newAddress;
+    }
+    
+    
+    //    void* MallocCode( size_t size ) {
+    //        void* newAddress = (void*)NextOnCode;
+    //        BytesAllocated += size;
+    //        NumberOfAllocations++;
+    //        NextOnCode += size;
+    //        NextOnCode = (NextOnCode + 0b01111) & ~0b01111; // Round up for alignment
+    //        CheckAddress(newAddress);
+    //        return newAddress;
+    //    }
+    
+    
+    void* AdvanceStack( size_t size ) {
+        void* newAddress = (void*)NextOnStack;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnStack += size;
+        NextOnStack = (NextOnStack + 0b01111) & ~0b01111; // Round up for alignment
+        CheckAddress(newAddress);
+        return newAddress;
+    }
+    
+    inline void ReportHeapWrite( size_t size ) {
+        NextOnHeap += size;
+        AlignNextHeap();
+    }
+    
+    
+    void* MallocHeap( size_t size ) {
+        void* newAddress = (void*)NextOnHeap;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnHeap += size;
+        //        NextOnHeap = (NextOnHeap + 0b01111) & ~0b01111; // Round up for alignment
+        AlignNextHeap();
+        CheckAddress(newAddress);
+        return newAddress;
+    }
+    
+    void PrintStatus() {
+        if (NumberOfAllocations) {
+            std::cout << "\nNumber of unfreed allocations: ";
+            std::cout << NumberOfAllocations;
+            std::cout << "\nTotal allocations: ";
+            std::cout << BytesAllocated;
+            std::cout << " bytes\n";
+        }
+    }
+    
+    
+    
+    Type* StringType;
+    Type* ConsType;
+    
+    std::map<std::string,Symbol> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
+    std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
+    std::map<Symbol,Namespace*> Namespaces;
+    
+public: Isolate();
+    
+    
+    Continuation* Root;
+    
+    VALUE EmptyList;
+    NIL Nil;
+    
+    uint LastSymbolUsed = 0;
+    
+    std::string GetStringFromSymbolId( uint32_t id ) {
+        return SymbolStrings[id];
+    }
+    
+    Symbol RegisterNamespace( Symbol sym ) {
+        
+        auto x = Namespaces.find(sym);
+        
+        if (x != Namespaces.end())
+            throw std::runtime_error("Namespace does already exist");
+        
+        Namespaces[sym] = new Namespace(); // TODO! GC
+        return sym;
+    }
+    
+    
+    Symbol RegisterSymbol( const char* str, size_t size, int known ) {
+        //        std::cout << std::string( str, size );
+        
+        auto s = std::string(str,size);
+        
+        auto x = SymbolsIds.find(str);
+        if (x != SymbolsIds.end()) {
+            //            if (memcmp(str,GetStringFromSymbolId(x->second).c_str(),size) != 0) {
+            //                std::cout << str;
+            //                std::cout << "!=";
+            //                std::cout << GetStringFromSymbolId(x->second).c_str();
+            //                throw std::runtime_error("Symbol finder does not work");
+            //            }
+            return x->second;
+        }
+        
+        SymbolStrings.push_back(s);
+        uint16_t id = SymbolStrings.size() - 1;
+        SymbolsIds[s] = id;
+        
+        //std::cout << "\nRegistering: ";
+        //std::cout << SymbolStrings[id];
+        
+        if (known != -1 && known != id ) {
+            throw std::runtime_error("Error in fixed symbol registration");
+        }
+        
+        return id;
+    }
+    
+    //rrrr
+    //rrra
+    //rrar
+    //rraa
+    //rara
+    //arar
+    
+    
+    
+    //    bool IsReservedSymbol( uint16_t id ) {
+    //        return id <= ReservedSymbols;
+    //    }
+};
+
+
+// http://stackoverflow.com/questions/23791060/c-thread-local-storage-clang-503-0-40-mac-osx
+#if HAS_CXX11_THREAD_LOCAL
+#define ATTRIBUTE_TLS thread_local
+#elif defined (__GNUC__)
+#define ATTRIBUTE_TLS __thread
+#elif defined (_MSC_VER)
+#define ATTRIBUTE_TLS __declspec(thread)
+#else // !C++11 && !__GNUC__ && !_MSC_VER
+#error "Define a thread local storage qualifier for your compiler/platform!"
+#endif
+
+extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
+
+
+class String : public Object {
+public:
+    uint32_t Length;
+    
+    String(uint32_t length) {
+        Length = length;
+        //        Type = CurrentIsolate->StringType;
+    }
+};
+
+
+//class Compilation {
+//public:
+//    Instruction* Code;
+//    VALUE* Registers;
+//};
+
+
+struct Compilation {
+    u32 SizeOfRegisters;
+    u32 SizeOfInitializedRegisters;
+    
+    
+    VALUE* StartOfConstants() {
+        return (VALUE*)((byte*)this + sizeof(Compilation));
+    }
+    
+    Instruction* StartOfInstructions() {
+        return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters);
+    }
+    
+    int GetInitializedRegisterCount() {
+        return SizeOfInitializedRegisters / sizeof(VALUE);
+    }
+    
+    //Instruction* Code;
+    // VALUE v1; VALUE v2....
+};
+
+// Frames are register windows pertaining to a particular compilation.
+// Here the actual register values are kept.
+// As frames are referenced by continuations. The user can create many continuation objects.
+// Each frame is linked to its parent frame (it can be likened with a spaghetti stack).
+// You can view frames as a spaghetti stack where each node is the
+// exact size needed by a function. The frame is like a stack with direct addressing rather
+// than pushing and popping.
+// Frames are NOT using the garbage collector as frames can more cheaply allocated and
+// deallocated.
+struct Frame
+{
+    Frame* Parent;
+    Compilation* Comp;
+    // VALUE Registers[n];
+    
+    VALUE* GetStartOfRegisters() {
+        return (VALUE*)(((byte*)this) + sizeof(Frame));
+    }
+};
+
+
+// Continuations are used by value as it is only 16 bytes in size (on 64 bits architectures).
+class Continuation {
+public:
+    Instruction* PC;                    // Program Counter (aka Instruction Pointer).
+    Frame* frame = NULL;
+    
+    void EnterIntoNewFrame( Compilation* code, Frame* parent ) {
+        assert( frame == NULL );
+        // The compiled code contains the size of the register machine needed for the
+        // code. It also contains the initial values for the registers that are either
+        // invariant or that have a initial value.
+        frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->SizeOfRegisters);
+        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(Compilation), code->SizeOfInitializedRegisters );
+        frame->Comp = code;
+        frame->Parent = parent;
+    }
+};
+
+class Compiler {
+public:
+    static Compilation* Compile( VALUE form );
+    static Compilation* CompilePrototype( VALUE form );
+    static STRINGOLD Disassemble( Compilation* code );
+};
+
+
+class Interpreter {
+public:
+    
+    static Continuation Interpret( Continuation cont );
+    
+    
+    static Continuation Interpret( Compilation* code ) {
+        Continuation c;
+        c.EnterIntoNewFrame(code, NULL);
+        c.PC = code->StartOfInstructions();
+        return Interpreter::Interpret( c );
+    }
+    
+};
+
+
+
+
+// This value represents all kinds of lists (including strings and maps). If the list is empty,
+// there will only be this value. If the list is non-empty, it will have a representation
+// on the heap. The representation depends on the predicted use-case. I.e. if we suspect new
+// lists will be derived, we will create a persistent vector. If not, we will create a simple
+// array.
+class LIST : public VALUE {
+public:
+    LIST() {
+        Type = PList;
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
+        Integer = 0;
+    };
+    
+#ifdef USE_CONS
+    // Create a list that points to a Cons (a classical lisp linked list pair node)
+    LIST( VALUE _first, VALUE _rest) {
+        Type = PList;
+        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
+        MaterializeAsCons( _first, _rest );
+        CheckIntegrety();
+    }
+#endif
+    
+    VALUE Rest();
+    
+    
+    void CheckIntegrety() {
+        if (IsHeapObject()) {
+            auto o = GetObject();
+            o->CheckIntegrety();
+        }
+    }
+    
+    LIST( ValueStyle style, List* list ) {
+        Type = PList;
+        Integer = (uint64_t)list;
+        Style = style;    }
+    
+    
+    // Append to the end of this list. As this is slow in persistent linked lists,
+    // the new list will probably have another type of materialization.
+    LIST Append( VALUE elem );
+    
+    
+    // Empty lists are not allocated on the heap.
+    bool IsEmptyList() {
+        return Integer == 0;
+    }
+    
+    std::string Print();
+    
+#ifdef USE_CONS
+    void MaterializeAsCons( VALUE first, VALUE rest );
+#endif
+    //#ifdef USE_ARRAY
+    //    Array* MaterializeAsArray( VALUE first, VALUE rest );
+    //#endif
+    
+    LIST ReplaceAt( int i, VALUE v );
+    VALUE GetAt( int i );
+    
+    
+};
+
+
+class List : public Object {
+public:
+    
+    List() : Object() {
+        
+    }
+    
+    virtual VALUE First() = 0;
+    virtual VALUE Rest() = 0;
+    virtual List* Append( VALUE v ) = 0;
+    
+#ifdef USE_CONS
+    virtual List* Prepend( VALUE v );
+#else
+    virtual List* Prepend( VALUE v ) = 0;
+#endif
+    
+    virtual List* Skip( int index ) {
+        List* list = this;
+        for (int i = 0 ; i < index ; i++ ) {
+            list = list->Rest().GetList();
+        }
+        return list;
+    }
+    
+    virtual VALUE GetAt( int index ) {
+        return Skip(index)->First();
+    }
+    
+    virtual List* ReplaceAt( int i, VALUE v ) = 0;
+    
+    virtual int Count() {
+        int i = 1;
+        VALUE list = this->Rest();
+        while (!list.IsNil()) {
+            i++;
+            list = list.GetList()->Rest();
+        }
+        return i;
+    }
+    
+    virtual List* Last( int n ) {
+        int cnt = Count();
+        return Skip(cnt-n);
+    }
+    
+    virtual List* RemoveAt( int i ) = 0;
+    virtual List* InsertAt( int i, VALUE v ) = 0;
+    virtual List* Reverse() = 0;
+    virtual List* Replace( VALUE v1, VALUE v2 ) = 0;
+    virtual List* Sort( VALUE fun ) = 0;
+    virtual List* Map( VALUE fun ) = 0;
+    virtual List* First( int i ) = 0;
+    
+#ifdef USE_OPTIMIZATIONS
+    virtual bool AttemptDirtyAdd( VALUE v ) {
+        throw std::runtime_error("Not implemented yet");
+    }
+#endif
+    
+    bool AtEnd() {
+        return Rest().IsNil();
+    }
+    
+    List* RestL() {
+        return Rest().GetList();
+    }
+    
+};
 
 
 
