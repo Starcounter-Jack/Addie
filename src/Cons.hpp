@@ -12,9 +12,6 @@
 #define Cons_hpp
 
 #include "Cons.hpp"
-//#include "Value.hpp"
-#include "Isolate.hpp"
-#include "List.hpp"
 
 
 // This list materialization is based on the classical Lisp linked list.
@@ -81,7 +78,7 @@ public:
 #endif
         int originalCount = Count();
         int last = Count()-1;
-        List* c = LIST(elem,NIL()).GetList();
+        List* c = LIST(QParenthesis,elem,NIL()).GetList();
         while (last >= 0) {
             c = c->Prepend( GetAt(last) );
             last--;

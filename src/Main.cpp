@@ -8,10 +8,8 @@
 
 
 #include "Addie.hpp"
-#include "List.hpp"
 #include "Reader.hpp"
 #include <iostream>
-#include "Isolate.hpp"
 
 #ifdef USE_INTARRAY
 
@@ -45,12 +43,11 @@ void TestIntArrays() {
 void TestCons() {
 
     std::cout << "Test Cons:";
-    LIST str(INTEGER(107),NIL());
+    LIST str(QString,INTEGER(107),NIL());
     str.CheckIntegrety();
-    LIST str2(INTEGER(99),str);
-    LIST str3(INTEGER(97),str2);
-    LIST str4(INTEGER(74),str3);
-    str4.Style = QString;
+    LIST str2(QString,INTEGER(99),str);
+    LIST str3(QString,INTEGER(97),str2);
+    LIST str4(QString,INTEGER(74),str3);
     std::cout << str4.Print();
     std::cout << "\n\n\n";
     assert( strcmp("\"Jack\"",str4.Print().c_str()) == 0 );

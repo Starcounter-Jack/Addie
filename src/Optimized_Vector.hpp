@@ -25,7 +25,7 @@
 #define Vector_hpp
 
 #include <vector>
-#include "List.hpp"
+//#include "List.hpp"
 
 
 // TODO! Replace which Bitmap Vector Trie

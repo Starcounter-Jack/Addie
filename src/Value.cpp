@@ -7,7 +7,6 @@
 //
 
 #include "Addie.hpp"
-#include "List.hpp"
 #include "Cons.hpp"
 #include <sstream>
 #include "Optimized_Array.hpp"
@@ -132,20 +131,20 @@ std::string INTEGER::Print() {
 
 
 
-#ifdef USE_CONS
+#ifdef USE_ARRAY
 LIST LIST::Append( VALUE elem ) {
     if (Integer == 0) {
-        LIST v = LIST(elem,NIL());
+        LIST v = LIST(elem);
         v.Style = this->Style;
         return v;
     }
     return LIST(Style,GetList()->Append( elem ));
 }
 #else
-#ifdef USE_ARRAY
+#ifdef USE_CONS
 LIST LIST::Append( VALUE elem ) {
     if (Integer == 0) {
-        return LIST(Style,Array::Create( elem ));
+        return LIST(Style,elem);
     }
     return LIST(Style,GetList()->Append(elem));
 }
@@ -154,7 +153,7 @@ LIST LIST::Append( VALUE elem ) {
 
 #ifdef USE_CONS
 List* List::Prepend( VALUE v ) {
-        LIST newList(v,LIST(QParenthesis,this));
+        LIST newList(QParenthesis,v,LIST(QParenthesis,this));
         return newList.GetList();
 }
 #endif
@@ -258,6 +257,19 @@ void LIST::MaterializeAsCons( VALUE first, VALUE rest ) {
     assert( c == (Cons*)Integer );
     c->CheckIntegrety();
     Cons* obj = (Cons*)Integer;
+    assert( obj->MemoryCheck == 123456789 );
+    CheckIntegrety();
+}
+#endif
+
+#ifdef USE_ARRAY
+void LIST::MaterializeAsArray( VALUE first ) {
+    auto c = Array::Create(first);
+    //Cons* c = new Cons(first,rest);
+    Integer = (uintptr_t)c;
+    assert( c == (Array*)Integer );
+    c->CheckIntegrety();
+    auto obj = (Array*)Integer;
     assert( obj->MemoryCheck == 123456789 );
     CheckIntegrety();
 }

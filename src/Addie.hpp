@@ -13,13 +13,15 @@
 
 #ifdef USE_OPTIMIZATIONS
 #define USE_CONS
-#define USE_CONS_OPTIMIZATIONS
+//#define USE_CONS_OPTIMIZATIONS
 //#define USE_ARRAY
 //#define USE_ARRAY_OPTIMIZATIONS
-#define USE_INTARRAY
-#define USE_INTARRAY_OPTIMIZATIONS
+//#define USE_INTARRAY
+//#define USE_INTARRAY_OPTIMIZATIONS
 //#define USE_VECTOR
 //#define USE_VECTOR_OPTIMIZATIONS
+#else
+#define USE_CONS
 #endif
 
 
@@ -28,6 +30,11 @@
 #include <iostream>
 #include <assert.h>
 #include <cstdint>
+#include <map>
+#include <vector>
+#include <sys/mman.h>
+
+
 
 typedef uint8_t byte;
 typedef uint16_t u16;
@@ -427,11 +434,8 @@ public:
 };
 
 
-#include "Addie.hpp"
-#include <map>
-#include <vector>
-#include <sys/mman.h>
-#include <cstring>
+//#include "Addie.hpp"
+//#include <cstring>
 
 
 #define MALLOC_HEAP(type) (type*)CurrentIsolate->MallocHeap(sizeof(type));
@@ -772,14 +776,32 @@ public:
         Integer = 0;
     };
     
-#ifdef USE_CONS
+#ifdef USE_ARRAY
     // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( VALUE _first, VALUE _rest) {
+    LIST( ValueStyle style, VALUE _first) {
         Type = PList;
-        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
+        Style = style;
+        MaterializeAsArray( _first );
+        CheckIntegrety();
+    }
+#else
+#ifdef USE_CONS
+    
+    // Create a list that points to a Cons (a classical lisp linked list pair node)
+    LIST( ValueStyle style, VALUE _first) {
+        Type = PList;
+        Style = style; // See VALUE::IsClassicalParenthesis
+        MaterializeAsCons( _first, NIL() );
+        CheckIntegrety();
+    }
+    // Create a list that points to a Cons (a classical lisp linked list pair node)
+    LIST( ValueStyle style, VALUE _first, VALUE _rest) {
+        Type = PList;
+        Style = style; // See VALUE::IsClassicalParenthesis
         MaterializeAsCons( _first, _rest );
         CheckIntegrety();
     }
+#endif
 #endif
     
     VALUE Rest();
@@ -813,9 +835,9 @@ public:
 #ifdef USE_CONS
     void MaterializeAsCons( VALUE first, VALUE rest );
 #endif
-    //#ifdef USE_ARRAY
-    //    Array* MaterializeAsArray( VALUE first, VALUE rest );
-    //#endif
+#ifdef USE_ARRAY
+    void MaterializeAsArray( VALUE first );
+#endif
     
     LIST ReplaceAt( int i, VALUE v );
     VALUE GetAt( int i );

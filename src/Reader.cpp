@@ -14,47 +14,20 @@
 // All our reserved characters lives in ASCII space except for our extended
 // begin/end parenthesis unicode symbols ⏜ ⏝ (9180 and 9181).
 ParseSomething Parsers[128] = {
-    NULL,    // 0
-    NULL,    // 1
-    NULL,    // 2
-    NULL,    // 3
-    NULL,    // 4
-    NULL,    // 5
-    NULL,    // 6
-    NULL,    // 7
-    NULL,    // 8
-    NULL,    // 9
-    NULL,    // 10
-    NULL,    // 11
-    NULL,    // 12
-    NULL,    // 13
-    NULL,    // 14
-    NULL,    // 15
-    NULL,    // 16
-    NULL,    // 17
-    NULL,    // 18
-    NULL,    // 19
-    NULL,    // 20
-    NULL,    // 21
-    NULL,    // 22
-    NULL,    // 23
-    NULL,    // 24
-    NULL,    // 25
-    NULL,    // 26
-    NULL,    // 27
-    NULL,    // 28
-    NULL,    // 29
+    NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, // 0-9
+    NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, // 10-19
+    NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, // 20-29
     NULL,    // 30
     NULL,    // 31
     NULL,    // 32
-    &(Parser::ParseSymbol),    // 33
+    &(Parser::ParseSymbol),    // 33  !
     &(Parser::ParseString),    // 34  "
-    &(Parser::ParseSymbol),    // 35
-    &(Parser::ParseSymbol),    // 36
-    &(Parser::ParseSymbol),    // 37
-    &(Parser::ParseSymbol),    // 38
-    &(Parser::ParseSymbol),    // 39
-    &(Parser::ParseList),    // 40 (
+    &(Parser::ParseSymbol),    // 35  #
+    &(Parser::ParseSymbol),    // 36  $
+    &(Parser::ParseSymbol),    // 37  %
+    &(Parser::ParseSymbol),    // 38  &
+    &(Parser::ParseSymbol),    // 39  '
+    &(Parser::ParseList),      // 40 (
     &(Parser::ParseUnsolicitedEndParen),    // 41 )
     &(Parser::ParseSymbol),    // 42
     &(Parser::ParseSymbol),    // 43
@@ -156,37 +129,37 @@ Char Chars[256] = {
     {1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},{1},    // 14-31
     {1,0,1},       // 32 SPACE
     {0,1},         // 33  !
-    {1,0,0,1},   // 34  "
-    {0,0,0,1},   // 35  #
+    {1,0,0,1},     // 34  "
+    {0,0,0,1},     // 35  #
     {0,1},         // 36  $
-    {0,0,0,1},   // 37  %
+    {0,0,0,1},     // 37  %
     {0,1},         // 38  &
-    {0,0,0,1},   // 39  '
-    {1,0,0,1},   // 40  (
-    {1,0,0,1},   // 41  )
+    {0,0,0,1},     // 39  '
+    {1,0,0,1},     // 40  (
+    {1,0,0,1},     // 41  )
     {0,1},         // 42  *
     {0,1},         // 43  +
     {1,0},         // 44  ,
     {0,1},         // 45  -
     {0,1},         // 46  .
     {0,1},         // 47  /
-    {0,1,0,0,1},         // 48  0
-    {0,1,0,0,1},         // 49  1
-    {0,1,0,0,1},         // 50  2
-    {0,1,0,0,1},         // 51  3
-    {0,1,0,0,1},         // 52  4
-    {0,1,0,0,1},         // 53  5
-    {0,1,0,0,1},         // 54  6
-    {0,1,0,0,1},         // 55  7
-    {0,1,0,0,1},         // 56  8
-    {0,1,0,0,1},         // 57  9
-    {1,0,0,1},   // 58  :
-    {1,0,0,1},   // 59  ;
+    {0,1,0,0,1},   // 48  Num 0
+    {0,1,0,0,1},   // 49  Num 1
+    {0,1,0,0,1},   // 50  Num 2
+    {0,1,0,0,1},   // 51  Num 3
+    {0,1,0,0,1},   // 52  Num 4
+    {0,1,0,0,1},   // 53  Num 5
+    {0,1,0,0,1},   // 54  Num 6
+    {0,1,0,0,1},   // 55  Num 7
+    {0,1,0,0,1},   // 56  Num 8
+    {0,1,0,0,1},   // 57  Num 9
+    {1,0,0,1},     // 58  :
+    {1,0,0,1},     // 59  ;
     {0,1},         // 60  <
     {0,1},         // 61  =
     {0,1},         // 62  >
     {0,1},         // 63  ?
-    {1,0,0,1},   // 64  @
+    {1,0,0,1},     // 64  @
     {0,1},         // 65  A
     {0,1},         // 66  B
     {0,1},         // 67  C
@@ -213,12 +186,12 @@ Char Chars[256] = {
     {0,1},         // 88  X
     {0,1},         // 89  Y
     {0,1},         // 90  Z
-    {1,0,0,1},   // 91  [
-    {1,0,0,1},   // 92  BACKSLASH
-    {1,0,0,1},   // 93  ]
-    {1,0,0,1},   // 94  ^
+    {1,0,0,1},     // 91  [
+    {1,0,0,1},     // 92  BACKSLASH
+    {1,0,0,1},     // 93  ]
+    {1,0,0,1},     // 94  ^
     {0,1},         // 95  _
-    {1,0,0,1},   // 96  `
+    {1,0,0,1},     // 96  `
     {0,1},         // 97  a
     {0,1},         // 98  b
     {0,1},         // 99  c
@@ -245,11 +218,11 @@ Char Chars[256] = {
     {0,1},         // 120 x
     {0,1},         // 121 y
     {0,1},         // 122 z
-    {1,0,0,1},   // 123 {
+    {1,0,0,1},     // 123 {
     {0,1},         // 124 |
-    {1,0,0,1},   // 125 }
-    {1,0,0,1},   // 126 ~
-    {1},          // 127 DELETE
+    {1,0,0,1},     // 125 }
+    {1,0,0,1},     // 126 ~
+    {1},           // 127 DELETE
     {0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},
     {0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},
     {0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},{0,1},
@@ -262,6 +235,169 @@ Char Chars[256] = {
     {0,1},{0,1}
 };
 
+// Parse any form
+VALUE Parser::ParseForm( StreamReader* r ) {
+    
+    r->SkipWhitespace(r);
+    unsigned char c = r->Read();
+    if (c > 127 ) {
+        r->UnRead();
+        if (ConsumeVerticalStartParenthesis(r,false)) {
+            return Parser::ParseList(r);
+        } else if (ConsumeVerticalStartBracket(r,false)) {
+            return Parser::ParseVector(r);
+        }
+        return Parser::ParseSymbol(r);
+    }
+    else {
+        ParseSomething fn = Parsers[c];
+        if (fn == NULL) {
+            std::ostringstream msg;
+            msg << "Missing parser for character ";
+            msg << (int)c;
+            throw std::runtime_error(msg.str());
+        }
+        else {
+            //               std::cout << "Found parser for ";
+            //               std::cout << c;
+            //               std::cout << "\n";
+            r->UnRead();
+            return fn( r );
+        }
+    }
+    //  }
+    return NIL();
+}
+
+// Parse the a string literal
+VALUE Parser::ParseString( StreamReader* r) {
+#ifdef USE_INTARRAY
+    IntArray<char>* arr = IntArray<char>::__beginWrite();
+    LIST list(QString,arr);
+    try {
+        r->Read(); // Skip the intitial "
+        while (true) {
+            unsigned char c = r->Read();
+            if (c == '"' ) {
+                arr->__endWrite();
+                return list;
+            }
+            arr->__write(c);
+        }
+    }
+    catch (...) {
+        arr->__endWrite();
+        throw;
+    }
+    arr->__endWrite();
+    return list;
+#else
+    LIST list;
+    r->Read(); // Skip the intitial "
+    while (true) {
+        unsigned char c = r->Read();
+        if (c == '"' ) {
+            list.Style = QString;
+            return list;
+        }
+        VALUE elem = INTEGER(c);
+        list = list.Append( elem );
+    }
+    return list;
+#endif
+}
+
+// Parse the form (....)
+VALUE Parser::ParseList( StreamReader* r) {
+    LIST list;
+    
+    ConsumeVerticalStartParenthesis(r, true);
+    while (true) {
+        
+        try {
+            StreamReader::SkipWhitespace(r);
+        }
+        catch (UnexpectedEOF e) {
+            throw std::runtime_error("Missing )");
+        }
+        
+        if (CheckForEndParenthesis(r)) {
+            return list;
+        }
+        
+        VALUE elem = ParseForm( r );
+        list = list.Append( elem );
+    }
+}
+
+// Parse the a symbol literal
+VALUE Parser::ParseSymbol( StreamReader* r ) {
+    
+    //        r->UnRead();
+    std::ostringstream res;
+    
+    while (true) {
+        unsigned char c = r->ReadEofOk();
+        if (Chars[c].IsSymbolTerminator) {
+            r->UnRead();
+            break;
+        }
+        res << c;
+    }
+    std::string str = res.str();
+    if (str.length() == 0) {
+        throw std::runtime_error("Symbol size is zero!");
+    }
+    return SYMBOL(str.c_str(), str.length());
+}
+
+
+
+// Parse the a number literal
+VALUE Parser::ParseNumber( StreamReader* r ) {
+    
+    // TODO! Currently only supports integers
+    // TODO! Also read decimal numbers and maybe other numeric literals. Check Clojure...
+    //r->UnRead();
+    std::ostringstream res;
+    
+    while (true) {
+        unsigned char c = r->ReadEofOk();
+        if (!Chars[c].IsDigit) {
+            r->UnRead();
+            break;
+        }
+        res << c;
+    }
+    std::string str = res.str();
+    return INTEGER( std::stoi(str) );
+}
+
+
+// Parse the form [.....]
+VALUE Parser::ParseVector( StreamReader* r) {
+    LIST list;
+    list.Style = QBrackets;
+    ConsumeVerticalStartBracket(r, true);
+    //        r->Read(); // Skip first parenthesis
+    while (true) {
+        
+        try {
+            StreamReader::SkipWhitespace(r);
+        }
+        catch (UnexpectedEOF e) {
+            throw std::runtime_error("Missing ]");
+        }
+        
+        if (CheckForEndBracket(r)) {
+            return list;
+        }
+        
+        VALUE elem = ParseForm( r );
+        list = list.Append(elem);
+        //list.Style = QBrackets;
+    }
+}
 
 
 

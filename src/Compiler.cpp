@@ -7,7 +7,6 @@
 //
 
 #include "Addie.hpp"
-#include "Isolate.hpp"
 #include <sstream>
 
 
