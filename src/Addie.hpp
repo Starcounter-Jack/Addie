@@ -555,15 +555,7 @@ public:
         return newAddress;
     }
     
-    void PrintStatus() {
-        if (NumberOfAllocations) {
-            std::cout << "\nNumber of unfreed allocations: ";
-            std::cout << NumberOfAllocations;
-            std::cout << "\nTotal allocations: ";
-            std::cout << BytesAllocated;
-            std::cout << " bytes\n";
-        }
-    }
+    void PrintStatus();
     
     
     
@@ -599,51 +591,8 @@ public: Isolate();
         return sym;
     }
     
-    
-    Symbol RegisterSymbol( const char* str, size_t size, int known ) {
-        //        std::cout << std::string( str, size );
-        
-        auto s = std::string(str,size);
-        
-        auto x = SymbolsIds.find(str);
-        if (x != SymbolsIds.end()) {
-            //            if (memcmp(str,GetStringFromSymbolId(x->second).c_str(),size) != 0) {
-            //                std::cout << str;
-            //                std::cout << "!=";
-            //                std::cout << GetStringFromSymbolId(x->second).c_str();
-            //                throw std::runtime_error("Symbol finder does not work");
-            //            }
-            return x->second;
-        }
-        
-        SymbolStrings.push_back(s);
-        uint16_t id = SymbolStrings.size() - 1;
-        SymbolsIds[s] = id;
-        
-        //std::cout << "\nRegistering: ";
-        //std::cout << SymbolStrings[id];
-        
-        if (known != -1 && known != id ) {
-            throw std::runtime_error("Error in fixed symbol registration");
-        }
-        
-        return id;
-    }
-    
-    //rrrr
-    //rrra
-    //rrar
-    //rraa
-    //rara
-    //arar
-    
-    
-    
-    //    bool IsReservedSymbol( uint16_t id ) {
-    //        return id <= ReservedSymbols;
-    //    }
+    Symbol RegisterSymbol( const char* str, size_t size, int known );
 };
-
 
 // http://stackoverflow.com/questions/23791060/c-thread-local-storage-clang-503-0-40-mac-osx
 #if HAS_CXX11_THREAD_LOCAL
@@ -670,32 +619,13 @@ public:
 };
 
 
-//class Compilation {
-//public:
-//    Instruction* Code;
-//    VALUE* Registers;
-//};
-
-
 struct Compilation {
     u32 SizeOfRegisters;
     u32 SizeOfInitializedRegisters;
     
-    
-    VALUE* StartOfConstants() {
-        return (VALUE*)((byte*)this + sizeof(Compilation));
-    }
-    
-    Instruction* StartOfInstructions() {
-        return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters);
-    }
-    
-    int GetInitializedRegisterCount() {
-        return SizeOfInitializedRegisters / sizeof(VALUE);
-    }
-    
-    //Instruction* Code;
-    // VALUE v1; VALUE v2....
+    VALUE* StartOfConstants() {   return (VALUE*)((byte*)this + sizeof(Compilation)); }
+    Instruction* StartOfInstructions() { return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters); }
+    int GetInitializedRegisterCount() { return SizeOfInitializedRegisters / sizeof(VALUE); }
 };
 
 // Frames are register windows pertaining to a particular compilation.
@@ -711,7 +641,6 @@ struct Frame
 {
     Frame* Parent;
     Compilation* Comp;
-    // VALUE Registers[n];
     
     VALUE* GetStartOfRegisters() {
         return (VALUE*)(((byte*)this) + sizeof(Frame));
@@ -759,7 +688,6 @@ public:
     }
     
 };
-
 
 
 
@@ -920,5 +848,3 @@ public:
 
 
 #endif /* Addie_hpp */
-
-

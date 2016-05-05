@@ -60,5 +60,35 @@ Type* Object::GetType() {
 //    return Parser::ParseForm( &teststr );
 //}
 
+void Isolate::PrintStatus() {
+    if (NumberOfAllocations) {
+        std::cout << "\nNumber of unfreed allocations: ";
+        std::cout << NumberOfAllocations;
+        std::cout << "\nTotal allocations: ";
+        std::cout << BytesAllocated;
+        std::cout << " bytes\n";
+    }
+}
+
+
+Symbol Isolate::RegisterSymbol( const char* str, size_t size, int known ) {
+    auto s = std::string(str,size);
+    auto x = SymbolsIds.find(str);
+    if (x != SymbolsIds.end()) {
+        return x->second;
+    }
+    
+    SymbolStrings.push_back(s);
+    uint16_t id = SymbolStrings.size() - 1;
+    SymbolsIds[s] = id;
+    
+    if (known != -1 && known != id ) {
+        throw std::runtime_error("Error in fixed symbol registration");
+    }
+    return id;
+}
+
+
+
 
 ATTRIBUTE_TLS Isolate* CurrentIsolate;
