@@ -13,11 +13,11 @@
 
 #ifdef USE_OPTIMIZATIONS
 #define USE_CONS
-//#define USE_CONS_OPTIMIZATIONS
-//#define USE_ARRAY
-//#define USE_ARRAY_OPTIMIZATIONS
-//#define USE_INTARRAY
-//#define USE_INTARRAY_OPTIMIZATIONS
+#define USE_CONS_OPTIMIZATIONS
+#define USE_ARRAY
+#define USE_ARRAY_OPTIMIZATIONS
+#define USE_INTARRAY
+#define USE_INTARRAY_OPTIMIZATIONS
 //#define USE_VECTOR
 //#define USE_VECTOR_OPTIMIZATIONS
 #else
@@ -722,6 +722,9 @@ public:
         MaterializeAsCons( _first, NIL() );
         CheckIntegrety();
     }
+#endif
+#endif
+#ifdef USE_CONS
     // Create a list that points to a Cons (a classical lisp linked list pair node)
     LIST( ValueStyle style, VALUE _first, VALUE _rest) {
         Type = PList;
@@ -729,7 +732,6 @@ public:
         MaterializeAsCons( _first, _rest );
         CheckIntegrety();
     }
-#endif
 #endif
     
     VALUE Rest();
