@@ -13,8 +13,10 @@
 #ifndef Array_hpp
 #define Array_hpp
 
-#include "Addie.hpp"
+#include "VM.hpp"
 
+namespace Addie {
+    namespace Internals {
 
 class VectorRest : public List {
 public:
@@ -293,10 +295,11 @@ public:
 
 };
 
-
-
-
 #endif
+
+}
+
+}
 
 
 #endif /* Array_hpp */

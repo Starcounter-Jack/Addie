@@ -8,12 +8,15 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "Addie.hpp"
+#include "VM.hpp"
 #include "Reader.hpp"
+
+using namespace Addie::Internals;
+
 
 // All our reserved characters lives in ASCII space except for our extended
 // begin/end parenthesis unicode symbols ⏜ ⏝ (9180 and 9181).
-ParseSomething Parsers[128] = {
+ParseSomething Addie::Internals::Parsers[128] = {
     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, // 0-9
     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, // 10-19
     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL, // 20-29
@@ -119,7 +122,7 @@ ParseSomething Parsers[128] = {
 };
 
 
-Char Chars[256] = {
+Char Addie::Internals::Chars[256] = {
     {1},{1},{1},{1},{1},{1},{1},{1},{1}, // 0-8
     {1,0,1},       // 9   TAB
     {1,0,1},       // 10  LF \n

@@ -14,11 +14,12 @@
 #ifndef IntArray_hpp
 #define IntArray_hpp
 
-#include "Addie.hpp"
+#include "VM.hpp"
 #include "Optimized_Array.hpp"
 
 
-
+namespace Addie {
+    namespace Internals {
 
 struct ArrayHeader {
     unsigned int ElementSize : 4;   // Important for efficiency for things like strings
@@ -208,6 +209,8 @@ public:
     
 };
 
+}
+}
 
 
 #endif /* IntArray_hpp */

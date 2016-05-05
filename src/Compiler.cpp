@@ -6,9 +6,11 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "Addie.hpp"
+#include "VM.hpp"
+#include "Compiler.hpp"
 #include <sstream>
 
+using namespace Addie::Internals;
 
 Compilation* Compiler::Compile( VALUE form ) {
     //        int type = form.Type;

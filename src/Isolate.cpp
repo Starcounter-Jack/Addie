@@ -6,8 +6,10 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "Addie.hpp"
+#include "VM.hpp"
 #include "Reader.hpp"
+
+using namespace Addie::Internals;
 
 
 Isolate::Isolate() {
@@ -23,42 +25,12 @@ Isolate::Isolate() {
     NextOnHeap = (uintptr_t)Heap;
     NextOnConstant = (uintptr_t)Constants;
     
-    StringType = new Type( SymString );
-    ConsType = new Type( SymCons );
-
     // Register the known symbols. Each VM bytecode OP also has a corresponding
     // text mnemonic such that the first 256 symbols correspond to a OP code.
     for (int t=0;t<Sym_Count;t++) {
         RegisterSymbol( SymStrings[t], strlen(SymStrings[t]), t );
     }
 }
-
-/*
-Type* Object::GetType() {
-        if (Type == SymString) {
-            return CurrentIsolate->StringType;
-        }
-        else if (Type == SymCons) {
-            return CurrentIsolate->ConsType;
-        }
-}
- */
-
-//STRING Isolate::Compile( VALUE form ) {
-//    Compiler c;
-//    return c.Compile( form );
-//}
-
-//STRING Isolate::Decompile( STRING code ) {
-//    Compiler c;
-//    return c.Decompile( code );
-//}
-
-//VALUE Isolate::Read( STRING source ) {
-//    const char* str = source.c_str();
-//    auto teststr = StringReader(str,strlen(str));
-//    return Parser::ParseForm( &teststr );
-//}
 
 void Isolate::PrintStatus() {
     if (NumberOfAllocations) {
@@ -69,7 +41,6 @@ void Isolate::PrintStatus() {
         std::cout << " bytes\n";
     }
 }
-
 
 Symbol Isolate::RegisterSymbol( const char* str, size_t size, int known ) {
     auto s = std::string(str,size);
@@ -91,4 +62,4 @@ Symbol Isolate::RegisterSymbol( const char* str, size_t size, int known ) {
 
 
 
-ATTRIBUTE_TLS Isolate* CurrentIsolate;
+ATTRIBUTE_TLS Isolate* Addie::Internals::CurrentIsolate;

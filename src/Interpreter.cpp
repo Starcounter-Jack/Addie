@@ -6,7 +6,9 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "Addie.hpp"
+#include "VM.hpp"
+
+using namespace Addie::Internals;
 
 // VM byte-codes are described here
 // https://github.com/Starcounter-Jack/Addie/wiki

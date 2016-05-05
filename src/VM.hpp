@@ -13,11 +13,11 @@
 
 #ifdef USE_OPTIMIZATIONS
 #define USE_CONS
-#define USE_CONS_OPTIMIZATIONS
-#define USE_ARRAY
-#define USE_ARRAY_OPTIMIZATIONS
-#define USE_INTARRAY
-#define USE_INTARRAY_OPTIMIZATIONS
+//#define USE_CONS_OPTIMIZATIONS
+//#define USE_ARRAY
+//#define USE_ARRAY_OPTIMIZATIONS
+//#define USE_INTARRAY
+//#define USE_INTARRAY_OPTIMIZATIONS
 //#define USE_VECTOR
 //#define USE_VECTOR_OPTIMIZATIONS
 #else
@@ -34,8 +34,9 @@
 #include <vector>
 #include <sys/mman.h>
 
-
-
+namespace Addie {
+namespace Internals {
+    
 typedef uint8_t byte;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -46,15 +47,15 @@ typedef uint16_t Symbol;
 
 // * c = (Cons*)CurrentIsolate->Memory.MallocHeap(sizeof(Cons));
 
+    
+    
 
-class Isolate;
-class Continuation;
 class List;
 
 // The root heap object
 class Object {
 public:
-    uint64_t MemoryCheck = 123456789; // 0xABBACAFFE;
+    uint32_t MemoryCheck = 123456789; // 0xABBACAFFE;
     int RefCount = 0;
     List* Meta;
     //    SYMBOL SetSpecifiers[32];
@@ -262,6 +263,9 @@ public:
     std::string ToString();
     std::string Print();
 };
+    
+class Continuation;
+
 
 class CONTINUATION : public VALUE {
 public:
@@ -272,7 +276,7 @@ public:
 };
 
 
-class Type;
+//class Type;
 
 
 
@@ -282,13 +286,13 @@ public:
     Symbol Name;
 };
 
-// The root type object
-class Type : public NamedEntity {
-public:
-    Type( Symbol symbol ) {
-        Name = symbol;
-    }
-};
+//// The root type object
+//class Type : public NamedEntity {
+//public:
+//    Type( Symbol symbol ) {
+//        Name = symbol;
+//    }
+//};
 
 
 
@@ -559,8 +563,8 @@ public:
     
     
     
-    Type* StringType;
-    Type* ConsType;
+//    Type* StringType;
+//    Type* ConsType;
     
     std::map<std::string,Symbol> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
     std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
@@ -605,7 +609,8 @@ public: Isolate();
 #error "Define a thread local storage qualifier for your compiler/platform!"
 #endif
 
-extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
+    
+    
 
 
 class String : public Object {
@@ -646,6 +651,9 @@ struct Frame
         return (VALUE*)(((byte*)this) + sizeof(Frame));
     }
 };
+        
+extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
+
 
 
 // Continuations are used by value as it is only 16 bytes in size (on 64 bits architectures).
@@ -666,12 +674,6 @@ public:
     }
 };
 
-class Compiler {
-public:
-    static Compilation* Compile( VALUE form );
-    static Compilation* CompilePrototype( VALUE form );
-    static STRINGOLD Disassemble( Compilation* code );
-};
 
 
 class Interpreter {
@@ -688,163 +690,10 @@ public:
     }
     
 };
+    
 
+} } // namespace Addie::Internals
 
-
-// This value represents all kinds of lists (including strings and maps). If the list is empty,
-// there will only be this value. If the list is non-empty, it will have a representation
-// on the heap. The representation depends on the predicted use-case. I.e. if we suspect new
-// lists will be derived, we will create a persistent vector. If not, we will create a simple
-// array.
-class LIST : public VALUE {
-public:
-    LIST() {
-        Type = PList;
-        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
-        Integer = 0;
-    };
-    
-#ifdef USE_ARRAY
-    // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ValueStyle style, VALUE _first) {
-        Type = PList;
-        Style = style;
-        MaterializeAsArray( _first );
-        CheckIntegrety();
-    }
-#else
-#ifdef USE_CONS
-    
-    // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ValueStyle style, VALUE _first) {
-        Type = PList;
-        Style = style; // See VALUE::IsClassicalParenthesis
-        MaterializeAsCons( _first, NIL() );
-        CheckIntegrety();
-    }
-#endif
-#endif
-#ifdef USE_CONS
-    // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ValueStyle style, VALUE _first, VALUE _rest) {
-        Type = PList;
-        Style = style; // See VALUE::IsClassicalParenthesis
-        MaterializeAsCons( _first, _rest );
-        CheckIntegrety();
-    }
-#endif
-    
-    VALUE Rest();
-    
-    
-    void CheckIntegrety() {
-        if (IsHeapObject()) {
-            auto o = GetObject();
-            o->CheckIntegrety();
-        }
-    }
-    
-    LIST( ValueStyle style, List* list ) {
-        Type = PList;
-        Integer = (uint64_t)list;
-        Style = style;    }
-    
-    
-    // Append to the end of this list. As this is slow in persistent linked lists,
-    // the new list will probably have another type of materialization.
-    LIST Append( VALUE elem );
-    
-    
-    // Empty lists are not allocated on the heap.
-    bool IsEmptyList() {
-        return Integer == 0;
-    }
-    
-    std::string Print();
-    
-#ifdef USE_CONS
-    void MaterializeAsCons( VALUE first, VALUE rest );
-#endif
-#ifdef USE_ARRAY
-    void MaterializeAsArray( VALUE first );
-#endif
-    
-    LIST ReplaceAt( int i, VALUE v );
-    VALUE GetAt( int i );
-    
-    
-};
-
-
-class List : public Object {
-public:
-    
-    List() : Object() {
-        
-    }
-    
-    virtual VALUE First() = 0;
-    virtual VALUE Rest() = 0;
-    virtual List* Append( VALUE v ) = 0;
-    
-#ifdef USE_CONS
-    virtual List* Prepend( VALUE v );
-#else
-    virtual List* Prepend( VALUE v ) = 0;
-#endif
-    
-    virtual List* Skip( int index ) {
-        List* list = this;
-        for (int i = 0 ; i < index ; i++ ) {
-            list = list->Rest().GetList();
-        }
-        return list;
-    }
-    
-    virtual VALUE GetAt( int index ) {
-        return Skip(index)->First();
-    }
-    
-    virtual List* ReplaceAt( int i, VALUE v ) = 0;
-    
-    virtual int Count() {
-        int i = 1;
-        VALUE list = this->Rest();
-        while (!list.IsNil()) {
-            i++;
-            list = list.GetList()->Rest();
-        }
-        return i;
-    }
-    
-    virtual List* Last( int n ) {
-        int cnt = Count();
-        return Skip(cnt-n);
-    }
-    
-    virtual List* RemoveAt( int i ) = 0;
-    virtual List* InsertAt( int i, VALUE v ) = 0;
-    virtual List* Reverse() = 0;
-    virtual List* Replace( VALUE v1, VALUE v2 ) = 0;
-    virtual List* Sort( VALUE fun ) = 0;
-    virtual List* Map( VALUE fun ) = 0;
-    virtual List* First( int i ) = 0;
-    
-#ifdef USE_OPTIMIZATIONS
-    virtual bool AttemptDirtyAdd( VALUE v ) {
-        throw std::runtime_error("Not implemented yet");
-    }
-#endif
-    
-    bool AtEnd() {
-        return Rest().IsNil();
-    }
-    
-    List* RestL() {
-        return Rest().GetList();
-    }
-    
-};
 
 
 

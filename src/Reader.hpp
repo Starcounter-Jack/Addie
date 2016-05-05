@@ -16,13 +16,15 @@
 //#include <numeric> // for std::accumulate
 #include <sstream> // for std::ostringstream
 
-#include "Addie.hpp"
+#include "VM.hpp"
 #include "Cons.hpp"
 #include "Optimized_Array.hpp"
 #include "Optimized_IntArray.hpp"
 #include "Optimized_Vector.hpp"
 
-
+namespace Addie {
+    namespace Internals {
+    
 class UnexpectedEOF: public std::exception {
 };
 
@@ -278,5 +280,8 @@ class Parser {
     }
 };
 
+}
+
+}
 
 #endif /* Parser_hpp */

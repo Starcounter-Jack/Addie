@@ -6,11 +6,13 @@
 //  Copyright © 2016 Joachim Wester, Starcounter AB.
 //
 
-#include "Addie.hpp"
+#include "VM.hpp"
+#include "List.hpp"
 #include "Cons.hpp"
 #include <sstream>
 #include "Optimized_Array.hpp"
 
+using namespace Addie::Internals;
 
 
 std::string STRINGOLD::ToString() {
@@ -131,32 +133,24 @@ std::string INTEGER::Print() {
 
 
 
-#ifdef USE_ARRAY
 LIST LIST::Append( VALUE elem ) {
     if (Integer == 0) {
-        LIST v = LIST(elem);
-        v.Style = this->Style;
+        LIST v = LIST(Style,elem);
         return v;
     }
     return LIST(Style,GetList()->Append( elem ));
 }
-#else
-#ifdef USE_CONS
-LIST LIST::Append( VALUE elem ) {
-    if (Integer == 0) {
-        return LIST(Style,elem);
-    }
-    return LIST(Style,GetList()->Append(elem));
-}
-#endif
-#endif
 
-#ifdef USE_CONS
-List* List::Prepend( VALUE v ) {
-        LIST newList(QParenthesis,v,LIST(QParenthesis,this));
-        return newList.GetList();
+
+LIST LIST::Prepend( VALUE elem ) {
+    if (Integer == 0) {
+        LIST v = LIST(Style,elem);
+        return v;
+    }
+    return LIST(Style,GetList()->Prepend( elem ));
 }
-#endif
+
+
 
 //    CONS newList;
 //    newList.Rest = this;
@@ -250,28 +244,19 @@ VALUE LIST::GetAt( int i ) {
 }
 
 #ifdef USE_CONS
-void LIST::MaterializeAsCons( VALUE first, VALUE rest ) {
-    auto c = Cons::Create(first,rest);
-    //Cons* c = new Cons(first,rest);
-    Integer = (uintptr_t)c;
-    assert( c == (Cons*)Integer );
-    c->CheckIntegrety();
-    Cons* obj = (Cons*)Integer;
-    assert( obj->MemoryCheck == 123456789 );
-    CheckIntegrety();
+//List* LIST::CreateDefaultList( VALUE first, VALUE rest ) {
+//    return Cons::Create(first,rest);
+//}
+#ifndef USE_ARRAY
+List* LIST::CreateDefaultList( VALUE first ) {
+    return Cons::Create(first,NIL());
 }
+#endif
 #endif
 
 #ifdef USE_ARRAY
-void LIST::MaterializeAsArray( VALUE first ) {
-    auto c = Array::Create(first);
-    //Cons* c = new Cons(first,rest);
-    Integer = (uintptr_t)c;
-    assert( c == (Array*)Integer );
-    c->CheckIntegrety();
-    auto obj = (Array*)Integer;
-    assert( obj->MemoryCheck == 123456789 );
-    CheckIntegrety();
+List* LIST::CreateDefaultList( VALUE first ) {
+    return Array::Create(first);
 }
 #endif
 

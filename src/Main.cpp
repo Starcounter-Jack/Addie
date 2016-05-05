@@ -7,13 +7,19 @@
 //
 
 
-#include "Addie.hpp"
+#include "VM.hpp"
 #include "Reader.hpp"
+#include "Compiler.hpp"
 #include <iostream>
+
+using namespace Addie::Internals;
+
 
 #ifdef USE_INTARRAY
 
 #include "Optimized_IntArray.hpp"
+
+
 
 IntArray<int>* CreateSimpleArray() {
     IntArray<int>* arr = IntArray<int>::__beginWrite();
@@ -39,28 +45,42 @@ void TestIntArrays() {
 #endif
 
 
-#ifdef USE_CONS
-void TestCons() {
-
-    std::cout << "Test Cons:";
-    LIST str(QString,INTEGER(107),NIL());
+void TestAppend() {
+    
+    std::cout << "Test Append:";
+    LIST str(QString,INTEGER(74));
     str.CheckIntegrety();
-    LIST str2(QString,INTEGER(99),str);
-    LIST str3(QString,INTEGER(97),str2);
-    LIST str4(QString,INTEGER(74),str3);
+    LIST str2 = str.Append(INTEGER(97));
+    LIST str3 = str2.Append(INTEGER(99));
+    LIST str4 = str3.Append(INTEGER(107));
     std::cout << str4.Print();
-    std::cout << "\n\n\n";
+    std::cout << "\n";
     assert( strcmp("\"Jack\"",str4.Print().c_str()) == 0 );
-
+    
 }
-#endif
+
+
+
+void TestPrepend() {
+    
+    std::cout << "Test Prepend:";
+    LIST str(QString,INTEGER(107));
+    str.CheckIntegrety();
+    LIST str2 = str.Prepend(INTEGER(99));
+    LIST str3 = str2.Prepend(INTEGER(97));
+    LIST str4 = str3.Prepend(INTEGER(74));
+    std::cout << str4.Print();
+    std::cout << "\n";
+    assert( strcmp("\"Jack\"",str4.Print().c_str()) == 0 );
+    
+}
+
 void TestArrays() {
 #ifdef USE_INTARRAY
     TestIntArrays();
 #endif
-#ifdef USE_CONS
-    TestCons();
-#endif
+    TestPrepend();
+    TestAppend();
 }
 
 

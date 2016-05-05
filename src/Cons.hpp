@@ -11,9 +11,13 @@
 #ifndef Cons_hpp
 #define Cons_hpp
 
+#include "VM.hpp"
+#include "List.hpp"
 #include "Cons.hpp"
 
-
+namespace Addie {
+    namespace Internals {
+    
 // This list materialization is based on the classical Lisp linked list.
 // The names first and rest are used instead of car and cdr as is also the
 // case in Clojure. A major difference is that Addie sees both First and Rest
@@ -78,16 +82,16 @@ public:
 #endif
         int originalCount = Count();
         int last = Count()-1;
-        List* c = LIST(QParenthesis,elem,NIL()).GetList();
+        List* c = LIST(QParenthesis,elem).GetList();
         while (last >= 0) {
             c = c->Prepend( GetAt(last) );
             last--;
         }
         int newCount = c->Count();
         assert( newCount == originalCount + 1 );
-        std::cout << "\nBefore:" << LIST(QParenthesis,this).Print();
-        std::cout << "\nAdded:" << elem.Print();
-        std::cout << "\nAfter:" << LIST(QParenthesis,c).Print() << "\n";
+//        std::cout << "\nBefore:" << LIST(QParenthesis,this).Print();
+//        std::cout << "\nAdded:" << elem.Print();
+//        std::cout << "\nAfter:" << LIST(QParenthesis,c).Print() << "\n";
         return c;
     }
     
@@ -97,11 +101,16 @@ public:
             return false;        
         }
         LIST c;
-        c.MaterializeAsCons( v, NIL() );
+        c.Integer = (uintptr_t)Cons::Create( v, NIL() );
+//        c.MaterializeAsCons( v, NIL() );
         SetRest(c);
         return true;
     }
 #endif
+    
+    List* Prepend( VALUE v ) final {
+        return Cons::Create(v, LIST(QParenthesis,this));
+    }
     
     
     
@@ -144,7 +153,9 @@ public:
 
 };
 
+}
 
+}
 #endif /* List_hpp */
 
 #endif
