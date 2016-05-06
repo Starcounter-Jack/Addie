@@ -19,7 +19,7 @@
 namespace Addie {
     namespace Internals {
 
-/*
+
  class VectorRest : public List {
 public:
     List* _host;
@@ -107,7 +107,7 @@ public:
     }
     
 };
- */
+ 
 
 #ifdef USE_ARRAY
 
@@ -170,7 +170,13 @@ public:
     
     // Override of the List interface
     VALUE Rest() {
-        return LIST(this).Rest();
+        VectorRest* rest;
+        if (_count == 1) {
+            return NIL();
+        }
+        rest = MALLOC_HEAP(VectorRest);
+        new (rest) VectorRest(this,1);
+        return LIST(rest);
     }
     
     // Override of the List interface
@@ -231,9 +237,9 @@ public:
         
         CurrentIsolate->ReportHeapWrite(size + sizeof(VALUE));
 
-//        std::cout << "Before:" << LIST(this).Print() << "\n";
+//        std::cout << "Before:" << LIST(QParenthesis,this).Print() << "\n";
 //        std::cout << "Adding:" << v.Print() << "\n";
-//        std::cout << "After:" << LIST(newList).Print() << "\n";
+//        std::cout << "After:" << LIST(QParenthesis,newList).Print() << "\n";
         return newList;
 #else
         // Upgrade to a bitmapped vector trie as it is faster for
@@ -255,9 +261,9 @@ public:
         CurrentIsolate->ReportHeapWrite(sizeof(Array) + elemsize + sizeof(VALUE));
         ((Array*)newList)->_count++;
         
-//        std::cout << "\nBefore:" << LIST(this).Print() << "\n";
+//        std::cout << "\nBefore:" << LIST(QParenthesis,this).Print() << "\n";
 //        std::cout << "Prepend:" << v.Print() << "\n";
-//        std::cout << "After:" << LIST((Array*)newList).Print() << "\n";
+//        std::cout << "After:" << LIST(QParenthesis,(Array*)newList).Print() << "\n";
 
         return (Array*)newList;
 #else

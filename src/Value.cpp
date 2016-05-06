@@ -174,6 +174,7 @@ VALUE VALUE::Rest() {
     if (Integer == 0) {
         return NIL();
     }
+    /*
     List* self = GetList();
     if (self->IsCheapCount()) {
         if ( Start < self->Count() - 1 ) {
@@ -184,13 +185,14 @@ VALUE VALUE::Rest() {
         }
         return NIL();
     }
+     */
     return GetList()->Rest();
 }
 
 
 VALUE VALUE::First() {
     assert( ListPointer != 0);
-    return GetList()->GetAt(Start); //First();
+    return GetList()->First();
 }
 
 

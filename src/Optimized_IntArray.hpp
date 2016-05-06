@@ -76,7 +76,13 @@ public:
     
     // Override of the List interface
     VALUE Rest() {
-        return LIST(this).Rest();
+        VectorRest* rest;
+        if (Header.Count == 1) {
+            return NIL();
+        }
+        rest = MALLOC_HEAP(VectorRest);
+        new (rest) VectorRest(this,1);
+        return LIST(rest);
     }
     
     // Override of the List interface
