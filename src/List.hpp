@@ -83,7 +83,8 @@ public:
     
     // Empty lists are not allocated on the heap.
     bool IsEmptyList() {
-        return Integer == 0;
+        assert( Type == TList );
+        return (Type == TList && Integer == 0);
     }
     
     std::string Print();
@@ -131,7 +132,7 @@ public:
     virtual int Count() {
         int i = 1;
         LIST list = this->Rest();
-        while (!list.IsNil()) {
+        while (!list.IsEmpty()) {
             i++;
             list = list.GetList()->Rest();
         }
@@ -157,10 +158,6 @@ public:
     }
 #endif
     
-    bool AtEnd() {
-        return Rest().IsNil();
-    }
-    
     List* RestL() {
         return Rest().GetList();
     }
@@ -170,7 +167,9 @@ public:
         class LIST_NIL : public LIST {
         public:
             LIST_NIL() {
-                Whole = 0;
+                Type = TList;
+                ListStyle = QParenthesis;
+                Integer = 0;
             }
             
         };

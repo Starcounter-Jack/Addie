@@ -230,7 +230,7 @@ std::string LIST::Print() {
     LIST next = Rest();
     if (ListStyle == QString) {
         res << (char)(First().Integer);
-        while (next.IsList()) {
+        while (!next.IsEmpty()) {
             //List* pnext = next.GetList();
             res << (char)(next.First().Integer);
             next = next.Rest();
@@ -239,13 +239,13 @@ std::string LIST::Print() {
     else {
        if (Rest().IsList()) {
            res << First().Print();
-           while (next.IsList()) {
+           while (!next.IsEmpty()) {
                res << " ";
                //List* pnext = next.GetList();
                res << next.First().Print();
                next = next.Rest();
            }
-           if (!next.IsNil()) {
+           if (!next.IsEmptyList()) {
                res << " . ";
                res << next.Print();
            }
@@ -254,7 +254,7 @@ std::string LIST::Print() {
            //res << "Vafan";
            //res << startParen;
            res << First().Print();
-           if (!Rest().IsNil()) {
+           if (!Rest().IsEmptyList()) {
                res << " . ";
                res << Rest().Print();
            }

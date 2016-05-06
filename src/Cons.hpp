@@ -69,10 +69,10 @@ public:
     List* Append( VALUE elem ) {
 #ifdef USE_CONS_OPTIMIZATIONS
         List* tail = this;
-        while (!tail->Rest().IsNil() ) {
+        while (!tail->Rest().IsEmpty() ) {
             tail = tail->Rest().GetList();
         }
-        if (tail->RefCount < 2 && tail->Rest().IsNil()) {
+        if (tail->RefCount < 2 && tail->Rest().IsEmpty()) {
             // We can optimize things as we can reuse this materalization.
             // Nobody is referencing it.
             if (tail->AttemptDirtyAdd(elem)) {

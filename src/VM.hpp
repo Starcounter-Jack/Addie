@@ -206,6 +206,12 @@ public:
         return Whole == 0;
     }
     
+    
+    bool IsEmpty() {
+        return Integer == 0;
+    }
+
+    
     bool IsList() {
         //return ( Tag & 0b1100 ) == 0b1100;
         return Type == TList;
