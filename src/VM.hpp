@@ -70,6 +70,8 @@ public:
 
 
 
+
+
 enum ValueType : unsigned int {
     TAtom      =  0b00,    // Symbol
     TNumber    =  0b01,    // Integer
@@ -106,7 +108,6 @@ enum ValueOtherSubType : unsigned int {
      OOther      =  0b11,    //
 };
     
-    
 enum ValueTag : unsigned int {
     TagNil              =  0b0000,    // Lisp nil
     TagSymbol           =  0b0001,    // Symbol
@@ -136,23 +137,24 @@ public:
     union {
         uint64_t Whole;
         struct {
-            ValueTag Tag : 4;
+            ValueType Type : 2;
+            ValueOtherSubType OtherSubType : 2;
+            int64_t OtherPointers: 60;
+        };
+        struct {
+            ValueType Type_ : 2;
+            ValueAtomSubType AtomSubType : 2;
             int64_t Integer: 60;
         };
         struct {
-            ValueNumberSubType AtomSubType : 2;
-            ValueType SuperType2 : 2;
-            int64_t SymbolId: 60;
-        };
-        struct {
+            ValueType Type__ : 2;
             ValueNumberSubType NumberSubType : 2;
-            ValueType SuperType3 : 2;
             uint32_t Denominator: 28;
             int32_t Numerator: 32;
         };
         struct {
+            ValueType Type___ : 2;
             ValueListStyle ListStyle : 2;
-            ValueType Type : 2;
             uint32_t Start : 28;
             uintptr_t Pointer : 32;
         };
@@ -164,7 +166,7 @@ public:
     
     // Lists and Lambdas obviously do not fit in a value.
     bool IsHeapObject() {
-        return Tag & 0b1000 && Pointer != 0;
+        return ( Type & 0b10 ) && Pointer != 0;
     }
     
     List* GetList() {
@@ -210,16 +212,16 @@ public:
 
     
     bool IsNil() {
-        return Tag == TagNil;
+        return Whole == 0;
     }
     
     bool IsList() {
-        return ( Tag & 0b1100 ) == 0b1100;
-        // return SuperType == PList;
+        //return ( Tag & 0b1100 ) == 0b1100;
+        return Type == TList;
     }
     
     bool IsInteger() {
-        return Tag == TagInteger;
+        return Type == TNumber && NumberSubType == NInteger;
     }
     
     std::string ToString();
@@ -233,13 +235,14 @@ public:
 class STRINGOLD : public VALUE {
 public:
     STRINGOLD(std::string str ) {
-        //Style = QString;
-        Tag = TagOldString;
+        Type = TOther;
+        OtherSubType = OOldString;
         AllocateString( str.c_str(), str.length() );
     }
     
     STRINGOLD(char* c, size_t size ) {
-        Tag = TagOldString;
+        Type = TOther;
+        OtherSubType = OOldString;
         AllocateString( c, size );
     }
     
@@ -264,7 +267,7 @@ public:
 class NIL : public VALUE {
 public:
     NIL() {
-        Tag = TagNil;
+        Whole = 0; // = TagNil;
     }
     
     std::string Print();
@@ -273,10 +276,12 @@ public:
 class SYMBOL : public VALUE {
 public:
     SYMBOL() {
-        Tag = TagSymbol;
+        Type = TAtom;
+        AtomSubType = ASymbol;
     }
     SYMBOL( uint32_t sym ) {
-        Tag = TagSymbol;
+        Type = TAtom;
+        AtomSubType = ASymbol;
         Integer = sym;
     }
     
@@ -289,12 +294,14 @@ public:
 class INTEGER : public VALUE {
 public:
     INTEGER() {
-        Tag = TagInteger;
+        Type = TNumber;
+        NumberSubType = NInteger;
         Integer = 0;
     }
     
     INTEGER( int64_t i ) {
-        Tag = TagInteger;
+        Type = TNumber;
+        NumberSubType = NInteger;
         Integer = i;
         assert( Integer == i );
     }

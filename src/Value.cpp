@@ -67,7 +67,8 @@ uint32_t STRINGOLD::Length() {
 
 
 SYMBOL::SYMBOL( const char* str, size_t len ) {
-    Tag = TagSymbol;
+    Type = TAtom;
+    AtomSubType = ASymbol;
     Integer = CurrentIsolate->RegisterSymbol( str, len, -1 );
 }
 
@@ -95,20 +96,18 @@ std::string NIL::Print() {
 std::string VALUE::Print() {
     
     switch (Type) {
-        case (TList) :
-            return ((LIST*)this)->Print();
-        case (TOther) :
-            return ((STRINGOLD*)this)->Print();
-        case (TAtom) :
-            switch (AtomSubType) {
-                case (ASymbol) :
-                    return ((SYMBOL*)this)->Print();
-                case (ANil) :
-                    return ((NIL*)this)->Print();
-                default:
-                    break;
-            }
-        case (TNumber) :
+            case (TList) :
+                return ((LIST*)this)->Print();
+            case (TOther) :
+                return ((STRINGOLD*)this)->Print();
+            case (TAtom) :
+                switch (AtomSubType) {
+                    case (ASymbol) :
+                        return ((SYMBOL*)this)->Print();
+                    case (ANil) :
+                        return ((NIL*)this)->Print();
+                }
+            case (TNumber) :
             switch (NumberSubType) {
                 case (NInteger) :
                     return ((INTEGER*)this)->Print();
@@ -119,15 +118,17 @@ std::string VALUE::Print() {
 
     std::ostringstream res;
     res << "I dont know how to print a heap=";
-    res << " tag=";
-    res << Tag;
+    res << " type=";
+    res << Type;
+    res << " subtype=";
+    res << OtherSubType;
     return res.str();
 }
 
 
 std::string VALUE::ToString() {
     
-    if (Tag == TagList_Str ) {
+    if (Type == TList && ListStyle == QString ) {
         return "hello";
     }
     return Print();

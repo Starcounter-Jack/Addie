@@ -29,8 +29,6 @@ public:
     LIST() {
         Type = TList;
         ListStyle = QParenthesis;
-//        Type = TList_Paren;
-       // Style = QParenthesis; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };
     
