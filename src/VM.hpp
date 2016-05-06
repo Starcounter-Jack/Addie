@@ -151,10 +151,7 @@ public:
         return ( Type & 0b10 ) && Integer != 0;
     }
     
-    List* GetList() {
-        assert( IsList() );
-        return (List*)GetObject();
-    }
+
     
     inline void SetListPointer( uintptr_t p ) {
         ListPointer = p >> 4;
@@ -220,8 +217,6 @@ public:
     
     std::string ToString();
     
-    VALUE Rest();
-    VALUE First();
     std::string Print();
 };
 

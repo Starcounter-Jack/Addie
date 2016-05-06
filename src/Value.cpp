@@ -170,9 +170,9 @@ LIST LIST::Prepend( VALUE elem ) {
 //}
 
 
-VALUE VALUE::Rest() {
+LIST LIST::Rest() {
     if (Integer == 0) {
-        return NIL();
+        return LIST_NIL();
     }
     /*
     List* self = GetList();
@@ -190,7 +190,7 @@ VALUE VALUE::Rest() {
 }
 
 
-VALUE VALUE::First() {
+VALUE LIST::First() {
     assert( ListPointer != 0);
     return GetList()->First();
 }
@@ -227,7 +227,7 @@ std::string LIST::Print() {
     //List* self = GetList();
     
     res << startParen;
-    VALUE next = Rest();
+    LIST next = Rest();
     if (ListStyle == QString) {
         res << (char)(First().Integer);
         while (next.IsList()) {

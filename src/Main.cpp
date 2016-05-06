@@ -104,7 +104,9 @@ VALUE TestParse( const char* input, const char* expectedOutput ) {
 }
 
 VALUE TestParse( const char* input, int expectedCount, const char* expectedOutput ) {
-    VALUE v = IllustrateParse( input );
+    VALUE x = IllustrateParse( input );
+    LIST v;
+    v.Whole = x.Whole;
     int actualCount = v.GetList()->Count();
     const char* output = v.Print().c_str();
     assert( actualCount == expectedCount );
@@ -143,7 +145,7 @@ int main(int argc, const char * argv[]) {
                   "(let [a 10 b 20] (print (+ a b)))");
     
 
-    v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
+    //v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
     
     Compilation* code = Compiler::Compile( v );
     STRINGOLD str = Compiler::Disassemble(code);

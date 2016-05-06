@@ -35,10 +35,10 @@ public:
         return _host->GetAt(_pos);
     }
     
-    VALUE Rest() {
+    LIST Rest() {
         if (RefCount < 2) {
             if (_pos == _host->Count()-1) {
-                return NIL();
+                return LIST_NIL();
             }
             _pos++;
             return LIST(QString,this);
@@ -170,10 +170,10 @@ public:
     }
     
     // Override of the List interface
-    VALUE Rest() {
+    LIST Rest() {
         VectorRest* rest;
         if (_count == 1) {
-            return NIL();
+            return LIST_NIL();
         }
         rest = MALLOC_HEAP(VectorRest);
         new (rest) VectorRest(this,1);

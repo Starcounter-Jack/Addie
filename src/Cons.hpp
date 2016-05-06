@@ -26,17 +26,17 @@ namespace Addie {
 class Cons : public List {
 private:
     VALUE _first;
-    VALUE _rest;
+    LIST _rest;
 public:
     VALUE First() {
         return _first;
     }
     
-    VALUE Rest() {
+    LIST Rest() {
         return _rest;
     };
 
-    void SetRest( VALUE rest ) {
+    void SetRest( LIST rest ) {
         if (rest.IsHeapObject()) {
             rest.GetObject()->RefCount++;
         }
@@ -51,12 +51,12 @@ public:
     }
 
 
-    Cons( VALUE first, VALUE rest ) : List() {
+    Cons( VALUE first, LIST rest ) : List() {
         SetFirst( first );
         SetRest( rest );
     }
     
-    static Cons* Create( VALUE first, VALUE rest ) {
+    static Cons* Create( VALUE first, LIST rest ) {
         Cons* c = MALLOC_HEAP(Cons);
         new (c) Cons(first,rest);  // Calling constructor
         c->CheckIntegrety();
@@ -101,7 +101,7 @@ public:
             return false;        
         }
         LIST c;
-        c.SetListPointer( (uintptr_t)Cons::Create( v, NIL() ) );
+        c.SetListPointer( (uintptr_t)Cons::Create( v, LIST_NIL() ) );
 //        c.MaterializeAsCons( v, NIL() );
         SetRest(c);
         return true;

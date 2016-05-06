@@ -75,10 +75,10 @@ public:
     }
     
     // Override of the List interface
-    VALUE Rest() {
+    LIST Rest() {
         VectorRest* rest;
         if (Header.Count == 1) {
-            return NIL();
+            return LIST_NIL();
         }
         rest = MALLOC_HEAP(VectorRest);
         new (rest) VectorRest(this,1);

@@ -23,8 +23,7 @@ class LIST : public VALUE {
 public:
     
     List* CreateDefaultList( VALUE first );
-    List* CreateDefaultList( VALUE first, VALUE rest );
-    
+    List* CreateDefaultList( VALUE first, LIST rest );
     
     LIST() {
         Type = TList;
@@ -39,6 +38,10 @@ public:
         SetListPointer( (uintptr_t)CreateDefaultList( _first ) );
         CheckIntegrety();
     }
+    
+    LIST Rest();
+    VALUE First();
+
     
     /*
     // Create a list that points to a Cons (a classical lisp linked list pair node)
@@ -73,6 +76,10 @@ public:
 
     LIST Prepend( VALUE elem );
     
+    List* GetList() {
+        assert( IsList() );
+        return (List*)GetObject();
+    }
     
     // Empty lists are not allocated on the heap.
     bool IsEmptyList() {
@@ -97,7 +104,7 @@ public:
     }
     
     virtual VALUE First() = 0;
-    virtual VALUE Rest() = 0;
+    virtual LIST Rest() = 0;
     virtual List* Append( VALUE v ) = 0;
     
     virtual List* Prepend( VALUE v ) = 0;
@@ -123,7 +130,7 @@ public:
     
     virtual int Count() {
         int i = 1;
-        VALUE list = this->Rest();
+        LIST list = this->Rest();
         while (!list.IsNil()) {
             i++;
             list = list.GetList()->Rest();
@@ -159,8 +166,17 @@ public:
     }
     
 };
+     
+        class LIST_NIL : public LIST {
+        public:
+            LIST_NIL() {
+                Whole = 0;
+            }
+            
+        };
 
-}
+    }
+    
 }
 
 
