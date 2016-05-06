@@ -14,6 +14,7 @@
 #define Array_hpp
 
 #include "VM.hpp"
+#include "List.hpp"
 
 namespace Addie {
     namespace Internals {
@@ -56,6 +57,9 @@ public:
     
     // Override of the List interface
     VALUE GetAt( int i ) final {
+        if (i==0) {
+            return First();
+        }
         throw std::runtime_error("Not implemented yet");
     }
     
@@ -89,7 +93,7 @@ public:
         throw std::runtime_error("Not implemented yet");
     }
     
-    List* First( int i = 1 ) final {
+    List* Take( int i = 1 ) final {
         throw std::runtime_error("Not implemented yet");
     }
     
@@ -177,6 +181,11 @@ public:
     int Count() {
         return _count;
     }
+    
+    virtual bool IsCheapCount() {
+        return true;
+    }
+
 
     
     // Override of the List interface
@@ -226,9 +235,9 @@ public:
         
         CurrentIsolate->ReportHeapWrite(size + sizeof(VALUE));
 
-        //std::cout << "Before:" << LIST(this).Print() << "\n";
-        //std::cout << "Adding:" << v.Print() << "\n";
-        //std::cout << "After:" << LIST(newList).Print() << "\n";
+//        std::cout << "Before:" << LIST(QParenthesis,this).Print() << "\n";
+//        std::cout << "Adding:" << v.Print() << "\n";
+//        std::cout << "After:" << LIST(QParenthesis,newList).Print() << "\n";
         return newList;
 #else
         // Upgrade to a bitmapped vector trie as it is faster for
@@ -244,11 +253,16 @@ public:
         // Make a copy of the list
         size_t elemsize = _count * sizeof(VALUE);
         byte* newList = (byte*)CurrentIsolate->NextOnHeap;
-        memcpy( newList, (void*)this, sizeof(Array) );
-        memcpy( newList + sizeof(Array) + sizeof(VALUE), (void*)this, elemsize );
-        __values()[0] = v;
+        memcpy( newList, (void*)this, sizeof(Array) ); // Copy header
+        memcpy( newList + sizeof(Array) + sizeof(VALUE), (byte*)this + sizeof(Array), elemsize ); // Copy tail
+        ((Array*)newList)->__values()[0] = v;
         CurrentIsolate->ReportHeapWrite(sizeof(Array) + elemsize + sizeof(VALUE));
         ((Array*)newList)->_count++;
+        
+//        std::cout << "\nBefore:" << LIST(QParenthesis,this).Print() << "\n";
+//        std::cout << "Prepend:" << v.Print() << "\n";
+//        std::cout << "After:" << LIST(QParenthesis,(Array*)newList).Print() << "\n";
+
         return (Array*)newList;
 #else
         // Upgrade to a bitmapped vector trie as it is faster for
@@ -281,7 +295,7 @@ public:
         throw std::runtime_error("Not implemented yet");
     }
 
-    List* First( int i ) {
+    List* Take( int i ) {
         throw std::runtime_error("Not implemented yet");
     }
 

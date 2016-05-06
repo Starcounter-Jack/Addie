@@ -12,9 +12,9 @@
 #define USE_OPTIMIZATIONS
 
 #ifdef USE_OPTIMIZATIONS
-#define USE_CONS
+//#define USE_CONS
 //#define USE_CONS_OPTIMIZATIONS
-//#define USE_ARRAY
+#define USE_ARRAY
 //#define USE_ARRAY_OPTIMIZATIONS
 //#define USE_INTARRAY
 //#define USE_INTARRAY_OPTIMIZATIONS
@@ -72,7 +72,7 @@ public:
 
 
 
-enum ValueType : unsigned int {
+enum ValueType : uint8_t {
     TAtom      =  0b00,    // Symbol
     TNumber    =  0b01,    // Integer
     TOther     =  0b10,    // Function/procedure/code
@@ -80,52 +80,34 @@ enum ValueType : unsigned int {
 };
 
     
-enum ValueListStyle : unsigned int {
+enum ValueListStyle : uint8_t {
     QParenthesis    =  0b00,    //
     QString         =  0b01,    //
     QBracket        =  0b10,    // List/vector/array/string/map
     QCurly          =  0b11,    // List/vector/array/string/map
 };
     
-enum ValueNumberSubType : unsigned int {
+enum ValueNumberSubType : uint8_t {
     NInteger    =  0b00,    //
     NFraction   =  0b01,    //
     NBool       =  0b10,    //
     NReserved   =  0b11,    //
 };
     
-enum ValueAtomSubType : unsigned int {
+enum ValueAtomSubType : uint8_t {
     ANil        =  0b00,    //
     ASymbol     =  0b01,    //
     AReserved   =  0b10,    //
     AOther      =  0b11,    //
 };
     
-enum ValueOtherSubType : unsigned int {
-     OFunction   =  0b00,    //
-     OReserved1  =  0b01,    //
-     OOldString  =  0b10,    //
-     OOther      =  0b11,    //
+enum ValueOtherSubType : uint8_t {
+     OFunction    =  0b00,    //
+     OValueReference =  0b01,    // For future imperative closures
+     OOldString   =  0b10,    //
+     OOther       =  0b11,    //
 };
     
-enum ValueTag : unsigned int {
-    TagNil              =  0b0000,    // Lisp nil
-    TagSymbol           =  0b0001,    // Symbol
-    TagReserved1        =  0b0010,    //
-    TagReserved2        =  0b0011,    //
-    TagInteger          =  0b0100,    // Integer
-    TagRatio            =  0b0101,    // Ratio
-    TagBool             =  0b0110,    // Bool
-    TagReserved3        =  0b0111,    //
-    TagReserved4        =  0b1000,    //
-    TagReserved5        =  0b1001,    //
-    TagOldString        =  0b1010,    //
-    TagReserved7        =  0b1011,    //
-    TagList_Paren       =  0b1100,    // List/vector/array/string/map
-    TagList_Str         =  0b1101,    // List/vector/array/string/map
-    TagList_Brack       =  0b1110,    // List/vector/array/string/map
-    TagList_Curly       =  0b1111,    // List/vector/array/string/map
-};
 
 
 
@@ -139,7 +121,7 @@ public:
         struct {
             ValueType Type : 2;
             ValueOtherSubType OtherSubType : 2;
-            int64_t OtherPointers: 60;
+            int64_t OtherPointer: 60;
         };
         struct {
             ValueType Type_ : 2;
@@ -156,7 +138,7 @@ public:
             ValueType Type___ : 2;
             ValueListStyle ListStyle : 2;
             uint32_t Start : 28;
-            uintptr_t Pointer : 32;
+            uintptr_t ListPointer : 32;
         };
 
     };
@@ -166,7 +148,7 @@ public:
     
     // Lists and Lambdas obviously do not fit in a value.
     bool IsHeapObject() {
-        return ( Type & 0b10 ) && Pointer != 0;
+        return ( Type & 0b10 ) && Integer != 0;
     }
     
     List* GetList() {
@@ -174,13 +156,13 @@ public:
         return (List*)GetObject();
     }
     
-    inline void SetPointer( uintptr_t p ) {
-        Pointer = p >> 4;
-        assert( (uintptr_t)GetPointer() == p );
+    inline void SetListPointer( uintptr_t p ) {
+        ListPointer = p >> 4;
+        assert( (uintptr_t)GetListPointer() == p );
     }
     
-    inline Object* GetPointer() {
-        uintptr_t p = Pointer << 4;
+    inline Object* GetListPointer() {
+        uintptr_t p = ListPointer << 4;
         p = p | 0xcaf0000000;
         return (Object*)p;
     }
@@ -189,8 +171,12 @@ public:
         if (!IsHeapObject()) {
             throw std::runtime_error("Not a heap object");
         }
-        assert( Pointer != 0 );
-        Object* o = GetPointer();
+        Object* o;
+        if (IsList()) {
+            o = GetListPointer();
+        } else {
+            o = (Object*)OtherPointer;
+        }
         o->CheckIntegrety();
         return o;
     }
@@ -226,7 +212,8 @@ public:
     
     std::string ToString();
     
-    
+    VALUE Rest();
+    VALUE First();
     std::string Print();
 };
 
@@ -257,7 +244,7 @@ public:
     
     std::string ToString();
     std::string Print();
-    
+
     
     
     // TODO! Strings are immutable/persistent vectors.

@@ -90,6 +90,11 @@ public:
         return Header.Count;
     }
     
+    virtual bool IsCheapCount() {
+        return true;
+    }
+
+    
     
     // Override of the List interface
     VALUE GetAt( int i ) {
@@ -195,7 +200,7 @@ public:
         throw std::runtime_error("Not implemented yet");
     }
     
-    List* First( int i ) {
+    List* Take( int i ) {
         throw std::runtime_error("Not implemented yet");
     }
     

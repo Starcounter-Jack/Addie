@@ -36,7 +36,7 @@ public:
     LIST( ValueListStyle style, VALUE _first) {
         Type = TList;
         ListStyle = style;
-        SetPointer( (uintptr_t)CreateDefaultList( _first ) );
+        SetListPointer( (uintptr_t)CreateDefaultList( _first ) );
         CheckIntegrety();
     }
     
@@ -50,7 +50,7 @@ public:
     }
      */
     
-    VALUE Rest();
+
     
     
     void CheckIntegrety() {
@@ -63,7 +63,7 @@ public:
     LIST( ValueListStyle style, List* list ) {
         Type = TList;
         ListStyle = style;
-        SetPointer( (uint64_t)list );
+        SetListPointer( (uint64_t)list );
     }
     
     
@@ -116,6 +116,11 @@ public:
     
     virtual List* ReplaceAt( int i, VALUE v ) = 0;
     
+    
+    virtual bool IsCheapCount() {
+        return false;
+    }
+    
     virtual int Count() {
         int i = 1;
         VALUE list = this->Rest();
@@ -137,7 +142,7 @@ public:
     virtual List* Replace( VALUE v1, VALUE v2 ) = 0;
     virtual List* Sort( VALUE fun ) = 0;
     virtual List* Map( VALUE fun ) = 0;
-    virtual List* First( int i ) = 0;
+    virtual List* Take( int i ) = 0;
     
 #ifdef USE_OPTIMIZATIONS
     virtual bool AttemptDirtyAdd( VALUE v ) {

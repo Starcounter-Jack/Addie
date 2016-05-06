@@ -101,7 +101,7 @@ public:
             return false;        
         }
         LIST c;
-        c.SetPointer( (uintptr_t)Cons::Create( v, NIL() ) );
+        c.SetListPointer( (uintptr_t)Cons::Create( v, NIL() ) );
 //        c.MaterializeAsCons( v, NIL() );
         SetRest(c);
         return true;
@@ -147,7 +147,7 @@ public:
         throw std::runtime_error("Not implemented yet");
     }
 
-    List* First( int i = 1 ) final {
+    List* Take( int i = 1 ) final {
         throw std::runtime_error("Not implemented yet");
     }
 

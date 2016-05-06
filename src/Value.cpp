@@ -19,18 +19,18 @@ std::string STRINGOLD::ToString() {
     if (Integer == 0) {
         return "\"\"";
     }
-    auto str =  (char*) GetPointer();
+    auto str =  (char*) Integer;
     str += sizeof(String);
     return str;
 }
 
 
 uint8_t* VALUE::OtherBytes() {
-    return (uint8_t*)GetPointer();
+    return (uint8_t*)Integer;
 }
 
 uint8_t* STRINGOLD::StringBytes() {
-    return (uint8_t*)(GetPointer()+sizeof(String));
+    return (uint8_t*)(OtherBytes()+sizeof(String));
 }
 
 
@@ -53,7 +53,7 @@ void STRINGOLD::AllocateString( const char* original, size_t size ) {
     
     memcpy(str, original, size);
     str[size] = 0;
-    SetPointer( (uint64_t)obj );
+    Integer = (uint64_t)obj;
     
     new (obj) String(size);
     
@@ -143,7 +143,7 @@ std::string INTEGER::Print() {
 
 
 LIST LIST::Append( VALUE elem ) {
-    if (Pointer == 0) {
+    if (ListPointer == 0) {
         LIST v = LIST(ListStyle,elem);
         return v;
     }
@@ -152,7 +152,7 @@ LIST LIST::Append( VALUE elem ) {
 
 
 LIST LIST::Prepend( VALUE elem ) {
-    if (Pointer == 0) {
+    if (ListPointer == 0) {
         LIST v = LIST(ListStyle,elem);
         return v;
     }
@@ -168,12 +168,29 @@ LIST LIST::Prepend( VALUE elem ) {
 //}
 
 
-VALUE LIST::Rest() {
+VALUE VALUE::Rest() {
     if (Integer == 0) {
+        return NIL();
+    }
+    List* self = GetList();
+    if (self->IsCheapCount()) {
+        if ( Start < self->Count() - 1 ) {
+            LIST rest;
+            rest.ListPointer = ListPointer;
+            rest.Start = Start + 1;
+            return rest;
+        }
         return NIL();
     }
     return GetList()->Rest();
 }
+
+
+VALUE VALUE::First() {
+    assert( ListPointer != 0);
+    return GetList()->GetAt(Start); //First();
+}
+
 
 
 std::string LIST::Print() {
@@ -199,30 +216,30 @@ std::string LIST::Print() {
             endParen = '"';
             break;
     }
-    if (Pointer == 0) {
+    if (ListPointer == 0) {
         res << startParen << endParen;
         return res.str();
     }
-    List* self = GetList();
+    //List* self = GetList();
     
     res << startParen;
-    VALUE next = self->Rest();
+    VALUE next = Rest();
     if (ListStyle == QString) {
-        res << (char)(self->First().Integer);
+        res << (char)(First().Integer);
         while (next.IsList()) {
-            List* pnext = next.GetList();
-            res << (char)(pnext->First().Integer);
-            next = pnext->Rest();
+            //List* pnext = next.GetList();
+            res << (char)(next.First().Integer);
+            next = next.Rest();
         }
     }
     else {
-       if (self->Rest().IsList()) {
-           res << self->First().Print();
+       if (Rest().IsList()) {
+           res << First().Print();
            while (next.IsList()) {
                res << " ";
-               List* pnext = next.GetList();
-               res << pnext->First().Print();
-               next = pnext->Rest();
+               //List* pnext = next.GetList();
+               res << next.First().Print();
+               next = next.Rest();
            }
            if (!next.IsNil()) {
                res << " . ";
@@ -232,10 +249,10 @@ std::string LIST::Print() {
        else {
            //res << "Vafan";
            //res << startParen;
-           res << self->First().Print();
-           if (!self->Rest().IsNil()) {
+           res << First().Print();
+           if (!Rest().IsNil()) {
                res << " . ";
-               res << self->Rest().Print();
+               res << Rest().Print();
            }
        }
     }

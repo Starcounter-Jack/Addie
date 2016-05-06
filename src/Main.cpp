@@ -79,8 +79,8 @@ void TestArrays() {
 #ifdef USE_INTARRAY
     TestIntArrays();
 #endif
-    TestPrepend();
     TestAppend();
+    TestPrepend();
 }
 
 
