@@ -76,7 +76,7 @@ public:
     
     // Override of the List interface
     VALUE Rest() {
-        return LIST(QParenthesis,this).Rest();
+        return LIST(this).Rest();
     }
     
     // Override of the List interface

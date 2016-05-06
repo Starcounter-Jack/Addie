@@ -66,6 +66,12 @@ public:
         SetListPointer( (uint64_t)list );
     }
     
+    LIST( List* list ) {
+        Type = TList;
+        ListStyle = QParenthesis;
+        SetListPointer( (uint64_t)list );
+    }
+    
     
     // Append to the end of this list. As this is slow in persistent linked lists,
     // the new list will probably have another type of materialization.

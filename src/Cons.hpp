@@ -82,16 +82,16 @@ public:
 #endif
         int originalCount = Count();
         int last = Count()-1;
-        List* c = LIST(QParenthesis,elem).GetList();
+        List* c = LIST(elem).GetList();
         while (last >= 0) {
             c = c->Prepend( GetAt(last) );
             last--;
         }
         int newCount = c->Count();
         assert( newCount == originalCount + 1 );
-//        std::cout << "\nBefore:" << LIST(QParenthesis,this).Print();
+//        std::cout << "\nBefore:" << LIST(this).Print();
 //        std::cout << "\nAdded:" << elem.Print();
-//        std::cout << "\nAfter:" << LIST(QParenthesis,c).Print() << "\n";
+//        std::cout << "\nAfter:" << LIST(c).Print() << "\n";
         return c;
     }
     
@@ -109,7 +109,7 @@ public:
 #endif
     
     List* Prepend( VALUE v ) final {
-        auto c = Cons::Create(v, LIST(QParenthesis,this));
+        auto c = Cons::Create(v, LIST(this));
         //std::cout << "\nBefore:" << LIST(TList,this).Print();
         //std::cout << "\nPrepended:" << v.Print();
         //std::cout << "\nAfter:" << LIST(TList,c).Print() << "\n";
