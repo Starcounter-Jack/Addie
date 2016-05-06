@@ -119,12 +119,13 @@ int main(int argc, const char * argv[]) {
     CurrentIsolate = &isolate;
     VALUE v;
     
-    TestArrays();
 
     
     assert( sizeof(VALUE) == sizeof(uintptr_t) ); // If we are on a 64 bit machine we want 64
                                                   // bit values
     assert( sizeof(Instruction) == 4 );           // Our byte instructions are 32 bit
+
+    TestArrays();
     
     TestParse( "﹇﹈","[]");
     TestParse( "⎴ ⎵ ","[]");

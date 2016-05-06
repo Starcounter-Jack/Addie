@@ -300,7 +300,7 @@ VALUE Parser::ParseString( StreamReader* r) {
     while (true) {
         unsigned char c = r->Read();
         if (c == '"' ) {
-            list.Style = QString;
+            list.ListStyle = QString;
             return list;
         }
         VALUE elem = INTEGER(c);
@@ -380,7 +380,7 @@ VALUE Parser::ParseNumber( StreamReader* r ) {
 // Parse the form [.....]
 VALUE Parser::ParseVector( StreamReader* r) {
     LIST list;
-    list.Style = QBrackets;
+    list.ListStyle = QBracket;
     ConsumeVerticalStartBracket(r, true);
     //        r->Read(); // Skip first parenthesis
     while (true) {

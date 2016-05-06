@@ -67,7 +67,7 @@ uint32_t STRINGOLD::Length() {
 
 
 SYMBOL::SYMBOL( const char* str, size_t len ) {
-    Type = PSymbol;
+    Tag = TagSymbol;
     Integer = CurrentIsolate->RegisterSymbol( str, len, -1 );
 }
 
@@ -95,31 +95,39 @@ std::string NIL::Print() {
 std::string VALUE::Print() {
     
     switch (Type) {
-        case (PList) :
+        case (TList) :
             return ((LIST*)this)->Print();
-        case (PSymbol) :
-            return ((SYMBOL*)this)->Print();
-        case (PNil) :
-            return ((NIL*)this)->Print();
-        case (PNumber) :
-            return ((INTEGER*)this)->Print();
-        case (PStringOld) :
+        case (TOther) :
             return ((STRINGOLD*)this)->Print();
-        default:
-            break;
+        case (TAtom) :
+            switch (AtomSubType) {
+                case (ASymbol) :
+                    return ((SYMBOL*)this)->Print();
+                case (ANil) :
+                    return ((NIL*)this)->Print();
+                default:
+                    break;
+            }
+        case (TNumber) :
+            switch (NumberSubType) {
+                case (NInteger) :
+                    return ((INTEGER*)this)->Print();
+                default:
+                    break;
+            }
     }
-    
+
     std::ostringstream res;
     res << "I dont know how to print a heap=";
-    res << " type=";
-    res << Type;
+    res << " tag=";
+    res << Tag;
     return res.str();
 }
 
 
 std::string VALUE::ToString() {
     
-    if (Type == PList && Style == QString ) {
+    if (Tag == TagList_Str ) {
         return "hello";
     }
     return Print();
@@ -134,20 +142,20 @@ std::string INTEGER::Print() {
 
 
 LIST LIST::Append( VALUE elem ) {
-    if (Integer == 0) {
-        LIST v = LIST(Style,elem);
+    if (Pointer == 0) {
+        LIST v = LIST(ListStyle,elem);
         return v;
     }
-    return LIST(Style,GetList()->Append( elem ));
+    return LIST(ListStyle,GetList()->Append( elem ));
 }
 
 
 LIST LIST::Prepend( VALUE elem ) {
-    if (Integer == 0) {
-        LIST v = LIST(Style,elem);
+    if (Pointer == 0) {
+        LIST v = LIST(ListStyle,elem);
         return v;
     }
-    return LIST(Style,GetList()->Prepend( elem ));
+    return LIST(ListStyle,GetList()->Prepend( elem ));
 }
 
 
@@ -171,12 +179,13 @@ std::string LIST::Print() {
     std::ostringstream res;
     char startParen;
     char endParen;
-    switch (Style) {
+    
+    switch (ListStyle) {
         case (QParenthesis):
             startParen = '(';
             endParen = ')';
             break;
-        case (QBrackets):
+        case (QBracket):
             startParen = '[';
             endParen = ']';
             break;
@@ -189,7 +198,7 @@ std::string LIST::Print() {
             endParen = '"';
             break;
     }
-    if (Integer == 0) {
+    if (Pointer == 0) {
         res << startParen << endParen;
         return res.str();
     }
@@ -197,7 +206,7 @@ std::string LIST::Print() {
     
     res << startParen;
     VALUE next = self->Rest();
-    if (Style == QString) {
+    if (ListStyle == QString) {
         res << (char)(self->First().Integer);
         while (next.IsList()) {
             List* pnext = next.GetList();
@@ -236,7 +245,7 @@ std::string LIST::Print() {
 
 
 LIST LIST::ReplaceAt( int i, VALUE v ) {
-    return LIST(Style,((List*)Integer)->ReplaceAt(i,v));
+    return LIST(ListStyle,((List*)Integer)->ReplaceAt(i,v));
 }
 
 VALUE LIST::GetAt( int i ) {

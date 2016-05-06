@@ -17,9 +17,9 @@ Isolate::Isolate() {
     
     // TODO! This needs to change. We cannot expect these ranges to be available.
     // Nice for debugging however.
-    Stack = ReserveMemoryBlock(0xaaffe000000, 0x10000000000);
-    Constants = ReserveMemoryBlock(0xbaffe000000, 0x10000000000);
-    Heap = ReserveMemoryBlock(0xcaffe0000,0x10000000000);
+    Stack = ReserveMemoryBlock(0x0caff0000000, 0x10000000000);
+    Constants = ReserveMemoryBlock(0x0cafe000000, 0x10000000000);
+    Heap = ReserveMemoryBlock(0x0cafd000000,0x10000000000);
     
     NextOnStack = (uintptr_t)Stack;
     NextOnHeap = (uintptr_t)Heap;

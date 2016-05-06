@@ -38,7 +38,7 @@ public:
                 return NIL();
             }
             _pos++;
-            return LIST(QParenthesis,this);
+            return LIST(QString,this);
         }
         throw std::runtime_error("Not Implemented yet");
     }

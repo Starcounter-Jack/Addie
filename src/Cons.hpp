@@ -109,7 +109,11 @@ public:
 #endif
     
     List* Prepend( VALUE v ) final {
-        return Cons::Create(v, LIST(QParenthesis,this));
+        auto c = Cons::Create(v, LIST(QParenthesis,this));
+        //std::cout << "\nBefore:" << LIST(TList,this).Print();
+        //std::cout << "\nPrepended:" << v.Print();
+        //std::cout << "\nAfter:" << LIST(TList,c).Print() << "\n";
+        return c;
     }
     
     

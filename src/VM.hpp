@@ -68,61 +68,65 @@ public:
 
 };
 
-enum ValueStyle : unsigned int  {
-    QParenthesis = 0b00,
-    QNumber = 0b00,
-    QBrackets = 0b01,
-    QBool = 0b01,
-    QCurly = 0b10,
-    QString = 0b11,
+
+
+enum ValueType : unsigned int {
+    TAtom      =  0b00,    // Symbol
+    TNumber    =  0b01,    // Integer
+    TOther     =  0b10,    // Function/procedure/code
+    TList      =  0b11,    // List/vector/array/string/map
 };
 
-/**
- * Most significat bit is means the object is allocated on the heap
- * Second most significant bit means this is a list
- */
-enum ValueType : unsigned int {
-    PNil              =  0b000,    // Lisp nil
-    PSymbol           =  0b010,    // Symbol
-    PNumber           =  0b011,    // Integer/Ratio
-    PList             =  0b100,    // List/vector/array/string/map
-    PLambda           =  0b101,    // Function/procedure/code
-    PContinuation     =  0b110,    // Execution thread
-    PStringOld        =  0b111     // TODO! REMOVE!
+    
+enum ValueListStyle : unsigned int {
+    QParenthesis    =  0b00,    //
+    QString         =  0b01,    //
+    QBracket        =  0b10,    // List/vector/array/string/map
+    QCurly          =  0b11,    // List/vector/array/string/map
 };
     
-enum ValueType2 : unsigned int {
-    TNil              =  0b0000,    // Lisp nil
-    TSymbol           =  0b0010,    // Symbol
-    TNumber           =  0b0011,    // Integer/Ratio
-    TList             =  0b1000,    // List/vector/array/string/map
-    TString           =  0b1001,    // List/vector/array/string/map
-    TVector           =  0b1010,    // List/vector/array/string/map
-    TMap              =  0b1011,    // List/vector/array/string/map
-    TOther            =  0b1100,    // Function/procedure/code
+enum ValueNumberSubType : unsigned int {
+    NInteger    =  0b00,    //
+    NFraction   =  0b01,    //
+    NBool       =  0b10,    //
+    NReserved   =  0b11,    //
+};
+    
+enum ValueAtomSubType : unsigned int {
+    ANil        =  0b00,    //
+    ASymbol     =  0b01,    //
+    AReserved   =  0b10,    //
+    AOther      =  0b11,    //
+};
+    
+enum ValueOtherSubType : unsigned int {
+     OFunction   =  0b00,    //
+     OReserved1  =  0b01,    //
+     OOldString  =  0b10,    //
+     OOther      =  0b11,    //
+};
+    
+    
+enum ValueTag : unsigned int {
+    TagNil              =  0b0000,    // Lisp nil
+    TagSymbol           =  0b0001,    // Symbol
+    TagReserved1        =  0b0010,    //
+    TagReserved2        =  0b0011,    //
+    TagInteger          =  0b0100,    // Integer
+    TagRatio            =  0b0101,    // Ratio
+    TagBool             =  0b0110,    // Bool
+    TagReserved3        =  0b0111,    //
+    TagReserved4        =  0b1000,    //
+    TagReserved5        =  0b1001,    //
+    TagOldString        =  0b1010,    //
+    TagReserved7        =  0b1011,    //
+    TagList_Paren       =  0b1100,    // List/vector/array/string/map
+    TagList_Str         =  0b1101,    // List/vector/array/string/map
+    TagList_Brack       =  0b1110,    // List/vector/array/string/map
+    TagList_Curly       =  0b1111,    // List/vector/array/string/map
 };
 
-/*
- class VALUE8 {
- byte OpCode : 8;
- };
- 
- class VALUE16 {
- byte OpCode : 8;
- union {
- char Char;
- int8_t Integer;
- };
- };
- 
- class VALUE32 {
- byte OpCode : 8;
- union {
- uint16_t Char;
- int16_t Integer;
- };
- };
- */
+
 
 // Addie fits numbers, nil, booleans and pointers to larger objects in a fixed size
 // structure that fits in a single 64 bit register on the CPU.
@@ -132,21 +136,25 @@ public:
     union {
         uint64_t Whole;
         struct {
-            // The materialized type
-            ValueType Type : 3;
-            // The percieved type. I.e. a percieved type can be a map while the
-            // materialized type is a linked list. Another example is that the percieved
-            // type is a string whereas the materialized type is a bitmapped vector.
-            // Most list materialization can represent most percieved list type.
-            ValueStyle Style : 2;
-            // The actual data forming the numbers or pointers are stored here.
-            int64_t Integer: 59;
+            ValueTag Tag : 4;
+            int64_t Integer: 60;
         };
         struct {
-            ValueType2 Type2 : 5;
-            uintptr_t Pointer : 33;
-            uint16_t Start : 10;
-            uint16_t Stop : 10;
+            ValueNumberSubType AtomSubType : 2;
+            ValueType SuperType2 : 2;
+            int64_t SymbolId: 60;
+        };
+        struct {
+            ValueNumberSubType NumberSubType : 2;
+            ValueType SuperType3 : 2;
+            uint32_t Denominator: 28;
+            int32_t Numerator: 32;
+        };
+        struct {
+            ValueListStyle ListStyle : 2;
+            ValueType Type : 2;
+            uint32_t Start : 28;
+            uintptr_t Pointer : 32;
         };
 
     };
@@ -156,20 +164,22 @@ public:
     
     // Lists and Lambdas obviously do not fit in a value.
     bool IsHeapObject() {
-        return Type & 0b100 && Integer != 0;
+        return Tag & 0b1000 && Pointer != 0;
     }
     
     List* GetList() {
-        assert( Type == PList );
+        assert( IsList() );
         return (List*)GetObject();
     }
     
     inline void SetPointer( uintptr_t p ) {
-        Pointer = (p >> 4);
+        Pointer = p >> 4;
+        assert( (uintptr_t)GetPointer() == p );
     }
     
     inline Object* GetPointer() {
-        uintptr_t p = (Pointer << 4);
+        uintptr_t p = Pointer << 4;
+        p = p | 0xcaf0000000;
         return (Object*)p;
     }
     
@@ -200,15 +210,16 @@ public:
 
     
     bool IsNil() {
-        return Type == PNil;
+        return Tag == TagNil;
     }
     
     bool IsList() {
-        return Type == PList;
+        return ( Tag & 0b1100 ) == 0b1100;
+        // return SuperType == PList;
     }
     
     bool IsInteger() {
-        return Type == PNumber;
+        return Tag == TagInteger;
     }
     
     std::string ToString();
@@ -222,12 +233,13 @@ public:
 class STRINGOLD : public VALUE {
 public:
     STRINGOLD(std::string str ) {
-        Style = QString;
+        //Style = QString;
+        Tag = TagOldString;
         AllocateString( str.c_str(), str.length() );
     }
     
     STRINGOLD(char* c, size_t size ) {
-        Style = QString;
+        Tag = TagOldString;
         AllocateString( c, size );
     }
     
@@ -252,7 +264,7 @@ public:
 class NIL : public VALUE {
 public:
     NIL() {
-        Type = PNil;
+        Tag = TagNil;
     }
     
     std::string Print();
@@ -261,10 +273,10 @@ public:
 class SYMBOL : public VALUE {
 public:
     SYMBOL() {
-        Type = PSymbol;
+        Tag = TagSymbol;
     }
     SYMBOL( uint32_t sym ) {
-        Type = PSymbol;
+        Tag = TagSymbol;
         Integer = sym;
     }
     
@@ -277,12 +289,12 @@ public:
 class INTEGER : public VALUE {
 public:
     INTEGER() {
-        Type = PNumber;
+        Tag = TagInteger;
         Integer = 0;
     }
     
     INTEGER( int64_t i ) {
-        Type = PNumber;
+        Tag = TagInteger;
         Integer = i;
         assert( Integer == i );
     }
@@ -496,34 +508,34 @@ class Continuation;
 class Isolate {
     
 public:
-    byte* Stack;
-    byte* Constants;
-    byte* Heap;
+    uintptr_t Stack;
+    uintptr_t Constants;
+    uintptr_t Heap;
     
-    uint64_t NextOnStack;
-    uint64_t NextOnHeap;
-    uint64_t NextOnConstant;
+    uintptr_t NextOnStack;
+    uintptr_t NextOnHeap;
+    uintptr_t NextOnConstant;
     
     
     int NumberOfAllocations = 0;
     int BytesAllocated = 0;
     
     
-    byte* ReserveMemoryBlock(uint64_t address, size_t size) {
-        void* addr = (void*)address;
+    uintptr_t ReserveMemoryBlock(uint64_t address, size_t size) {
+        uintptr_t addr = address;
         
-        addr = mmap((void *) addr, size,
+        addr = (uintptr_t)mmap((void *) addr, size,
                     PROT_WRITE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         //printf("%p\n", addr);
-        if(addr == MAP_FAILED)
+        if((void*)addr == MAP_FAILED)
             throw std::runtime_error("Addie is trying to reserving 3TB of fixed memory addresses and fails. Jack was being a little bit too optimisitic.");
-        return (byte*)addr;
+        return addr;
     }
     
     
-    void CheckAddress(void* addr) {
-        uint64_t i = (uint64_t)addr;
-        if ( i & 0b0000000000000000000000000000000000000000000000000000000000001111 ) {
+    void CheckAddress(uintptr_t addr) {
+        //uint64_t i = (uint64_t)addr;
+        if ( addr & 0b0000000000000000000000000000000000000000000000000000000000001111 ) {
             throw std::runtime_error( "Addresses must be aligned" );
         }
     }
@@ -537,8 +549,8 @@ public:
     }
     
     
-    void* MallocConstant( size_t size ) {
-        void* newAddress = (void*)NextOnConstant;
+    uintptr_t MallocConstant( size_t size ) {
+        uintptr_t newAddress = NextOnConstant;
         BytesAllocated += size;
         NumberOfAllocations++;
         NextOnConstant += size;
@@ -559,8 +571,8 @@ public:
     //    }
     
     
-    void* AdvanceStack( size_t size ) {
-        void* newAddress = (void*)NextOnStack;
+    uintptr_t AdvanceStack( size_t size ) {
+        uintptr_t newAddress = (uintptr_t)NextOnStack;
         BytesAllocated += size;
         NumberOfAllocations++;
         NextOnStack += size;
@@ -575,8 +587,8 @@ public:
     }
     
     
-    void* MallocHeap( size_t size ) {
-        void* newAddress = (void*)NextOnHeap;
+    uintptr_t MallocHeap( size_t size ) {
+        uintptr_t newAddress = NextOnHeap;
         BytesAllocated += size;
         NumberOfAllocations++;
         NextOnHeap += size;

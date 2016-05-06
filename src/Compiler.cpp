@@ -30,7 +30,7 @@ Compilation* Compiler::Compile( VALUE form ) {
     registers = r = (VALUE*)p;
     
     
-    if (form.Style != QParenthesis ) {
+    if (form.Type != TList ) {
         *((VALUE*)r++) = form;             // R0 retval
         code = c = (Instruction*)r;
         *(c++) = Instruction(END);

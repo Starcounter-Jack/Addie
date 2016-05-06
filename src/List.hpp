@@ -27,22 +27,24 @@ public:
     
     
     LIST() {
-        Type = PList;
-        Style = QParenthesis; // See VALUE::IsClassicalParenthesis
+        Type = TList;
+        ListStyle = QParenthesis;
+//        Type = TList_Paren;
+       // Style = QParenthesis; // See VALUE::IsClassicalParenthesis
         Integer = 0;
     };
     
     // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ValueStyle style, VALUE _first) {
-        Type = PList;
-        Style = style;
+    LIST( ValueListStyle style, VALUE _first) {
+        Type = TList;
+        ListStyle = style;
         SetPointer( (uintptr_t)CreateDefaultList( _first ) );
         CheckIntegrety();
     }
     
     /*
     // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ValueStyle style, VALUE _first, VALUE _rest) {
+    LIST( ListTyle style, VALUE _first, VALUE _rest) {
         Type = PList;
         Style = style; // See VALUE::IsClassicalParenthesis
         Integer = (uintptr_t)CreateDefaultList( _first, _rest );
@@ -60,10 +62,11 @@ public:
         }
     }
     
-    LIST( ValueStyle style, List* list ) {
-        Type = PList;
+    LIST( ValueListStyle style, List* list ) {
+        Type = TList;
+        ListStyle = style;
         SetPointer( (uint64_t)list );
-        Style = style;    }
+    }
     
     
     // Append to the end of this list. As this is slow in persistent linked lists,
