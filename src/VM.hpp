@@ -181,7 +181,15 @@ public:
         return o;
     }
     
+    void CheckIntegrety() {
+        if (IsHeapObject()) {
+            auto o = GetObject();
+            o->CheckIntegrety();
+        }
+    }
     
+    
+
     
     uint8_t* OtherBytes();
     

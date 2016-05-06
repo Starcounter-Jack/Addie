@@ -24,6 +24,7 @@ namespace Addie {
 public:
     List* _host;
     int _pos;
+//     VALUE MapLambda;
     
     VectorRest( List* host, int pos ) {
         _host = host;

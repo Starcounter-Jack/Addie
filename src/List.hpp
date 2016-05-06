@@ -53,12 +53,6 @@ public:
 
     
     
-    void CheckIntegrety() {
-        if (IsHeapObject()) {
-            auto o = GetObject();
-            o->CheckIntegrety();
-        }
-    }
     
     LIST( ValueListStyle style, List* list ) {
         Type = TList;

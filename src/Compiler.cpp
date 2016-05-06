@@ -14,6 +14,12 @@ using namespace Addie::Internals;
 
 Compilation* Compiler::Compile( VALUE form ) {
     //        int type = form.Type;
+    
+    if (form.Type == TList && form.ListStyle == QParenthesis) {
+        return CompilePrototype( form );
+    }
+    
+    
     byte* start = (byte*)CurrentIsolate->NextOnConstant;
     byte* p = (byte*)start;
     
@@ -21,30 +27,28 @@ Compilation* Compiler::Compile( VALUE form ) {
     Instruction* c;
     VALUE* registers;
     VALUE* r;
-    //        int uninitatedRegisters;
+    int uninitatedRegisters;
     
     Compilation* header = (Compilation*)p;
-    new (header) Compilation(); // No constructor, but just for correctness
     p += sizeof(Compilation);
     
     registers = r = (VALUE*)p;
     
+    *((VALUE*)r++) = form;             // R0 retval
+    uninitatedRegisters = 0;
     
-    if (form.Type != TList ) {
-        *((VALUE*)r++) = form;             // R0 retval
-        code = c = (Instruction*)r;
-        *(c++) = Instruction(END);
-        
-        header->SizeOfInitializedRegisters = 1;
-        header->SizeOfRegisters = 1 * sizeof(VALUE);
-        //header->Code = code;
-        
-        p = (byte*)c;
-        CurrentIsolate->NextOnConstant = (u64)p; // TODO! GC! Mark the memory as used
-        
-        return header;
-    }
-    return CompilePrototype( form );
+    code = c = (Instruction*)r;
+    *(c++) = Instruction(END);       // 3=Print 5=internadiate1
+    p = (byte*)c;
+    
+    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
+    header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
+    
+    CurrentIsolate->NextOnConstant = (u64)p; // Mark the memory as used
+    
+    return header;
+
+    
 }
 
 Compilation* Compiler::CompilePrototype( VALUE form ) {
@@ -65,12 +69,12 @@ Compilation* Compiler::CompilePrototype( VALUE form ) {
     
     std::cout << "\nCompiling (print (+ 10 20))\n";
     
-    if (form.IsList()) {
         *((VALUE*)r++) = NIL();             // R0 retval
         *((VALUE*)r++) = SYMBOL(SymPlus);   // R1
         *((VALUE*)r++) = SYMBOL(SymPrint);  // R2
         *((VALUE*)r++) = INTEGER(10);       // R3
         *((VALUE*)r++) = INTEGER(20);       // R4
+    
         // R5
         
         code = c = (Instruction*)r;
@@ -92,16 +96,13 @@ Compilation* Compiler::CompilePrototype( VALUE form ) {
         //*(c++) = OpMove(0,5);       // retval -> intermediate1
         *(c++) = Instruction(EXIT_WITH_CONTINUATION);
         *(c++) = OpCall(2,0);       // 3=Print 5=internadiate1
+        *(c++) = Instruction(END);       // 3=Print 5=internadiate1
+
         //*(c++) = Instruction(JMP_IF_TRUE,(int32_t)-1);       // 3=Print 5=internadiate1
         uninitatedRegisters = 1;
         p = (byte*)c;
-    }
-    else {
-        throw std::runtime_error("Can only compile list forms right now");
-    }
     
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    //header->Code = code;
     header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
     
     CurrentIsolate->NextOnConstant = (u64)p; // Mark the memory as used
