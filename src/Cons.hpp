@@ -82,7 +82,7 @@ public:
 #endif
         int originalCount = Count();
         int last = Count()-1;
-        List* c = LIST(elem).GetList();
+        List* c = LIST(QParenthesis,elem).GetList();
         while (last >= 0) {
             c = c->Prepend( GetAt(last) );
             last--;

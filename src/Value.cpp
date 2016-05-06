@@ -106,6 +106,8 @@ std::string VALUE::Print() {
                         return ((SYMBOL*)this)->Print();
                     case (ANil) :
                         return ((NIL*)this)->Print();
+                    default:
+                        break;
                 }
             case (TNumber) :
             switch (NumberSubType) {
