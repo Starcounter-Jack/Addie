@@ -76,13 +76,7 @@ public:
     
     // Override of the List interface
     VALUE Rest() {
-        VectorRest* rest;
-        if (Count() == 1) {
-            return NIL();
-        }
-        rest = MALLOC_HEAP(VectorRest);
-        new (rest) VectorRest(this,1);
-        return LIST(QParenthesis,rest);
+        return LIST(QParenthesis,this).Rest();
     }
     
     // Override of the List interface
