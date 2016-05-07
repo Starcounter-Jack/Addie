@@ -38,7 +38,7 @@ public:
     LIST Rest() {
         if (RefCount < 2) {
             if (_pos == _host->Count()-1) {
-                return LIST_NIL();
+                return LIST();
             }
             _pos++;
             return LIST(QString,this);
@@ -173,7 +173,7 @@ public:
     LIST Rest() {
         VectorRest* rest;
         if (_count == 1) {
-            return LIST_NIL();
+            return LIST();
         }
         rest = MALLOC_HEAP(VectorRest);
         new (rest) VectorRest(this,1);

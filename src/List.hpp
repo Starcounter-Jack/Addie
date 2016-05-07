@@ -164,15 +164,6 @@ public:
     
 };
      
-        class LIST_NIL : public LIST {
-        public:
-            LIST_NIL() {
-                Type = TList;
-                ListStyle = QParenthesis;
-                Integer = 0;
-            }
-            
-        };
 
     }
     

@@ -101,7 +101,7 @@ public:
             return false;        
         }
         LIST c;
-        c.SetListPointer( (uintptr_t)Cons::Create( v, LIST_NIL() ) );
+        c.SetListPointer( (uintptr_t)Cons::Create( v, LIST() ) );
 //        c.MaterializeAsCons( v, NIL() );
         SetRest(c);
         return true;

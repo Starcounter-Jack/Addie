@@ -13,7 +13,7 @@ using namespace Addie::Internals;
 // VM byte-codes are described here
 // https://github.com/Starcounter-Jack/Addie/wiki
 
-Continuation Interpreter::Interpret( Continuation cont ) {
+Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
     
     Instruction* p = cont.PC;
     //        Instruction* start = p;

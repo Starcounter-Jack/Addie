@@ -172,7 +172,7 @@ LIST LIST::Prepend( VALUE elem ) {
 
 LIST LIST::Rest() {
     if (Integer == 0) {
-        return LIST_NIL();
+        return LIST();
     }
     /*
     List* self = GetList();

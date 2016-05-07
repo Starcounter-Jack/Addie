@@ -147,14 +147,14 @@ int main(int argc, const char * argv[]) {
 
     //v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
     
-    Compilation* code = Compiler::Compile( v );
-    STRINGOLD str = Compiler::Disassemble(code);
+    Compilation* code = Compiler::Compile( &isolate, v );
+    STRINGOLD str = Compiler::Disassemble(  &isolate, code);
     
     std::cout << str.ToString();
 
-    Continuation c = Interpreter::Interpret(code);
+    Continuation c = Interpreter::Interpret(  &isolate, code);
     
-    Interpreter::Interpret(c);
+    Interpreter::Interpret( &isolate,c);
     std::cout << "\n\n";
 
 }

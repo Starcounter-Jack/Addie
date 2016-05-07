@@ -584,6 +584,11 @@ public:
         return newAddress;
     }
     
+    inline void ReportConstantWrite( uintptr_t addr ) {
+        NextOnConstant = addr;
+        AlignNextConstant();
+    }
+    
     inline void ReportHeapWrite( size_t size ) {
         NextOnHeap += size;
         AlignNextHeap();
@@ -721,14 +726,14 @@ public:
 class Interpreter {
 public:
     
-    static Continuation Interpret( Continuation cont );
+    static Continuation Interpret( Isolate* isolate, Continuation cont );
     
     
-    static Continuation Interpret( Compilation* code ) {
+    static Continuation Interpret( Isolate* isolate, Compilation* code ) {
         Continuation c;
         c.EnterIntoNewFrame(code, NULL);
         c.PC = code->StartOfInstructions();
-        return Interpreter::Interpret( c );
+        return Interpreter::Interpret( isolate, c );
     }
     
 };

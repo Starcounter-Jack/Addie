@@ -14,9 +14,9 @@ namespace Addie {
         
 class Compiler {
 public:
-    static Compilation* Compile( VALUE form );
-    static Compilation* CompilePrototype( VALUE form );
-    static STRINGOLD Disassemble( Compilation* code );
+    static Compilation* Compile( Isolate* isolate, VALUE form );
+    static Compilation* CompilePrototype( Isolate* isolate, VALUE form );
+    static STRINGOLD Disassemble(  Isolate* isolate, Compilation* code );
 };
 
     }

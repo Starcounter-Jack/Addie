@@ -12,16 +12,14 @@
 
 using namespace Addie::Internals;
 
-Compilation* Compiler::Compile( VALUE form ) {
+Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     //        int type = form.Type;
     
     if (form.Type == TList && form.ListStyle == QParenthesis) {
-        return CompilePrototype( form );
+        return CompilePrototype( isolate, form );
     }
     
-    
-    byte* start = (byte*)CurrentIsolate->NextOnConstant;
-    byte* p = (byte*)start;
+    byte* p = (byte*)isolate->NextOnConstant;
     
     Instruction* code;
     Instruction* c;
@@ -44,16 +42,16 @@ Compilation* Compiler::Compile( VALUE form ) {
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
     
-    CurrentIsolate->NextOnConstant = (u64)p; // Mark the memory as used
+    isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     
     return header;
 
     
 }
 
-Compilation* Compiler::CompilePrototype( VALUE form ) {
+Compilation* Compiler::CompilePrototype( Isolate* isolate, VALUE form ) {
     
-    byte* start = (byte*)CurrentIsolate->NextOnConstant;
+    byte* start = (byte*)isolate->NextOnConstant;
     byte* p = (byte*)start;
     
     Instruction* code;
@@ -105,12 +103,12 @@ Compilation* Compiler::CompilePrototype( VALUE form ) {
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
     
-    CurrentIsolate->NextOnConstant = (u64)p; // Mark the memory as used
+    isolate->NextOnConstant = (u64)p; // Mark the memory as used
     
     return header;
 }
 
-STRINGOLD Compiler::Disassemble( Compilation* code ) {
+STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* code ) {
     
     //Compilation* header = (Compilation*)code;
     std::ostringstream res;
@@ -129,7 +127,7 @@ STRINGOLD Compiler::Disassemble( Compilation* code ) {
         while (prefix++ < 12) res << " ";
         
         res << ".";
-        str = CurrentIsolate->GetStringFromSymbolId((*p).OP).c_str();
+        str = isolate->GetStringFromSymbolId((*p).OP).c_str();
         
         switch (p->OP) {
             case (END):
