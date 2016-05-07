@@ -71,7 +71,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 break;
             case (CALL_1):
                 //std::cout << "CALL-1";
-                sym = r[i.A].Integer;
+                sym = r[i.A].SymbolId;
                 if (sym == SymPrint) {
                     std::cout << "\nPrinting " << r[0].Print();
                     r[0].Print();
@@ -101,7 +101,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (CALL_2):
                 //                   std::cout << "CALL-2";
                 
-                sym = r[i.A].Integer;
+                sym = r[i.A].SymbolId;
                 if (sym == SymPlus) {
                     r[0] = INTEGER(r[i.B].Integer + r[i.C].Integer);
                 }

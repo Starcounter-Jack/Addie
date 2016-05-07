@@ -69,11 +69,11 @@ uint32_t STRINGOLD::Length() {
 SYMBOL::SYMBOL( const char* str, size_t len ) {
     Type = TAtom;
     AtomSubType = ASymbol;
-    Integer = CurrentIsolate->RegisterSymbol( str, len, -1 );
+    SymbolId = CurrentIsolate->RegisterSymbol( str, len, -1 );
 }
 
 std::string SYMBOL::ToString() {
-    return CurrentIsolate->GetStringFromSymbolId(Integer); // vectors are zero based. symbols start with 1
+    return CurrentIsolate->GetStringFromSymbolId(SymbolId); // vectors are zero based. symbols start with 1
 }
 
 std::string SYMBOL::Print() {

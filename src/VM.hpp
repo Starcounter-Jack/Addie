@@ -130,12 +130,18 @@ public:
         };
         struct {
             ValueType Type__ : 2;
+            ValueAtomSubType AtomSubType_ : 2;
+            uint32_t Notused: 28;
+            uint32_t SymbolId: 32;
+        };
+        struct {
+            ValueType Type___ : 2;
             ValueNumberSubType NumberSubType : 2;
             uint32_t Denominator: 28;
             int32_t Numerator: 32;
         };
         struct {
-            ValueType Type___ : 2;
+            ValueType Type____ : 2;
             ValueListStyle ListStyle : 2;
             uint32_t Start : 28;
             uintptr_t ListPointer : 32;
@@ -278,7 +284,7 @@ public:
     SYMBOL( uint32_t sym ) {
         Type = TAtom;
         AtomSubType = ASymbol;
-        Integer = sym;
+        SymbolId = sym;
     }
     
     SYMBOL( const char* str, size_t len );
