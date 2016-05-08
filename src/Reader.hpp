@@ -121,10 +121,8 @@ class Parser {
         return NIL();
     }
     
-    static VALUE ParseMap( StreamReader* r ) {
-        throw std::runtime_error("Encountered a map");
-        return NIL();
-    }
+    static VALUE ParseCurly( StreamReader* r );
+    
     static VALUE ParseUnsolicitedEndBracket( StreamReader* r ) {
         throw std::runtime_error("] does not match any [");
         return NIL();
@@ -140,71 +138,30 @@ class Parser {
         return NIL();
     }
     
-    
-    static bool ConsumeVerticalStartBracket( StreamReader* r, bool eatit ) {
-        unsigned char c;
-        c = r->ReadEofOk();
-        if (c == '[') {
-            if (!eatit) {
-                r->UnRead();
-            }
-            return true;
-        }
-        if (c == 226 ) { // First part of unicode ⎴ 9140 or ⎵ 9141)
-            c = r->ReadEofOk();
-            if ( c == 142 ) { // Second part
-                c = r->ReadEofOk();
-                if ( c == 180 ) { // Third part
-                    if (!eatit) {
-                       r->UnRead();
-                       r->UnRead();
-                       r->UnRead();
-                    }
-                    return true;
-                }
-                r->UnRead();
-            }
-            r->UnRead();
-        }
-        else if (c == 239 ) { // First part of unicode 65095 ﹇ 65096﹈)
-            c = r->ReadEofOk();
-            if ( c == 185 ) { // Second part
-                c = r->ReadEofOk();
-                if ( c == 135 ) { // Third part
-                    if (!eatit) {
-                        r->UnRead();
-                        r->UnRead();
-                        r->UnRead();
-                    }
-                    return true;
-                }
-                r->UnRead();
-            }
-            r->UnRead();
-        }
-        r->UnRead();
-        return false;
-    }
-
-    
-    static bool ConsumeVerticalStartParenthesis( StreamReader* r, bool eatIt ) {
-        unsigned char c;
-        c = r->ReadEofOk();
-        if (c == '(' ) {
+    static bool ConsumeCharacter( StreamReader* r, bool eatIt, unsigned char part1 ) {
+        unsigned char c = r->ReadEofOk();
+        if (c == part1 ) {
             if (!eatIt) {
                 r->UnRead();
             }
             return true;
         }
-        if (c == 226 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
+        r->UnRead();
+        return false;
+    }
+    
+    static bool ConsumeUnicodeCharacter( StreamReader* r, bool eatIt, unsigned char part1, unsigned char part2, unsigned char part3 )  {
+        unsigned char c;
+        c = r->ReadEofOk();
+        if (c == part1 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
             c = r->ReadEofOk();
-            if ( c== 143 ) { // Second part of unicode ⏜⏝ (9180,9181)
+            if ( c== part2 ) { // Second part of unicode ⏜⏝ (9180,9181)
                 c = r->ReadEofOk();
-                if ( c== 156 ) { // Third part of unicode ⏜ (9180)
+                if ( c== part3 ) { // Third part of unicode ⏜ (9180)
                     if (!eatIt) {
-                       r->UnRead();
-                       r->UnRead();
-                       r->UnRead();
+                        r->UnRead();
+                        r->UnRead();
+                        r->UnRead();
                     }
                     return true;
                 }
@@ -215,68 +172,37 @@ class Parser {
         r->UnRead();
         return false;
     }
-
-
+    
+    static bool ConsumeStartBracket( StreamReader* r, bool eatit ) {
+        return ConsumeCharacter(r, eatit, '[') ||  ConsumeUnicodeCharacter(r, eatit, 226, 142, 180) || ConsumeUnicodeCharacter(r, eatit, 239, 185, 135);  // unicode ⎴ 9140
+    }
 
     
+    static bool ConsumeStartParenthesis( StreamReader* r, bool eatIt ) {
+        return ConsumeCharacter(r, eatIt, '(') || ConsumeUnicodeCharacter(r, eatIt, 226, 143, 156); // unicode ⏜ (9180)
+    }
 
-    
+
+    static bool ConsumeStartCurly( StreamReader* r, bool eatIt ) {
+        return ConsumeCharacter(r, eatIt, '{') || ConsumeUnicodeCharacter(r, eatIt, 226, 143, 158); // unicode
+    }
 
     
     // We support some exotic unicode end parenthesis
     static bool CheckForEndParenthesis( StreamReader* r ) {
-        unsigned char c = r->ReadEofOk();
-        if (c == ')' ) {
-            return true;
-        }
-        else if ( c == 226 ) { // Potential vertical end parenthesis
-           // std::cout << "Spotted potential parens candidate";
-            c = r->ReadEofOk();
-            if ( c== 143 ) { // Second part of unicode ⏝ (9181)
-                c = r->ReadEofOk();
-                if ( c== 157 ) { // Third part of unicode ⏝ (9181)
-                    return true; // Eureka! Vertical end paren
-                }
-                r->UnRead(); // This was not a vertical end paren
-            }
-            r->UnRead(); // This was not a vertical end paren
-        }
-        r->UnRead(); // This was not a vertical end paren
-        return false;
+        return ConsumeCharacter(r, true, ')') || ConsumeUnicodeCharacter(r,true,226,143,157); // unicode ⏝ (9181)
+    }
+    
+    
+    // We support some exotic unicode end parenthesis
+    static bool CheckForEndCurly( StreamReader* r ) {
+        return ConsumeCharacter(r,true,'}') || ConsumeUnicodeCharacter(r, true, 226, 143 ,159 );
     }
     
     
     // We support some exotic unicode end parenthesis
     static bool CheckForEndBracket( StreamReader* r ) {
-        unsigned char c = r->ReadEofOk();
-        if (c == ']' ) {
-            return true;
-        }
-        else if ( c == 226 ) { // Potential vertical end parenthesis
-            c = r->ReadEofOk();
-            if ( c== 142 ) { // Second part of unicode ⎵(9141)
-                c = r->ReadEofOk();
-                if ( c== 181 ) { // Third part of unicode ⎵ (9141)
-                    return true; // Eureka! Vertical end paren
-                }
-                r->UnRead(); // This was not a vertical end paren
-            }
-            r->UnRead(); // This was not a vertical end paren
-        }
-        else if ( c == 239 ) { // Potential vertical end parenthesis
-            c = r->ReadEofOk();
-            if ( c== 185 ) { // Second part of unicode ⎵(9141)
-                c = r->ReadEofOk();
-                if ( c== 136 ) { // Third part of unicode ⎵ (9141)
-                    return true; // Eureka! Vertical end paren
-                }
-                r->UnRead(); // This was not a vertical end paren
-            }
-            r->UnRead(); // This was not a vertical end paren
-        }
-
-        r->UnRead(); // This was not a vertical end paren
-        return false;
+        return ConsumeCharacter(r, true, ']') || ConsumeUnicodeCharacter(r, true, 226, 142 ,181 ) || ConsumeUnicodeCharacter(r,true,239,185,136); // unicode ⎵ (9141)
     }
 };
 

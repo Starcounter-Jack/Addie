@@ -113,7 +113,7 @@ ParseSomething Addie::Internals::Parsers[128] = {
     &(Parser::ParseSymbol),    // 120 x
     &(Parser::ParseSymbol),    // 121 y
     &(Parser::ParseSymbol),    // 122 z
-    &(Parser::ParseMap),    // 123 {
+    &(Parser::ParseCurly),    // 123 {
     &(Parser::ParseSymbol),    // 124 |
     &(Parser::ParseUnsolicitedEndCurly),    // 125 }
     NULL,    // 126
@@ -245,10 +245,12 @@ VALUE Parser::ParseForm( StreamReader* r ) {
     unsigned char c = r->Read();
     if (c > 127 ) {
         r->UnRead();
-        if (ConsumeVerticalStartParenthesis(r,false)) {
+        if (ConsumeStartParenthesis(r,false)) {
             return Parser::ParseList(r);
-        } else if (ConsumeVerticalStartBracket(r,false)) {
+        } else if (ConsumeStartBracket(r,false)) {
             return Parser::ParseVector(r);
+        } else if (ConsumeStartCurly(r,false)) {
+            return Parser::ParseCurly(r);
         }
         return Parser::ParseSymbol(r);
     }
@@ -314,7 +316,7 @@ VALUE Parser::ParseString( StreamReader* r) {
 VALUE Parser::ParseList( StreamReader* r) {
     LIST list;
     
-    ConsumeVerticalStartParenthesis(r, true);
+    ConsumeStartParenthesis(r, true);
     while (true) {
         
         try {
@@ -381,7 +383,7 @@ VALUE Parser::ParseNumber( StreamReader* r ) {
 VALUE Parser::ParseVector( StreamReader* r) {
     LIST list;
     list.ListStyle = QBracket;
-    ConsumeVerticalStartBracket(r, true);
+    ConsumeStartBracket(r, true);
     //        r->Read(); // Skip first parenthesis
     while (true) {
         
@@ -399,6 +401,30 @@ VALUE Parser::ParseVector( StreamReader* r) {
         VALUE elem = ParseForm( r );
         list = list.Append(elem);
         //list.Style = QBrackets;
+    }
+}
+
+// Parse the form {.....}
+VALUE Parser::ParseCurly( StreamReader* r) {
+    LIST list;
+    list.ListStyle = QCurly;
+    ConsumeStartCurly(r, true);
+    //        r->Read(); // Skip first parenthesis
+    while (true) {
+        
+        try {
+            StreamReader::SkipWhitespace(r);
+        }
+        catch (UnexpectedEOF e) {
+            throw std::runtime_error("Missing ]");
+        }
+        
+        if (CheckForEndCurly(r)) {
+            return list;
+        }
+        
+        VALUE elem = ParseForm( r );
+        list = list.Append(elem);
     }
 }
 

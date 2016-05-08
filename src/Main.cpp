@@ -129,11 +129,11 @@ int main(int argc, const char * argv[]) {
 
     TestArrays();
     
+    TestParse( "⏞ ⏟","{}");
+    //    TestParse("︷ ︸","{}");
     TestParse( "﹇﹈","[]");
     TestParse( "⎴ ⎵ ","[]");
     TestParse( "⏜⏝","()");
-//    TestParse( "⏞ ⏟","{}");
-//    TestParse("︷ ︸","{}");
     TestParse( "\"Jack\"", 4, "\"Jack\"" );
     TestParse("(\"Jack\" \"Wester\")", 2, "(\"Jack\" \"Wester\")");
     TestParse( "⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝",
