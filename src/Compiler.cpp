@@ -15,9 +15,7 @@ using namespace Addie::Internals;
 Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     //        int type = form.Type;
     
-    if (form.Type == TList && form.ListStyle == QParenthesis) {
-        return CompilePrototype( isolate, form );
-    }
+
     
     byte* p = (byte*)isolate->NextOnConstant;
     
@@ -32,12 +30,19 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
     registers = r = (VALUE*)p;
     
-    *((VALUE*)r++) = form;             // R0 retval
-    uninitatedRegisters = 0;
+    if (form.EvaluatesToSelf()) {
     
-    code = c = (Instruction*)r;
-    *(c++) = Instruction(END);       // 3=Print 5=internadiate1
-    p = (byte*)c;
+        *((VALUE*)r++) = form;             // R0 retval
+        uninitatedRegisters = 0;
+    
+        code = c = (Instruction*)r;
+        *(c++) = Instruction(END);       // 3=Print 5=internadiate1
+        p = (byte*)c;
+    } else {
+//        if (form.Type == TList && form.ListStyle == QParenthesis) {
+            return CompilePrototype( isolate, form );
+//        }
+    }
     
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);

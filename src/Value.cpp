@@ -280,7 +280,7 @@ VALUE LIST::GetAt( int i ) {
 //}
 #ifndef USE_ARRAY
 List* LIST::CreateDefaultList( VALUE first ) {
-    return Cons::Create(first,NIL());
+    return Cons::Create(first,LIST());
 }
 #endif
 #endif

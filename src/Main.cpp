@@ -14,11 +14,14 @@
 
 using namespace Addie::Internals;
 
+#ifdef USE_VECTOR
+extern void TestMap();
+#endif
+
 
 #ifdef USE_INTARRAY
 
 #include "Optimized_IntArray.hpp"
-
 
 
 IntArray<int>* CreateSimpleArray() {
@@ -145,7 +148,6 @@ int main(int argc, const char * argv[]) {
                   "(let [a 10 b 20] (print (+ a b)))");
     
 
-    //v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
     
     Compilation* code = Compiler::Compile( &isolate, v );
     STRINGOLD str = Compiler::Disassemble(  &isolate, code);
@@ -153,8 +155,23 @@ int main(int argc, const char * argv[]) {
     std::cout << str.ToString();
 
     Continuation c = Interpreter::Interpret(  &isolate, code);
+    assert(!c.HasRunToCompletion());
     
     Interpreter::Interpret( &isolate,c);
+    
+    
+    v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
+    code = Compiler::Compile( &isolate, v );
+    std::cout << Compiler::Disassemble(&isolate, code).ToString();
+    c = Interpreter::Interpret( &isolate, code );
+    
+    assert(c.HasRunToCompletion());
+    std::cout << "\nEvaluated:" << c.GetReturnValue().Print();
+    
     std::cout << "\n\n";
+    
+#ifdef USE_VECTOR
+    TestMap();
+#endif
 
 }

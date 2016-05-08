@@ -9,7 +9,7 @@
 #ifndef Addie_hpp
 #define Addie_hpp
 
-#define USE_OPTIMIZATIONS
+//#define USE_OPTIMIZATIONS
 
 #ifdef USE_OPTIMIZATIONS
 #define USE_CONS
@@ -152,6 +152,7 @@ public:
     VALUE() : Whole(0) { // Everything is zero by default
     }
     
+
     // Lists and Lambdas obviously do not fit in a value.
     bool IsHeapObject() {
         return ( Type & 0b10 ) && Integer != 0;
@@ -221,6 +222,10 @@ public:
     bool IsList() {
         //return ( Tag & 0b1100 ) == 0b1100;
         return Type == TList;
+    }
+    
+    inline bool EvaluatesToSelf() {
+        return Type != TList || ListStyle != QParenthesis;
     }
     
     bool IsInteger() {
@@ -423,8 +428,10 @@ public:
         };
     };
     
+    
     Instruction( Op op ) {
         OP = op;
+        A3 = 0;
     }
     
     Instruction( Op op, int16_t a2, byte c  ) {
@@ -491,19 +498,16 @@ public:
 
 
 #define MALLOC_HEAP(type) (type*)CurrentIsolate->MallocHeap(sizeof(type));
+#define MALLOC_HEAPS(size) CurrentIsolate->MallocHeap(size);
 
 
-class Evaluateable : public NamedEntity {
-public:
-    virtual VALUE Evaluate() = 0;
-};
 
-class Variable : public Evaluateable {
+class Variable : public NamedEntity {
 };
 
 class Namespace : public NamedEntity {
 public:
-    std::map<Symbol,Variable*> Variables;
+    std::map<Symbol,VALUE> Values;
 };
 
 
@@ -714,6 +718,14 @@ class Continuation {
 public:
     Instruction* PC;                    // Program Counter (aka Instruction Pointer).
     Frame* frame = NULL;
+    
+    inline VALUE GetReturnValue() {
+        return frame->GetStartOfRegisters()[0];
+    }
+    
+    inline bool HasRunToCompletion() {
+        return (*PC).OP == END;
+    }
     
     void EnterIntoNewFrame( Compilation* code, Frame* parent ) {
         assert( frame == NULL );
