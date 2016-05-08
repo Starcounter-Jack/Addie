@@ -129,8 +129,8 @@ int main(int argc, const char * argv[]) {
 
     TestArrays();
     
+    TestParse("︷ ︸","{}");
     TestParse( "⏞ ⏟","{}");
-    //    TestParse("︷ ︸","{}");
     TestParse( "﹇﹈","[]");
     TestParse( "⎴ ⎵ ","[]");
     TestParse( "⏜⏝","()");

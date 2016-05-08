@@ -153,11 +153,11 @@ class Parser {
     static bool ConsumeUnicodeCharacter( StreamReader* r, bool eatIt, unsigned char part1, unsigned char part2, unsigned char part3 )  {
         unsigned char c;
         c = r->ReadEofOk();
-        if (c == part1 ) { // First part of unicode ⏜ or ⏝ (9180,9181)
+        if (c == part1 ) { // First part of unicode such as for example ⏜ or ⏝ (9180,9181)
             c = r->ReadEofOk();
-            if ( c== part2 ) { // Second part of unicode ⏜⏝ (9180,9181)
+            if ( c== part2 ) { // Second part of unicode
                 c = r->ReadEofOk();
-                if ( c== part3 ) { // Third part of unicode ⏜ (9180)
+                if ( c== part3 ) { // Third part of unicode
                     if (!eatIt) {
                         r->UnRead();
                         r->UnRead();
@@ -184,7 +184,8 @@ class Parser {
 
 
     static bool ConsumeStartCurly( StreamReader* r, bool eatIt ) {
-        return ConsumeCharacter(r, eatIt, '{') || ConsumeUnicodeCharacter(r, eatIt, 226, 143, 158); // unicode
+        return ConsumeCharacter(r, eatIt, '{') || ConsumeUnicodeCharacter(r, eatIt, 226, 143, 158)
+        || ConsumeUnicodeCharacter(r,eatIt, 239,184,183) ; // unicode
     }
 
     
@@ -196,7 +197,7 @@ class Parser {
     
     // We support some exotic unicode end parenthesis
     static bool CheckForEndCurly( StreamReader* r ) {
-        return ConsumeCharacter(r,true,'}') || ConsumeUnicodeCharacter(r, true, 226, 143 ,159 );
+        return ConsumeCharacter(r,true,'}') || ConsumeUnicodeCharacter(r, true, 226, 143 ,159 ) || ConsumeUnicodeCharacter(r, true, 239, 184 ,184 );
     }
     
     
