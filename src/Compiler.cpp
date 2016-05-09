@@ -152,7 +152,8 @@ Compilation* CompileFunctionCall( Isolate* isolate, Metaframe* mf, VALUE form ) 
 }
 
 Compilation* CompileList( Isolate* isolate, Metaframe* mf, VALUE form ) {
-      throw std::runtime_error("Not Implemented");
+    // TODO! We don't know that this list is a constant. Temporary code.
+    return CompileConstant(isolate,form);
 }
 
 Compilation* CompileForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
@@ -162,7 +163,8 @@ Compilation* CompileForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
         case TList:
             switch (form.ListStyle) {
                 case QParenthesis:
-                    return CompileFunctionCall( isolate, mf, form );
+                    // CompileFunctionCall( isolate, mf, form );
+                    return Addie::Compiler::CompilePrototype( isolate, form ); // TODO!
                 case QCurly:
                 case QBracket:
                     return CompileList( isolate, mf, form );
