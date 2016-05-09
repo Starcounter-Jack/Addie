@@ -19,81 +19,14 @@ namespace Addie {
 // on the heap. The representation depends on the predicted use-case. I.e. if we suspect new
 // lists will be derived, we will create a persistent vector. If not, we will create a simple
 // array.
+        
 class LIST : public VALUE {
 public:
-    
-    List* CreateDefaultList( VALUE first );
-    List* CreateDefaultList( VALUE first, LIST rest );
-    
     LIST() {
         Type = TList;
         ListStyle = QParenthesis;
         Integer = 0;
     };
-    
-    // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ValueListStyle style, VALUE _first) {
-        Type = TList;
-        ListStyle = style;
-        SetListPointer( (uintptr_t)CreateDefaultList( _first ) );
-        CheckIntegrety();
-    }
-    
-    LIST Rest();
-    VALUE First();
-
-    
-    /*
-    // Create a list that points to a Cons (a classical lisp linked list pair node)
-    LIST( ListTyle style, VALUE _first, VALUE _rest) {
-        Type = PList;
-        Style = style; // See VALUE::IsClassicalParenthesis
-        Integer = (uintptr_t)CreateDefaultList( _first, _rest );
-        CheckIntegrety();
-    }
-     */
-    
-
-    
-    
-    
-    LIST( ValueListStyle style, List* list ) {
-        Type = TList;
-        ListStyle = style;
-        SetListPointer( (uint64_t)list );
-    }
-    
-    LIST( List* list ) {
-        Type = TList;
-        ListStyle = QParenthesis;
-        SetListPointer( (uint64_t)list );
-    }
-    
-    
-    // Append to the end of this list. As this is slow in persistent linked lists,
-    // the new list will probably have another type of materialization.
-    LIST Append( VALUE elem );
-
-    LIST Prepend( VALUE elem );
-    
-    List* GetList() {
-        assert( IsList() );
-        return (List*)GetObject();
-    }
-    
-    // Empty lists are not allocated on the heap.
-    bool IsEmptyList() {
-        assert( Type == TList );
-        return (Type == TList && Integer == 0);
-    }
-    
-    std::string Print();
-    
-    
-    LIST ReplaceAt( int i, VALUE v );
-    VALUE GetAt( int i );
-    
-    
 };
 
 
@@ -105,7 +38,7 @@ public:
     }
     
     virtual VALUE First() = 0;
-    virtual LIST Rest() = 0;
+    virtual VALUE Rest() = 0;
     virtual List* Append( VALUE v ) = 0;
     
     virtual List* Prepend( VALUE v ) = 0;
@@ -131,7 +64,7 @@ public:
     
     virtual int Count() {
         int i = 1;
-        LIST list = this->Rest();
+        VALUE list = this->Rest();
         while (!list.IsEmpty()) {
             i++;
             list = list.GetList()->Rest();

@@ -35,13 +35,13 @@ public:
         return _host->GetAt(_pos);
     }
     
-    LIST Rest() {
+    VALUE Rest() {
         if (RefCount < 2) {
             if (_pos == _host->Count()-1) {
-                return LIST();
+                return VALUE(QParenthesis);
             }
             _pos++;
-            return LIST(QString,this);
+            return VALUE(QString,this);
         }
         throw std::runtime_error("Not Implemented yet");
     }
@@ -170,7 +170,7 @@ public:
     }
     
     // Override of the List interface
-    LIST Rest() {
+    VALUE Rest() {
         VectorRest* rest;
         if (_count == 1) {
             return LIST();

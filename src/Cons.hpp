@@ -26,17 +26,17 @@ namespace Addie {
 class Cons : public List {
 private:
     VALUE _first;
-    LIST _rest;
+    VALUE _rest;
 public:
     VALUE First() {
         return _first;
     }
     
-    LIST Rest() {
+    VALUE Rest() {
         return _rest;
     };
 
-    void SetRest( LIST rest ) {
+    void SetRest( VALUE rest ) {
         if (rest.IsHeapObject()) {
             rest.GetObject()->RefCount++;
         }
@@ -51,12 +51,12 @@ public:
     }
 
 
-    Cons( VALUE first, LIST rest ) : List() {
+    Cons( VALUE first, VALUE rest ) : List() {
         SetFirst( first );
         SetRest( rest );
     }
     
-    static Cons* Create( VALUE first, LIST rest ) {
+    static Cons* Create( VALUE first, VALUE rest ) {
         Cons* c = MALLOC_HEAP(Cons);
         new (c) Cons(first,rest);  // Calling constructor
         c->CheckIntegrety();
@@ -82,7 +82,7 @@ public:
 #endif
         int originalCount = Count();
         int last = Count()-1;
-        List* c = LIST(QParenthesis,elem).GetList();
+        List* c = VALUE(QParenthesis,elem).GetList();
         while (last >= 0) {
             c = c->Prepend( GetAt(last) );
             last--;
@@ -109,7 +109,7 @@ public:
 #endif
     
     List* Prepend( VALUE v ) final {
-        auto c = Cons::Create(v, LIST(this));
+        auto c = Cons::Create(v, VALUE(this));
         //std::cout << "\nBefore:" << LIST(TList,this).Print();
         //std::cout << "\nPrepended:" << v.Print();
         //std::cout << "\nAfter:" << LIST(TList,c).Print() << "\n";

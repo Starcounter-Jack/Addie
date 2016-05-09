@@ -149,8 +149,78 @@ public:
 
     };
     
+    
+    
+    List* CreateDefaultList( VALUE first );
+    List* CreateDefaultList( VALUE first, VALUE rest );
+    
+    
     VALUE() : Whole(0) { // Everything is zero by default
     }
+    
+    int Count();
+    
+    
+    VALUE( ValueListStyle style) {
+        Type = TList;
+        ListStyle = style;
+        Integer = 0;
+    }
+    
+    // Create a list that points to a Cons (a classical lisp linked list pair node)
+    VALUE( ValueListStyle style, VALUE _first) {
+        Type = TList;
+        ListStyle = style;
+        SetListPointer( (uintptr_t)CreateDefaultList( _first ) );
+        CheckIntegrety();
+    }
+    
+    
+    //    LIST Assoc( VALUE key, VALUE value );
+    
+    
+    /*
+     // Create a list that points to a Cons (a classical lisp linked list pair node)
+     LIST( ListTyle style, VALUE _first, VALUE _rest) {
+     Type = PList;
+     Style = style; // See VALUE::IsClassicalParenthesis
+     Integer = (uintptr_t)CreateDefaultList( _first, _rest );
+     CheckIntegrety();
+     }
+     */
+    
+    
+    
+    
+    VALUE( ValueListStyle style, List* list ) {
+        Type = TList;
+        ListStyle = style;
+        SetListPointer( (uint64_t)list );
+    }
+    
+    VALUE( List* list ) {
+        Type = TList;
+        ListStyle = QParenthesis;
+        SetListPointer( (uint64_t)list );
+    }
+    
+    
+    
+    
+    // Empty lists are not allocated on the heap.
+    bool IsEmptyList() {
+        assert( Type == TList );
+        return (Type == TList && Integer == 0);
+    }
+    
+    std::string Print();
+    std::string PrintList();
+  
+    
+    VALUE ReplaceAt( int i, VALUE v );
+    VALUE GetAt( int i );
+    
+    
     
 
     // Lists and Lambdas obviously do not fit in a value.
@@ -158,7 +228,19 @@ public:
         return ( Type & 0b10 ) && Integer != 0;
     }
     
+    VALUE Rest();
+    VALUE First();
 
+    // Append to the end of this list. As this is slow in persistent linked lists,
+    // the new list will probably have another type of materialization.
+    VALUE Append( VALUE elem );
+    
+    VALUE Prepend( VALUE elem );
+    
+    List* GetList() {
+        assert( IsList() );
+        return (List*)GetObject();
+    }
     
     inline void SetListPointer( uintptr_t p ) {
         ListPointer = p >> 4;
@@ -224,9 +306,15 @@ public:
         return Type == TList;
     }
     
-    inline bool EvaluatesToSelf() {
-        return Type != TList || ListStyle != QParenthesis;
+    bool IsSymbol() {
+        //return ( Tag & 0b1100 ) == 0b1100;
+        return Type == TAtom && AtomSubType == ASymbol;
     }
+
+    
+//    inline bool EvaluatesToSelf() {
+//        return Type != TList || ListStyle != QParenthesis;
+//    }
     
     bool IsInteger() {
         return Type == TNumber && NumberSubType == NInteger;
@@ -234,7 +322,7 @@ public:
     
     std::string ToString();
     
-    std::string Print();
+//    std::string Print();
 };
 
 
@@ -298,6 +386,7 @@ public:
     std::string Print();
 };
 
+    
 class INTEGER : public VALUE {
 public:
     INTEGER() {
@@ -367,6 +456,7 @@ enum Symbols {
     SymNil,
     SymFalse,
     SymTrue,
+    SymLetStar,
     SymString,
     SymPlus,
     SymMinus,
@@ -394,6 +484,7 @@ static const char *SymStrings[] = {
     "nil",
     "false",
     "true",
+    "let*",
     "string",
     "+",
     "-",
@@ -502,12 +593,13 @@ public:
 
 
 
-class Variable : public NamedEntity {
-};
+//class Variable : public NamedEntity {
+//};
 
 class Namespace : public NamedEntity {
 public:
-    std::map<Symbol,VALUE> Values;
+    std::map<Symbol,uint32_t> SlotBindings;
+    std::vector<VALUE> Slots;
 };
 
 
@@ -515,12 +607,18 @@ class Function : public NamedEntity {
 };
 
 class Continuation;
-
+    class Compilation;
 
 // To allow multiple VMs in the same process.
 class Isolate {
     
 public:
+    std::map<std::string,Symbol> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
+    std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
+    std::map<Symbol,Namespace*> Namespaces;
+    std::map<Symbol,Compilation*> BuiltInFunctions;
+
+    
     uintptr_t Stack;
     uintptr_t Constants;
     uintptr_t Heap;
@@ -623,9 +721,6 @@ public:
 //    Type* StringType;
 //    Type* ConsType;
     
-    std::map<std::string,Symbol> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
-    std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
-    std::map<Symbol,Namespace*> Namespaces;
     
 public: Isolate();
     

@@ -97,7 +97,7 @@ std::string VALUE::Print() {
     
     switch (Type) {
             case (TList) :
-                return ((LIST*)this)->Print();
+                return this->PrintList();
             case (TOther) :
                 return ((STRINGOLD*)this)->Print();
             case (TAtom) :
@@ -144,21 +144,21 @@ std::string INTEGER::Print() {
 
 
 
-LIST LIST::Append( VALUE elem ) {
+VALUE VALUE::Append( VALUE elem ) {
     if (ListPointer == 0) {
-        LIST v = LIST(ListStyle,elem);
+        VALUE v = VALUE(ListStyle,elem);
         return v;
     }
-    return LIST(ListStyle,GetList()->Append( elem ));
+    return VALUE(ListStyle,GetList()->Append( elem ));
 }
 
 
-LIST LIST::Prepend( VALUE elem ) {
+VALUE VALUE::Prepend( VALUE elem ) {
     if (ListPointer == 0) {
-        LIST v = LIST(ListStyle,elem);
+        VALUE v = VALUE(ListStyle,elem);
         return v;
     }
-    return LIST(ListStyle,GetList()->Prepend( elem ));
+    return VALUE(ListStyle,GetList()->Prepend( elem ));
 }
 
 
@@ -170,9 +170,9 @@ LIST LIST::Prepend( VALUE elem ) {
 //}
 
 
-LIST LIST::Rest() {
+VALUE VALUE::Rest() {
     if (Integer == 0) {
-        return LIST();
+        return VALUE(QParenthesis);
     }
     /*
     List* self = GetList();
@@ -190,14 +190,14 @@ LIST LIST::Rest() {
 }
 
 
-VALUE LIST::First() {
+VALUE VALUE::First() {
     assert( ListPointer != 0);
     return GetList()->First();
 }
 
 
 
-std::string LIST::Print() {
+std::string VALUE::PrintList() {
     std::ostringstream res;
     char startParen;
     char endParen;
@@ -227,7 +227,7 @@ std::string LIST::Print() {
     //List* self = GetList();
     
     res << startParen;
-    LIST next = Rest();
+    VALUE next = Rest();
     if (ListStyle == QString) {
         res << (char)(First().Integer);
         while (!next.IsEmpty()) {
@@ -266,21 +266,26 @@ std::string LIST::Print() {
 
 
 
-LIST LIST::ReplaceAt( int i, VALUE v ) {
-    return LIST(ListStyle,((List*)Integer)->ReplaceAt(i,v));
+VALUE VALUE::ReplaceAt( int i, VALUE v ) {
+    return VALUE(ListStyle,((List*)Integer)->ReplaceAt(i,v));
 }
 
-VALUE LIST::GetAt( int i ) {
+VALUE VALUE::GetAt( int i ) {
     return GetList()->GetAt(i);
 }
+
+int VALUE::Count() {
+        return GetList()->Count();
+}
+
 
 #ifdef USE_CONS
 //List* LIST::CreateDefaultList( VALUE first, VALUE rest ) {
 //    return Cons::Create(first,rest);
 //}
 #ifndef USE_ARRAY
-List* LIST::CreateDefaultList( VALUE first ) {
-    return Cons::Create(first,LIST());
+List* VALUE::CreateDefaultList( VALUE first ) {
+    return Cons::Create(first,VALUE(QParenthesis));
 }
 #endif
 #endif

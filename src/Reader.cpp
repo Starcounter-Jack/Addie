@@ -278,7 +278,7 @@ VALUE Parser::ParseForm( StreamReader* r ) {
 VALUE Parser::ParseString( StreamReader* r) {
 #ifdef USE_INTARRAY
     IntArray<char>* arr = IntArray<char>::__beginWrite();
-    LIST list(QString,arr);
+    VALUE list(QString,arr);
     try {
         r->Read(); // Skip the intitial "
         while (true) {
@@ -297,7 +297,7 @@ VALUE Parser::ParseString( StreamReader* r) {
     arr->__endWrite();
     return list;
 #else
-    LIST list;
+    VALUE list(QParenthesis);
     r->Read(); // Skip the intitial "
     while (true) {
         unsigned char c = r->Read();
@@ -314,7 +314,7 @@ VALUE Parser::ParseString( StreamReader* r) {
 
 // Parse the form (....)
 VALUE Parser::ParseList( StreamReader* r) {
-    LIST list;
+    VALUE list(QParenthesis);
     
     ConsumeStartParenthesis(r, true);
     while (true) {
@@ -381,8 +381,8 @@ VALUE Parser::ParseNumber( StreamReader* r ) {
 
 // Parse the form [.....]
 VALUE Parser::ParseVector( StreamReader* r) {
-    LIST list;
-    list.ListStyle = QBracket;
+    VALUE list(QBracket);
+//    list.ListStyle = QBracket;
     ConsumeStartBracket(r, true);
     //        r->Read(); // Skip first parenthesis
     while (true) {
@@ -406,8 +406,8 @@ VALUE Parser::ParseVector( StreamReader* r) {
 
 // Parse the form {.....}
 VALUE Parser::ParseCurly( StreamReader* r) {
-    LIST list;
-    list.ListStyle = QCurly;
+    VALUE list(QCurly);
+//    list.ListStyle = QCurly;
     ConsumeStartCurly(r, true);
     //        r->Read(); // Skip first parenthesis
     while (true) {

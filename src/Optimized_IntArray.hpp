@@ -75,7 +75,7 @@ public:
     }
     
     // Override of the List interface
-    LIST Rest() {
+    VALUE Rest() {
         VectorRest* rest;
         if (Header.Count == 1) {
             return LIST();

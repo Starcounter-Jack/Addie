@@ -10,11 +10,50 @@
 #include "Compiler.hpp"
 #include <sstream>
 
+using namespace Addie;
 using namespace Addie::Internals;
 
-Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
+// Find all declared variables and their default values
+Metaframe* AnalyseLet( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE form ) {
+    int cnt = form.Count();
+    int varCount = 0;
+    for (int t=0;t<cnt;t += 2) {
+        varCount++;
+        Symbol variableName = form.GetAt(t).SymbolId;
+        std::cout << "Found r[" << varCount << "] as local variable " << form.GetAt(t).Print() << "=" << form.GetAt(t+1).Print() << "\n";
+        //mf->LocalsAndArguments.push_back(Variable(variableName,form.GetAt(t+1)));
+        mf->LocalsAndArguments.push_back(variableName);
+        mf->Bindings[variableName] = mf->LocalsAndArguments.size()-1;
+    }
+    return mf;
+}
+
+Metaframe* Compiler::Analyse( Isolate* isolate, Namespace* ns, VALUE form ) {
+    
+    auto mf = MALLOC_HEAP(Metaframe); // TODO! GC
+    new (mf) Metaframe();
+    
+    if (form.Type == TList && form.ListStyle == QParenthesis) {
+        VALUE fst = form.First();
+        if (fst.IsSymbol()) {
+            Symbol verb = fst.SymbolId;
+            switch (verb) {
+                case SymLetStar:
+                    return AnalyseLet( isolate, ns, mf, form.Rest().First() );
+                    break;
+            }
+        }
+        mf->Body = form;
+    }
+    return mf;
+}
+
+
+
+Compilation* Compiler::Compile( Isolate* isolate, Namespace* ns, VALUE form ) {
     //        int type = form.Type;
     
+    auto mf = Analyse(isolate, ns, form );
 
     
     byte* p = (byte*)isolate->NextOnConstant;
@@ -30,7 +69,28 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
     registers = r = (VALUE*)p;
     
-    if (form.EvaluatesToSelf()) {
+    if (form.Type == TList && form.ListStyle == QParenthesis) {
+        // Function calling form (...)
+        VALUE fst = form.First();
+        if (fst.IsSymbol()) {
+            
+            r[0] = NIL();             // R0 retval
+            r[1] = form.First();    // R1
+            
+            uninitatedRegisters = 0;
+            r += mf->Bindings.size();
+            code = c = (Instruction*)r;
+            *(c++) = OpCall(1);
+            *(c++) = Instruction(END);
+            p = (byte*)c;
+            goto end;
+
+//            return CompilePrototype( isolate, form );
+        } else {
+            throw std::runtime_error("Cannot compile");
+        }
+    }
+    else {
     
         *((VALUE*)r++) = form;             // R0 retval
         uninitatedRegisters = 0;
@@ -38,12 +98,9 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
         code = c = (Instruction*)r;
         *(c++) = Instruction(END);       // 3=Print 5=internadiate1
         p = (byte*)c;
-    } else {
-//        if (form.Type == TList && form.ListStyle == QParenthesis) {
-            return CompilePrototype( isolate, form );
-//        }
     }
     
+end:
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
     

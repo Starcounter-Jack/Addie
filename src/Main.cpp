@@ -12,6 +12,7 @@
 #include "Compiler.hpp"
 #include <iostream>
 
+using namespace Addie;
 using namespace Addie::Internals;
 
 #ifdef USE_VECTOR
@@ -51,11 +52,11 @@ void TestIntArrays() {
 void TestAppend() {
     
     std::cout << "Test Append:";
-    LIST str(QString,INTEGER(74));
+    VALUE str(QString,INTEGER(74));
     str.CheckIntegrety();
-    LIST str2 = str.Append(INTEGER(97));
-    LIST str3 = str2.Append(INTEGER(99));
-    LIST str4 = str3.Append(INTEGER(107));
+    VALUE str2 = str.Append(INTEGER(97));
+    VALUE str3 = str2.Append(INTEGER(99));
+    VALUE str4 = str3.Append(INTEGER(107));
     std::cout << str4.Print();
     std::cout << "\n";
     assert( strcmp("\"Jack\"",str4.Print().c_str()) == 0 );
@@ -67,11 +68,11 @@ void TestAppend() {
 void TestPrepend() {
     
     std::cout << "Test Prepend:";
-    LIST str(QString,INTEGER(107));
+    VALUE str(QString,INTEGER(107));
     str.CheckIntegrety();
-    LIST str2 = str.Prepend(INTEGER(99));
-    LIST str3 = str2.Prepend(INTEGER(97));
-    LIST str4 = str3.Prepend(INTEGER(74));
+    VALUE str2 = str.Prepend(INTEGER(99));
+    VALUE str3 = str2.Prepend(INTEGER(97));
+    VALUE str4 = str3.Prepend(INTEGER(74));
     std::cout << str4.Print();
     std::cout << "\n";
     assert( strcmp("\"Jack\"",str4.Print().c_str()) == 0 );
@@ -108,7 +109,7 @@ VALUE TestParse( const char* input, const char* expectedOutput ) {
 
 VALUE TestParse( const char* input, int expectedCount, const char* expectedOutput ) {
     VALUE x = IllustrateParse( input );
-    LIST v;
+    VALUE v;
     v.Whole = x.Whole;
     int actualCount = v.GetList()->Count();
     const char* output = v.Print().c_str();
@@ -144,24 +145,25 @@ int main(int argc, const char * argv[]) {
     v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n] (fn [x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
 
-    v = TestParse("⏜\nlet ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
-                  "(let [a 10 b 20] (print (+ a b)))");
+    v = TestParse("⏜\nlet* ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
+                  "(let* [a 10 b 20] (print (+ a b)))");
     
 
+    Namespace ns;
     
-    Compilation* code = Compiler::Compile( &isolate, v );
+    Compilation* code = Compiler::Compile( &isolate, &ns, v );
     STRINGOLD str = Compiler::Disassemble(  &isolate, code);
     
     std::cout << str.ToString();
 
     Continuation c = Interpreter::Interpret(  &isolate, code);
-    assert(!c.HasRunToCompletion());
+    //assert(!c.HasRunToCompletion());
     
     Interpreter::Interpret( &isolate,c);
     
     
     v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
-    code = Compiler::Compile( &isolate, v );
+    code = Compiler::Compile( &isolate, &ns, v );
     std::cout << Compiler::Disassemble(&isolate, code).ToString();
     c = Interpreter::Interpret( &isolate, code );
     
