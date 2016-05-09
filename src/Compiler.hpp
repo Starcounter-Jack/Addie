@@ -15,6 +15,20 @@ namespace Addie {
 
     namespace Internals {
         
+        class Metaframe;
+        
+        class Binding {
+        public:
+            Binding() {
+                
+            }
+            Binding( Metaframe* frame, uint8_t reg ) : Frame(frame), Register(reg) {
+            }
+            
+            Metaframe* Frame;
+            uint8_t Register;
+        };
+        
         //struct Variable {
         //public:
         //    Variable( Symbol sym, VALUE val ) : symbol(sym), defaultValue(val) {
@@ -25,8 +39,10 @@ namespace Addie {
         
         class Metaframe {
         public:
-            std::vector<Symbol> LocalsAndArguments;
-            std::map<Symbol,uint8_t> Bindings;
+            Metaframe( Metaframe* parent ) :Parent(parent) {}
+            Metaframe* Parent = NULL;
+            std::vector<Symbol> Registers;
+            std::map<Symbol,Binding> Bindings;
             VALUE Body;
         };
 
@@ -34,8 +50,7 @@ namespace Addie {
     
     class Compiler {
     public:
-        static Metaframe* Analyse( Isolate* isolate, Namespace* ns, VALUE form );
-        static Compilation* Compile( Isolate* isolate, Namespace* ns, VALUE form );
+        static Compilation* Compile( Isolate* isolate, VALUE form );
         static Compilation* CompilePrototype( Isolate* isolate, VALUE form );
         static STRINGOLD Disassemble(  Isolate* isolate, Compilation* code );
     };

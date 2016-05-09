@@ -48,7 +48,7 @@ ParseSomething Addie::Internals::Parsers[128] = {
     &(Parser::ParseNumber),    // 55 7
     &(Parser::ParseNumber),    // 56 8
     &(Parser::ParseNumber),    // 57 9
-    NULL,    // 58 :
+    &(Parser::ParseKeyword),   // 58 :
     &(Parser::ParseComment),   // 59 ;
     &(Parser::ParseSymbol),    // 60 <
     &(Parser::ParseSymbol),    // 61 =
@@ -122,6 +122,8 @@ ParseSomething Addie::Internals::Parsers[128] = {
 };
 
 
+// IsSymbolTerminator, IsSymbol, IsWhitespace, IsClojureSpecialMeaning, IsDigit
+
 Char Addie::Internals::Chars[256] = {
     {1},{1},{1},{1},{1},{1},{1},{1},{1}, // 0-8
     {1,0,1},       // 9   TAB
@@ -156,7 +158,7 @@ Char Addie::Internals::Chars[256] = {
     {0,1,0,0,1},   // 55  Num 7
     {0,1,0,0,1},   // 56  Num 8
     {0,1,0,0,1},   // 57  Num 9
-    {1,0,0,1},     // 58  :
+    {0,1},         // 58  :
     {1,0,0,1},     // 59  ;
     {0,1},         // 60  <
     {0,1},         // 61  =
@@ -356,6 +358,28 @@ VALUE Parser::ParseSymbol( StreamReader* r ) {
     return SYMBOL(str.c_str(), str.length());
 }
 
+
+// Parse the a keyword literal
+VALUE Parser::ParseKeyword( StreamReader* r ) {
+    
+    std::ostringstream res;
+    
+    while (true) {
+        unsigned char c = r->ReadEofOk();
+        if (Chars[c].IsSymbolTerminator) {
+            r->UnRead();
+            break;
+        }
+        res << c;
+    }
+    std::string str = res.str();
+    if (str.length() == 0) {
+        throw std::runtime_error("Keyword size is zero!");
+    }
+    VALUE v = SYMBOL(str.c_str(), str.length());
+    v.AtomSubType = AKeyword;
+    return v;
+}
 
 
 // Parse the a number literal

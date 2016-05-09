@@ -145,13 +145,13 @@ int main(int argc, const char * argv[]) {
     v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n] (fn [x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
 
-    v = TestParse("⏜\nlet* ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
-                  "(let* [a 10 b 20] (print (+ a b)))");
+    v = TestParse("⏜\n123 ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
+                  "(123 [a 10 b 20] (print (+ a b)))");
     
 
-    Namespace ns;
+   // Namespace ns;
     
-    Compilation* code = Compiler::Compile( &isolate, &ns, v );
+    Compilation* code = Compiler::Compile( &isolate,  v );
     STRINGOLD str = Compiler::Disassemble(  &isolate, code);
     
     std::cout << str.ToString();
@@ -162,8 +162,8 @@ int main(int argc, const char * argv[]) {
     Interpreter::Interpret( &isolate,c);
     
     
-    v = TestParse( "[1 2 3 4]", "[1 2 3 4]" );
-    code = Compiler::Compile( &isolate, &ns, v );
+    v = TestParse( "{ :FirstName \"Jack\" }", "{:FirstName \"Jack\"}" );
+    code = Compiler::Compile( &isolate, v );
     std::cout << Compiler::Disassemble(&isolate, code).ToString();
     c = Interpreter::Interpret( &isolate, code );
     

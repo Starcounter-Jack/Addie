@@ -97,7 +97,7 @@ enum ValueNumberSubType : uint8_t {
 enum ValueAtomSubType : uint8_t {
     ANil        =  0b00,    //
     ASymbol     =  0b01,    //
-    AReserved   =  0b10,    //
+    AKeyword    =  0b10,    //
     AOther      =  0b11,    //
 };
     
@@ -149,7 +149,27 @@ public:
 
     };
     
-    
+    /*
+    inline bool IsConstant() {
+        switch (Type) {
+            case TList:
+                if (ListStyle == QString) {
+                    return true;
+                }
+                break;
+            case TAtom:
+                if ( AtomSubType == ANil && AtomSubType == AKeyword ) {
+                    return true;
+                }
+                break;
+            case TNumber:
+                return true;
+            case TOther:
+                return false;
+        }
+        return false;
+    }
+     */
     
     List* CreateDefaultList( VALUE first );
     List* CreateDefaultList( VALUE first, VALUE rest );
@@ -457,6 +477,7 @@ enum Symbols {
     SymFalse,
     SymTrue,
     SymLetStar,
+    SymDef,
     SymString,
     SymPlus,
     SymMinus,
@@ -485,6 +506,7 @@ static const char *SymStrings[] = {
     "false",
     "true",
     "let*",
+    "def",
     "string",
     "+",
     "-",
@@ -607,7 +629,7 @@ class Function : public NamedEntity {
 };
 
 class Continuation;
-    class Compilation;
+    struct Compilation;
 
 // To allow multiple VMs in the same process.
 class Isolate {

@@ -13,8 +13,20 @@
 using namespace Addie;
 using namespace Addie::Internals;
 
+/*
 // Find all declared variables and their default values
-Metaframe* AnalyseLet( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE form ) {
+Metaframe* CompileLetFrame( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE form ) {
+
+    auto newMf = MALLOC_HEAP(Metaframe); // TODO! GC
+    new (newMf) Metaframe();
+
+    if (mf != NULL ) {
+        // We nest all the frames for lexical scoping. Any variable not bound locally, will
+        // be added as an implicit argument. These implicit arguments allows closures
+        // to refer to variables in their parent scope.
+        newMf->Parent = mf;
+    }
+
     int cnt = form.Count();
     int varCount = 0;
     for (int t=0;t<cnt;t += 2) {
@@ -22,16 +34,15 @@ Metaframe* AnalyseLet( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE for
         Symbol variableName = form.GetAt(t).SymbolId;
         std::cout << "Found r[" << varCount << "] as local variable " << form.GetAt(t).Print() << "=" << form.GetAt(t+1).Print() << "\n";
         //mf->LocalsAndArguments.push_back(Variable(variableName,form.GetAt(t+1)));
-        mf->LocalsAndArguments.push_back(variableName);
-        mf->Bindings[variableName] = mf->LocalsAndArguments.size()-1;
+        newMf->Registers.push_back(variableName);
+        uint8_t regno = newMf->Registers.size()-1;
+        newMf->Bindings[variableName] = Binding(newMf,regno);
     }
-    return mf;
+    return newMf;
 }
 
-Metaframe* Compiler::Analyse( Isolate* isolate, Namespace* ns, VALUE form ) {
+Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE form ) {
     
-    auto mf = MALLOC_HEAP(Metaframe); // TODO! GC
-    new (mf) Metaframe();
     
     if (form.Type == TList && form.ListStyle == QParenthesis) {
         VALUE fst = form.First();
@@ -39,7 +50,7 @@ Metaframe* Compiler::Analyse( Isolate* isolate, Namespace* ns, VALUE form ) {
             Symbol verb = fst.SymbolId;
             switch (verb) {
                 case SymLetStar:
-                    return AnalyseLet( isolate, ns, mf, form.Rest().First() );
+                    return CompileLetFrame( isolate, ns, mf, form.Rest().First() );
                     break;
             }
         }
@@ -48,14 +59,11 @@ Metaframe* Compiler::Analyse( Isolate* isolate, Namespace* ns, VALUE form ) {
     return mf;
 }
 
+ */
 
 
-Compilation* Compiler::Compile( Isolate* isolate, Namespace* ns, VALUE form ) {
-    //        int type = form.Type;
-    
-    auto mf = Analyse(isolate, ns, form );
+Compilation* Compile2( Isolate* isolate, VALUE form ) {
 
-    
     byte* p = (byte*)isolate->NextOnConstant;
     
     Instruction* code;
@@ -78,15 +86,15 @@ Compilation* Compiler::Compile( Isolate* isolate, Namespace* ns, VALUE form ) {
             r[1] = form.First();    // R1
             
             uninitatedRegisters = 0;
-            r += mf->Bindings.size();
+     //       r += mf->Bindings.size();
             code = c = (Instruction*)r;
             *(c++) = OpCall(1);
             *(c++) = Instruction(END);
             p = (byte*)c;
             goto end;
 
-//            return CompilePrototype( isolate, form );
         } else {
+            return Addie::Compiler::CompilePrototype( isolate, form );
             throw std::runtime_error("Cannot compile");
         }
     }
@@ -107,9 +115,83 @@ end:
     isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     
     return header;
-
-    
 }
+
+Compilation* CompileConstant( Isolate* isolate, VALUE form ) {
+    
+    byte* p = (byte*)isolate->NextOnConstant;
+    
+    Instruction* code, *c;
+    VALUE* registers, *r;
+    
+    Compilation* header = (Compilation*)p;
+    p += sizeof(Compilation);
+    
+    registers = r = (VALUE*)p;
+    
+        *((VALUE*)r++) = form;             // R0 retval
+    
+        code = c = (Instruction*)r;
+        *(c++) = Instruction(END);       // 3=Print 5=intermediate1
+        p = (byte*)c;
+    
+    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
+    header->SizeOfRegisters = header->SizeOfInitializedRegisters;
+    
+    isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
+    
+    return header;
+}
+
+Compilation* CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol ) {
+    throw std::runtime_error("Not Implemented");
+}
+
+Compilation* CompileFunctionCall( Isolate* isolate, Metaframe* mf, VALUE form ) {
+    throw std::runtime_error("Not Implemented");
+}
+
+Compilation* CompileList( Isolate* isolate, Metaframe* mf, VALUE form ) {
+      throw std::runtime_error("Not Implemented");
+}
+
+Compilation* CompileForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
+    switch (form.Type) {
+        case TNumber:
+            return CompileConstant( isolate, form );
+        case TList:
+            switch (form.ListStyle) {
+                case QParenthesis:
+                    return CompileFunctionCall( isolate, mf, form );
+                case QCurly:
+                case QBracket:
+                    return CompileList( isolate, mf, form );
+                case QString:
+                    return CompileConstant( isolate, form );
+            }
+        case TAtom:
+            switch (form.AtomSubType) {
+                case ANil:
+                case AKeyword:
+                    return CompileConstant( isolate, form );
+                case ASymbol:
+                    return CompileSymbol(isolate, mf, form);
+                case AOther:
+                    break;
+            }
+        default:
+            break;
+    }
+    throw std::runtime_error("Compilation error");
+}
+
+Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
+    Metaframe* mf = MALLOC_HEAP(Metaframe);
+    new (mf) Metaframe(NULL);
+    return CompileForm( isolate, mf, form );
+    //return Compile2( isolate, form );
+}
+
 
 Compilation* Compiler::CompilePrototype( Isolate* isolate, VALUE form ) {
     

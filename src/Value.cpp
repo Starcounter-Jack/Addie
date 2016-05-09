@@ -103,6 +103,7 @@ std::string VALUE::Print() {
             case (TAtom) :
                 switch (AtomSubType) {
                     case (ASymbol) :
+                    case (AKeyword) :
                         return ((SYMBOL*)this)->Print();
                     case (ANil) :
                         return ((NIL*)this)->Print();

@@ -73,7 +73,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 //std::cout << "CALL-1";
                 sym = r[i.A].SymbolId;
                 if (sym == SymPrint) {
-                    std::cout << "\nPrinting " << r[0].Print();
+                    std::cout << "\nPrinting " << r[0].Print() << "\n";
                     r[0].Print();
                 }
                 

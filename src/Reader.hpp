@@ -108,6 +108,7 @@ class Parser {
     static VALUE ParseString( StreamReader* r);
     static VALUE ParseList( StreamReader* r);
     static VALUE ParseSymbol( StreamReader* r );
+    static VALUE ParseKeyword( StreamReader* r );
     static VALUE ParseNumber( StreamReader* r );
     static VALUE ParseVector( StreamReader* r);
    
