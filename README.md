@@ -8,12 +8,10 @@
 <img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/addie2.gif">
 </td>
 <td valign="top"><h4>A modern clojure style embeddable Lisp.</h4>
-1. Pure functional<br>
-2. Inspired by Clojure<br>
-3. Embeddable<br>
-4. Fast<br>
-5. Simple single threaded isolates for simple embedding<br>
-6. Supports vertical parentheses to relax your brain 🍺<br>
+1. For those wanting Clojure without Java<br>
+2. Fast, small and embeddable<br>
+3. Simple single threaded isolates for simple embedding<br>
+4. Supports vertical parentheses to relax your brain 🍺<br>
 <br>
 <img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/example2.png" width="382px"><br>
 </td>
