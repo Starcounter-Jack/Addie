@@ -145,7 +145,7 @@ int main(int argc, const char * argv[]) {
     v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n] (fn [x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
 
-    v = TestParse("⏜\nlet* ﹇\n    a 10\n    b 20\n    ﹈\n    (print (+ a b))\n⏝",
+    v = TestParse("⏜\nlet* ﹇\n     a 10\n     b 20\n     ﹈\n    (print (+ a b))\n⏝",
                   "(let* [a 10 b 20] (print (+ a b)))");
     
 

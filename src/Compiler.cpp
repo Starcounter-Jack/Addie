@@ -62,9 +62,10 @@ Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE 
  */
 
 
-Compilation* Compile2( Isolate* isolate, VALUE form ) {
-
-    byte* p = (byte*)isolate->NextOnConstant;
+byte* CompilePrototype( Isolate* isolate, byte* p, VALUE form ) {
+    
+    byte* start = p; //(byte*)isolate->NextOnConstant;
+    //byte* p = (byte*)start;
     
     Instruction* code;
     Instruction* c;
@@ -72,8 +73,70 @@ Compilation* Compile2( Isolate* isolate, VALUE form ) {
     VALUE* r;
     int uninitatedRegisters;
     
-    Compilation* header = (Compilation*)p;
-    p += sizeof(Compilation);
+    CompilationUnit* header = (CompilationUnit*)p;
+    p += sizeof(CompilationUnit);
+    
+    registers = r = (VALUE*)p;
+    
+    std::cout << "\nCompiling (print (+ 10 20))\n";
+    
+    *((VALUE*)r++) = NIL();             // R0 retval
+    *((VALUE*)r++) = SYMBOL(SymPlus);   // R1
+    *((VALUE*)r++) = SYMBOL(SymPrint);  // R2
+    *((VALUE*)r++) = INTEGER(10);       // R3
+    *((VALUE*)r++) = INTEGER(20);       // R4
+    
+    // R5
+    
+    code = c = (Instruction*)r;
+    
+    //            *(c++) = Instruction(SET_REGISTER_WINDOW);     // CODE START 0=SymPlus 1=10 2=20
+    //            uint64_t temp1 = (uint64_t)registers;
+    
+    //            *((VALUE*)c) = INTEGER(temp1);
+    //            uint64_t temp2 = (uint64_t)(*((VALUE*)c)).Integer;
+    
+    //            if (temp1 != temp2 ) {
+    //                std::cout << temp1 << "!=" << temp2 << "\n";
+    //            }
+    
+    
+    //            std::cout << (*((VALUE*)c)).Integer;
+    //            c += sizeof(INTEGER)/sizeof(Instruction);
+    *(c++) = OpCall(1,3,4);     // CODE START 0=SymPlus 1=10 2=20
+    //*(c++) = OpMove(0,5);       // retval -> intermediate1
+    *(c++) = Instruction(EXIT_WITH_CONTINUATION);
+    *(c++) = OpCall(2,0);       // 3=Print 5=internadiate1
+    *(c++) = Instruction(END);       // 3=Print 5=internadiate1
+    
+    //*(c++) = Instruction(JMP_IF_TRUE,(int32_t)-1);       // 3=Print 5=internadiate1
+    uninitatedRegisters = 1;
+    p = (byte*)(c-1);
+    
+    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
+    header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
+    
+    //isolate->NextOnConstant = (u64)p; // Mark the memory as used
+    
+    return p;
+    
+    //return header;
+}
+
+
+
+byte* Compile2( Isolate* isolate, byte* p, VALUE form ) {
+
+    //byte* p = (byte*)isolate->NextOnConstant;
+    
+    Instruction* code;
+    Instruction* c;
+    VALUE* registers;
+    VALUE* r;
+    int uninitatedRegisters;
+    
+    CompilationUnit* header = (CompilationUnit*)p;
+    p += sizeof(CompilationUnit);
     
     registers = r = (VALUE*)p;
     
@@ -81,10 +144,8 @@ Compilation* Compile2( Isolate* isolate, VALUE form ) {
         // Function calling form (...)
         VALUE fst = form.First();
         if (fst.IsSymbol()) {
-            
             r[0] = NIL();             // R0 retval
             r[1] = form.First();    // R1
-            
             uninitatedRegisters = 0;
      //       r += mf->Bindings.size();
             code = c = (Instruction*)r;
@@ -92,9 +153,8 @@ Compilation* Compile2( Isolate* isolate, VALUE form ) {
             *(c++) = Instruction(END);
             p = (byte*)c;
             goto end;
-
         } else {
-            return Addie::Compiler::CompilePrototype( isolate, form );
+            return CompilePrototype( isolate, p, form );
             throw std::runtime_error("Cannot compile");
         }
     }
@@ -112,20 +172,20 @@ end:
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
     
-    isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
+    //isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     
-    return header;
+    return p;
 }
 
-Compilation* CompileConstant( Isolate* isolate, VALUE form ) {
+byte* CompileConstant( Isolate* isolate, byte* p, VALUE form ) {
     
-    byte* p = (byte*)isolate->NextOnConstant;
+    //byte* p = (byte*)isolate->NextOnConstant;
     
     Instruction* code, *c;
     VALUE* registers, *r;
     
-    Compilation* header = (Compilation*)p;
-    p += sizeof(Compilation);
+    CompilationUnit* header = (CompilationUnit*)p;
+    p += sizeof(CompilationUnit);
     
     registers = r = (VALUE*)p;
     
@@ -138,46 +198,46 @@ Compilation* CompileConstant( Isolate* isolate, VALUE form ) {
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters;
     
-    isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
+    //isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     
-    return header;
+    return p;
 }
 
-Compilation* CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol ) {
+byte* CompileSymbol( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE symbol ) {
     throw std::runtime_error("Not Implemented");
 }
 
-Compilation* CompileFunctionCall( Isolate* isolate, Metaframe* mf, VALUE form ) {
+byte* CompileFunctionCall( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
     throw std::runtime_error("Not Implemented");
 }
 
-Compilation* CompileList( Isolate* isolate, Metaframe* mf, VALUE form ) {
+byte* CompileList( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
     // TODO! We don't know that this list is a constant. Temporary code.
-    return CompileConstant(isolate,form);
+    return CompileConstant(isolate, bytecode, form);
 }
 
-Compilation* CompileForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
+byte* CompileForm( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
     switch (form.Type) {
         case TNumber:
-            return CompileConstant( isolate, form );
+            return CompileConstant( isolate, bytecode, form );
         case TList:
             switch (form.ListStyle) {
                 case QParenthesis:
                     // CompileFunctionCall( isolate, mf, form );
-                    return Addie::Compiler::CompilePrototype( isolate, form ); // TODO!
+                    return CompilePrototype( isolate, bytecode, form ); // TODO!
                 case QCurly:
                 case QBracket:
-                    return CompileList( isolate, mf, form );
+                    return CompileList( isolate, bytecode, mf, form );
                 case QString:
-                    return CompileConstant( isolate, form );
+                    return CompileConstant( isolate, bytecode, form );
             }
         case TAtom:
             switch (form.AtomSubType) {
                 case ANil:
                 case AKeyword:
-                    return CompileConstant( isolate, form );
+                    return CompileConstant( isolate, bytecode, form );
                 case ASymbol:
-                    return CompileSymbol(isolate, mf, form);
+                    return CompileSymbol(isolate, bytecode, mf, form);
                 case AOther:
                     break;
             }
@@ -188,76 +248,28 @@ Compilation* CompileForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
 }
 
 Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
+    
     Metaframe* mf = MALLOC_HEAP(Metaframe);
     new (mf) Metaframe(NULL);
-    return CompileForm( isolate, mf, form );
-    //return Compile2( isolate, form );
-}
-
-
-Compilation* Compiler::CompilePrototype( Isolate* isolate, VALUE form ) {
     
-    byte* start = (byte*)isolate->NextOnConstant;
-    byte* p = (byte*)start;
-    
-    Instruction* code;
-    Instruction* c;
-    VALUE* registers;
-    VALUE* r;
-    int uninitatedRegisters;
-    
-    Compilation* header = (Compilation*)p;
+    byte* p = (byte*)isolate->NextOnConstant;
+    auto comp = new (p) Compilation();
     p += sizeof(Compilation);
     
-    registers = r = (VALUE*)p;
+    p = CompileForm( isolate, p, mf, form );
+    //return Compile2( isolate, form );
     
-    std::cout << "\nCompiling (print (+ 10 20))\n";
+    comp->SizeOfCompilation = p - (byte*)comp + 1;
     
-        *((VALUE*)r++) = NIL();             // R0 retval
-        *((VALUE*)r++) = SYMBOL(SymPlus);   // R1
-        *((VALUE*)r++) = SYMBOL(SymPrint);  // R2
-        *((VALUE*)r++) = INTEGER(10);       // R3
-        *((VALUE*)r++) = INTEGER(20);       // R4
-    
-        // R5
-        
-        code = c = (Instruction*)r;
-        
-        //            *(c++) = Instruction(SET_REGISTER_WINDOW);     // CODE START 0=SymPlus 1=10 2=20
-        //            uint64_t temp1 = (uint64_t)registers;
-        
-        //            *((VALUE*)c) = INTEGER(temp1);
-        //            uint64_t temp2 = (uint64_t)(*((VALUE*)c)).Integer;
-        
-        //            if (temp1 != temp2 ) {
-        //                std::cout << temp1 << "!=" << temp2 << "\n";
-        //            }
-        
-        
-        //            std::cout << (*((VALUE*)c)).Integer;
-        //            c += sizeof(INTEGER)/sizeof(Instruction);
-        *(c++) = OpCall(1,3,4);     // CODE START 0=SymPlus 1=10 2=20
-        //*(c++) = OpMove(0,5);       // retval -> intermediate1
-        *(c++) = Instruction(EXIT_WITH_CONTINUATION);
-        *(c++) = OpCall(2,0);       // 3=Print 5=internadiate1
-        *(c++) = Instruction(END);       // 3=Print 5=internadiate1
-
-        //*(c++) = Instruction(JMP_IF_TRUE,(int32_t)-1);       // 3=Print 5=internadiate1
-        uninitatedRegisters = 1;
-        p = (byte*)c;
-    
-    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
-    
-    isolate->NextOnConstant = (u64)p; // Mark the memory as used
-    
-    return header;
+    isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
+    return comp;
 }
 
-STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* code ) {
+
+uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CompilationUnit* code ) {
     
-    //Compilation* header = (Compilation*)code;
-    std::ostringstream res;
+    
+    
     const char* str;
     VALUE* R = code->StartOfConstants();
     
@@ -343,7 +355,20 @@ end:
         res << "\n";
     }
     res << "============================================================\n";
+    return (uintptr_t)p;
+}
+
+STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
     
+    CompilationUnit* code = compilation->GetFirstCompilationUnit();
+    std::ostringstream res;
+
+    uintptr_t p = (uintptr_t)code;
+    uintptr_t end = compilation->GetLastByteAddress();
+    while (p < end ) {
+       p = DisassembleUnit( isolate, res, (CompilationUnit*)p );
+    }
     
     return STRINGOLD(res.str());
+
 }

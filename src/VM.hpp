@@ -797,15 +797,31 @@ public:
     }
 };
 
-
-struct Compilation {
-    u32 SizeOfRegisters;
-    u32 SizeOfInitializedRegisters;
     
-    VALUE* StartOfConstants() {   return (VALUE*)((byte*)this + sizeof(Compilation)); }
-    Instruction* StartOfInstructions() { return (Instruction*)((byte*)this + sizeof(Compilation) + SizeOfInitializedRegisters); }
+
+
+struct CompilationUnit {
+    uint32_t SizeOfUnit;
+    uint16_t SizeOfRegisters;
+    uint16_t SizeOfInitializedRegisters;
+    
+    VALUE* StartOfConstants() {   return (VALUE*)((byte*)this + sizeof(CompilationUnit)); }
+    Instruction* StartOfInstructions() { return (Instruction*)((byte*)this + sizeof(CompilationUnit) + SizeOfInitializedRegisters); }
     int GetInitializedRegisterCount() { return SizeOfInitializedRegisters / sizeof(VALUE); }
 };
+    
+    struct Compilation {
+        uint32_t SizeOfCompilation;
+        
+        CompilationUnit* GetFirstCompilationUnit() {
+            return (CompilationUnit*)((byte*)this + sizeof(Compilation));
+        }
+        
+        uintptr_t GetLastByteAddress() {
+            return (uintptr_t)this + SizeOfCompilation - 1;
+        }
+    };
+    
 
 // Frames are register windows pertaining to a particular compilation.
 // Here the actual register values are kept.
@@ -819,7 +835,7 @@ struct Compilation {
 struct Frame
 {
     Frame* Parent;
-    Compilation* Comp;
+    CompilationUnit* Comp;
     
     VALUE* GetStartOfRegisters() {
         return (VALUE*)(((byte*)this) + sizeof(Frame));
@@ -844,13 +860,13 @@ public:
         return (*PC).OP == END;
     }
     
-    void EnterIntoNewFrame( Compilation* code, Frame* parent ) {
+    void EnterIntoNewFrame( CompilationUnit* code, Frame* parent ) {
         assert( frame == NULL );
         // The compiled code contains the size of the register machine needed for the
         // code. It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
         frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->SizeOfRegisters);
-        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(Compilation), code->SizeOfInitializedRegisters );
+        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(CompilationUnit), code->SizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
     }
@@ -866,8 +882,9 @@ public:
     
     static Continuation Interpret( Isolate* isolate, Compilation* code ) {
         Continuation c;
-        c.EnterIntoNewFrame(code, NULL);
-        c.PC = code->StartOfInstructions();
+        CompilationUnit* unit = code->GetFirstCompilationUnit();
+        c.EnterIntoNewFrame(unit, NULL);
+        c.PC = unit->StartOfInstructions();
         return Interpreter::Interpret( isolate, c );
     }
     
