@@ -193,7 +193,7 @@ byte* CompileConstant( Isolate* isolate, byte* p, VALUE form ) {
     
         code = c = (Instruction*)r;
         *(c++) = Instruction(END);       // 3=Print 5=intermediate1
-        p = (byte*)c;
+        p = (byte*)(c-1);
     
     header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     header->SizeOfRegisters = header->SizeOfInitializedRegisters;
