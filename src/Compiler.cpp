@@ -125,80 +125,26 @@ byte* CompilePrototype( Isolate* isolate, byte* p, VALUE form ) {
 
 
 
-byte* Compile2( Isolate* isolate, byte* p, VALUE form ) {
-
-    //byte* p = (byte*)isolate->NextOnConstant;
-    
-    Instruction* code;
-    Instruction* c;
-    VALUE* registers;
-    VALUE* r;
-    int uninitatedRegisters;
-    
-    CompilationUnit* header = (CompilationUnit*)p;
-    p += sizeof(CompilationUnit);
-    
-    registers = r = (VALUE*)p;
-    
-    if (form.Type == TList && form.ListStyle == QParenthesis) {
-        // Function calling form (...)
-        VALUE fst = form.First();
-        if (fst.IsSymbol()) {
-            r[0] = NIL();             // R0 retval
-            r[1] = form.First();    // R1
-            uninitatedRegisters = 0;
-     //       r += mf->Bindings.size();
-            code = c = (Instruction*)r;
-            *(c++) = OpCall(1);
-            *(c++) = Instruction(END);
-            p = (byte*)c;
-            goto end;
-        } else {
-            return CompilePrototype( isolate, p, form );
-            throw std::runtime_error("Cannot compile");
-        }
-    }
-    else {
-    
-        *((VALUE*)r++) = form;             // R0 retval
-        uninitatedRegisters = 0;
-    
-        code = c = (Instruction*)r;
-        *(c++) = Instruction(END);       // 3=Print 5=internadiate1
-        p = (byte*)c;
-    }
-    
-end:
-    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
-    
-    //isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
-    
-    return p;
-}
-
 byte* CompileConstant( Isolate* isolate, byte* p, VALUE form ) {
-    
-    //byte* p = (byte*)isolate->NextOnConstant;
     
     Instruction* code, *c;
     VALUE* registers, *r;
     
-    CompilationUnit* header = (CompilationUnit*)p;
+    CompilationUnit* unit = (CompilationUnit*)p;
     p += sizeof(CompilationUnit);
     
     registers = r = (VALUE*)p;
     
-        *((VALUE*)r++) = form;             // R0 retval
+    // Write register initialization
+    *((VALUE*)r++) = form; // R0 is the return value
     
-        code = c = (Instruction*)r;
-        *(c++) = Instruction(END);       // 3=Print 5=intermediate1
-        p = (byte*)(c-1);
+    // Write code instructions
+    code = c = (Instruction*)r;
+    *(c++) = Instruction(END);
+    p = (byte*)(c-1);
     
-    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    header->SizeOfRegisters = header->SizeOfInitializedRegisters;
-    
-    //isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
+    // Write header
+    new (unit) CompilationUnit( code, registers, 0 );
     
     return p;
 }

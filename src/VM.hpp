@@ -808,6 +808,11 @@ struct CompilationUnit {
     VALUE* StartOfConstants() {   return (VALUE*)((byte*)this + sizeof(CompilationUnit)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this + sizeof(CompilationUnit) + SizeOfInitializedRegisters); }
     int GetInitializedRegisterCount() { return SizeOfInitializedRegisters / sizeof(VALUE); }
+    
+    CompilationUnit( Instruction* code, VALUE* registers, int sizeUninit ) {
+        SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
+        SizeOfRegisters = SizeOfInitializedRegisters + sizeUninit;
+    }
 };
     
     struct Compilation {
