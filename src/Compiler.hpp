@@ -39,11 +39,12 @@ namespace Addie {
         
         class Metaframe {
         public:
-            Metaframe( Metaframe* parent ) :Parent(parent) {
+            Metaframe( Metaframe* parent, CompilationUnit* unit ) :Parent(parent) {
                 if (parent != NULL ){
                     compilation  = parent->compilation;
                     compilationUnit = parent->compilationUnit;
                 }
+                writeHead = ((byte*)unit) + sizeof(CompilationUnit) + sizeof(VALUE); // Skip return valueÏCo
                 
             }
 //            Metaframe( Metaframe* parent, CompilationUnit cu, Compilation c ) :Parent(parent),
@@ -54,6 +55,46 @@ namespace Addie {
             VALUE Body;
             CompilationUnit* compilationUnit = NULL;
             Compilation* compilation = NULL;
+            byte* writeHead;
+            
+            Instruction* tempWriteHead;
+            Instruction* tempBuffer = NULL; // Will point to a temporary stack allocation during compilation
+            // size_t CodeBufferUsed = 0; // To pop (free) the temporary stack allocation during compilation
+            
+            
+            Instruction* BeginCodeWrite( Isolate* isolate ) {
+                if (tempBuffer == NULL) {
+                    tempWriteHead = tempBuffer = (Instruction*)(isolate->NextOnStack);
+                }
+                return tempWriteHead;
+            }
+            
+            void EndCodeWrite( Instruction* addr ) {
+                tempWriteHead = addr;
+            }
+            
+            int AddConstant( VALUE value ) {
+                std::cout << "Adding constant " << value.Print() << "\n";
+                VALUE* reg = (VALUE*)writeHead;
+                (*reg++) = value;
+                writeHead = (byte*)reg;
+                compilationUnit->AddInitializedRegister();
+                return compilationUnit->GetInitializedRegisterCount() - 1;
+            }
+            
+            size_t FinishedWriting(Isolate* isolate) {
+                // Copy the buffer into the compilation unit
+                Instruction* c = BeginCodeWrite(isolate);
+                (*c++) = Instruction(END);
+                EndCodeWrite(c);
+                int tempBufferUsed = ((byte*)tempWriteHead - (byte*)tempBuffer);
+                if (tempBufferUsed != 0) {
+                   memcpy( compilationUnit->StartOfInstructions(), tempBuffer, tempBufferUsed);
+                }
+                //return (byte*)((byte*)compilationUnit->StartOfInstructions() + tempBufferUsed);
+                return sizeof(CompilationUnit) + compilationUnit->SizeOfInitializedRegisters +
+                                        tempBufferUsed;
+            }
         };
 
     }

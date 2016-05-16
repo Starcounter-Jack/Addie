@@ -478,7 +478,7 @@ enum Symbols {
     SymTrue,
     SymLetStar,
     SymDef,
-    SymDedef,
+    DEREF,
     SymString,
     SymPlus,
     SymMinus,
@@ -508,7 +508,7 @@ static const char *SymStrings[] = {
     "true",
     "let*",
     "def",
-    "dedef",
+    "deref",
     "string",
     "+",
     "-",
@@ -803,7 +803,7 @@ public:
 
 
 struct CompilationUnit {
-    uint32_t SizeOfUnit;
+//    uint32_t SizeOfUnit;
     uint16_t SizeOfRegisters;
     uint16_t SizeOfInitializedRegisters;
     
@@ -816,19 +816,22 @@ struct CompilationUnit {
         // By default, the only known register is the return register
         SizeOfInitializedRegisters = sizeof(VALUE); // ((byte*)code) - ((byte*)registers);
         SizeOfRegisters = sizeof(VALUE); // SizeOfInitializedRegisters + sizeUninit;
+//        SizeOfUnit = sizeof(VALUE) +
+        *StartOfRegisters() = NIL(); // Return value register (r[0])
     }
 
     
-    CompilationUnit( Instruction* code, VALUE* registers, int sizeUninit ) {
-        // TODO! REMOVE THIS CONSTRUCTOR
-        SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-        SizeOfRegisters = SizeOfInitializedRegisters + sizeUninit;
-    }
+    //CompilationUnit( Instruction* code, VALUE* registers, int sizeUninit ) {
+    //    // TODO! REMOVE THIS CONSTRUCTOR
+    //    SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
+    //    SizeOfRegisters = SizeOfInitializedRegisters + sizeUninit;
+    //}
     
-    void ReportLocals( int cnt ) {
-        size_t x = cnt * sizeof(VALUE);
+    int AddInitializedRegister() {
+        size_t x = sizeof(VALUE);
         SizeOfInitializedRegisters += x;
         SizeOfRegisters += x;
+        return SizeOfInitializedRegisters - 1;
     }
     
     void SetReturnRegister( VALUE constant ) {
