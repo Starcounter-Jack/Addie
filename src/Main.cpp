@@ -145,8 +145,8 @@ int main(int argc, const char * argv[]) {
     v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n] (fn [x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
 
-    v = TestParse("⏜\nfn* [x]\n    ⏜\n    let* ﹇\n         a 10\n         b 20\n         ﹈\n        (print (+ a b x))\n    ⏝\n⏝",
-                   "(fn* [x] (let* [a 10 b 20] (print (+ a b x))))");
+    v = TestParse("⏜\nfn* [x]\n    ⏜\n    let* ﹇\n         a 10\n         b 20\n         ﹈\n        (print (+ a b x y))\n    ⏝\n⏝",
+                   "(fn* [x] (let* [a 10 b 20] (print (+ a b x y))))");
 
     //v = TestParse("⏜\nfn* [x]\n   (≝ a 10)\n   (≝ b 20)\n   (123)\n⏝",
     //              "(fn* [x] (≝ a 10) (≝ b 20) (123))");

@@ -244,7 +244,7 @@ void CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE fo
     
     
     Instruction* i = mf->BeginCodeWrite(isolate);
-    uint8_t a1,a2,a3;
+    uint8_t a1,a2,a3,a4,a5;
     switch (argCount) {
         case 0:
             (*i++) = Instruction(SCALL_0,(uint8_t)regNo,(uint8_t)tmp);
@@ -265,6 +265,23 @@ void CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE fo
             a1 = isolate->MiniPop();
             (*i++) = Instruction(SCALL_3,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3);
+            break;
+        case 4:
+            a4 = isolate->MiniPop();
+            a3 = isolate->MiniPop();
+            a2 = isolate->MiniPop();
+            a1 = isolate->MiniPop();
+            (*i++) = Instruction(SCALL_4,regNo,tmp,a1);
+            (*i++) = Instruction(a2,a3,a4);
+            break;
+        case 5:
+            a5 = isolate->MiniPop();
+            a4 = isolate->MiniPop();
+            a3 = isolate->MiniPop();
+            a2 = isolate->MiniPop();
+            a1 = isolate->MiniPop();
+            (*i++) = Instruction(SCALL_5,regNo,tmp,a1);
+            (*i++) = Instruction(a2,a3,a4,a5);
             break;
         default:
             throw std::runtime_error("Not Implemented");
@@ -538,6 +555,44 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << (int)p->OP;
                 res << ",r";
                 res << (int)p->A;
+                res << ")";
+                break;
+            case (SCALL_4):
+            case (CALL_4):
+                res << str;
+                res << "     (r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ",r";
+                res << (int)p->C;
+                p++;
+                res << ",r";
+                res << (int)p->OP;
+                res << ",r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ")";
+                break;
+            case (SCALL_5):
+            case (CALL_5):
+                res << str;
+                res << "     (r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ",r";
+                res << (int)p->C;
+                p++;
+                res << ",r";
+                res << (int)p->OP;
+                res << ",r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ",r";
+                res << (int)p->C;
                 res << ")";
                 break;
             default:
