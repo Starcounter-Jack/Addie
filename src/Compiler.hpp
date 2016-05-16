@@ -39,11 +39,21 @@ namespace Addie {
         
         class Metaframe {
         public:
-            Metaframe( Metaframe* parent ) :Parent(parent) {}
+            Metaframe( Metaframe* parent ) :Parent(parent) {
+                if (parent != NULL ){
+                    compilation  = parent->compilation;
+                    compilationUnit = parent->compilationUnit;
+                }
+                
+            }
+//            Metaframe( Metaframe* parent, CompilationUnit cu, Compilation c ) :Parent(parent),
+//                                            compilationUnit(cu), compilation(c) {}
             Metaframe* Parent = NULL;
             std::vector<Symbol> Registers;
             std::map<Symbol,Binding> Bindings;
             VALUE Body;
+            CompilationUnit* compilationUnit = NULL;
+            Compilation* compilation = NULL;
         };
 
     }

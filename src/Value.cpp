@@ -238,7 +238,7 @@ std::string VALUE::PrintList() {
         }
     }
     else {
-       if (Rest().IsList()) {
+       if (next.IsList()) {
            res << First().Print();
            while (!next.IsEmpty()) {
                res << " ";

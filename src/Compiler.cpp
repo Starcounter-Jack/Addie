@@ -13,33 +13,62 @@
 using namespace Addie;
 using namespace Addie::Internals;
 
-/*
+
+byte* CompileForm( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form );
+
 // Find all declared variables and their default values
-Metaframe* CompileLetFrame( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE form ) {
+byte* CompileLet( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
 
-    auto newMf = MALLOC_HEAP(Metaframe); // TODO! GC
-    new (newMf) Metaframe();
+    
+//    CompilationUnit* unit = (CompilationUnit*)bytecode;
+//    bytecode += sizeof(CompilationUnit);
 
-    if (mf != NULL ) {
-        // We nest all the frames for lexical scoping. Any variable not bound locally, will
-        // be added as an implicit argument. These implicit arguments allows closures
-        // to refer to variables in their parent scope.
-        newMf->Parent = mf;
-    }
+//    form = form.Rest();
+//    bytecode = CompileLetFrame(isolate, bytecode, mf, form.First() );
+    VALUE lets = form.Rest().First();
 
-    int cnt = form.Count();
+    
+//    auto newMf = MALLOC_HEAP(Metaframe); // TODO! GC
+//    new (newMf) Metaframe( mf );
+
+//    if (mf != NULL ) {
+//        // We nest all the frames for lexical scoping. Any variable not bound locally, will
+//        // be added as an implicit argument. These implicit arguments allows closures
+//        // to refer to variables in their parent scope.
+//        newMf->Parent = mf;
+//    }
+
+    VALUE* registers = mf->compilationUnit->StartOfRegisters();
+    assert( registers == (VALUE*)bytecode );
+    (*registers++) = NIL();
+    int cnt = lets.Count();
     int varCount = 0;
     for (int t=0;t<cnt;t += 2) {
         varCount++;
-        Symbol variableName = form.GetAt(t).SymbolId;
-        std::cout << "Found r[" << varCount << "] as local variable " << form.GetAt(t).Print() << "=" << form.GetAt(t+1).Print() << "\n";
+        Symbol variableName = lets.GetAt(t).SymbolId;
+        //std::cout << "Found r[" << varCount << "] as local variable " << lets.GetAt(t).Print() << "=" << lets.GetAt(t+1).Print() << "\n";
         //mf->LocalsAndArguments.push_back(Variable(variableName,form.GetAt(t+1)));
-        newMf->Registers.push_back(variableName);
-        uint8_t regno = newMf->Registers.size()-1;
-        newMf->Bindings[variableName] = Binding(newMf,regno);
+        mf->Registers.push_back(variableName);
+        uint8_t regno = mf->Registers.size()-1;
+        mf->compilationUnit->ReportLocals(1);
+        mf->Bindings[variableName] = Binding(mf,regno);
+        (*registers++) = lets.GetAt(t+1);
     }
-    return newMf;
+    bytecode = (byte*)registers;
+    
+    form = form.Rest().Rest();
+    while (!form.IsEmptyList()) {
+        std::cout << "Statements following let:" << form.First().Print() << "\n";
+        bytecode = CompileForm(isolate,bytecode,mf,form.First());
+        form = form.Rest();
+    }
+    
+//    new (unit) CompilationUnit( code, registers,  );
+
+    return bytecode;
 }
+
+/*
 
 Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE form ) {
     
@@ -59,12 +88,11 @@ Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE 
     return mf;
 }
 
- */
+*/
 
-
-byte* CompilePrototype( Isolate* isolate, byte* p, VALUE form ) {
+byte* CompilePrototype( Isolate* isolate, Metaframe* mf, byte* p, VALUE form ) {
     
-    byte* start = p; //(byte*)isolate->NextOnConstant;
+//    byte* start = p; //(byte*)isolate->NextOnConstant;
     //byte* p = (byte*)start;
     
     Instruction* code;
@@ -73,8 +101,9 @@ byte* CompilePrototype( Isolate* isolate, byte* p, VALUE form ) {
     VALUE* r;
     int uninitatedRegisters;
     
-    CompilationUnit* header = (CompilationUnit*)p;
-    p += sizeof(CompilationUnit);
+    //    CompilationUnit* header = (CompilationUnit*)p;
+//    p += sizeof(CompilationUnit);
+    CompilationUnit* header = mf->compilationUnit;
     
     registers = r = (VALUE*)p;
     
@@ -125,63 +154,88 @@ byte* CompilePrototype( Isolate* isolate, byte* p, VALUE form ) {
 
 
 
-byte* CompileConstant( Isolate* isolate, byte* p, VALUE form ) {
+byte* CompileConstant( Isolate* isolate, Metaframe* mf, byte* p, VALUE form ) {
     
     Instruction* code, *c;
     VALUE* registers, *r;
     
-    CompilationUnit* unit = (CompilationUnit*)p;
-    p += sizeof(CompilationUnit);
+    CompilationUnit* unit = mf->compilationUnit; // (CompilationUnit*)p;
+//    p += sizeof(CompilationUnit);
     
-    registers = r = (VALUE*)p;
+    //registers = r = (VALUE*)p;
     
     // Write register initialization
-    *((VALUE*)r++) = form; // R0 is the return value
+    //*((VALUE*)r++) = form; // R0 is the return value
     
     // Write code instructions
-    code = c = (Instruction*)r;
+    code = c = (Instruction*)p; //unit->Get
     *(c++) = Instruction(END);
     p = (byte*)(c-1);
     
     // Write header
-    new (unit) CompilationUnit( code, registers, 0 );
+//    new (unit) CompilationUnit( code, registers, 0 );
+    unit->SetReturnRegister( form );
     
     return p;
 }
 
 byte* CompileSymbol( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE symbol ) {
-    throw std::runtime_error("Not Implemented");
+    Instruction* i = (Instruction*)bytecode;
+    (*i++) = Instruction( SymDedef, 0 );
+    //    throw std::runtime_error("Not Implemented");
+    return (byte*)i;
 }
 
-byte* CompileFunctionCall( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
-    throw std::runtime_error("Not Implemented");
+byte* CompileParenthesis( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
+    if (form.IsEmpty()) {
+        // () evaluates to an empty list whereas other lists are treated as/
+        // function/procedure calls.
+        return CompileConstant(isolate, mf, bytecode, form );
+    }
+    VALUE function = form.First();
+    if (function.IsSymbol()) {
+        // This is a regular predefined function/procedure call such as (print 123)
+        switch (function.SymbolId) {
+            case (SymLetStar):
+                return CompileLet( isolate, bytecode, mf, form );
+            default:
+                std::cout << "Function call: " << form.Print() << "\n";
+                bytecode = CompileForm(isolate,bytecode,mf,function);
+                // mf->FindBinding( function.Symbol );
+                Instruction* i = (Instruction*)bytecode;
+                (*i++) = OpCall(0);
+                return (byte*)i;
+        }
+    }
+//    return CompileConstant(isolate, bytecode, form );
+    // This is a direct lambda call such as ((fn [x] (print x)) 123)
+    throw std::runtime_error( "Not implemented");
 }
 
 byte* CompileList( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
     // TODO! We don't know that this list is a constant. Temporary code.
-    return CompileConstant(isolate, bytecode, form);
+    return CompileConstant(isolate, mf, bytecode, form);
 }
 
 byte* CompileForm( Isolate* isolate, byte* bytecode, Metaframe* mf, VALUE form ) {
     switch (form.Type) {
         case TNumber:
-            return CompileConstant( isolate, bytecode, form );
+            return CompileConstant( isolate, mf, bytecode, form );
         case TList:
             switch (form.ListStyle) {
                 case QParenthesis:
-                    // CompileFunctionCall( isolate, mf, form );
-                    return CompilePrototype( isolate, bytecode, form ); // TODO!
+                    return CompileParenthesis( isolate, bytecode, mf, form );
                 case QCurly:
                 case QBracket:
                     return CompileList( isolate, bytecode, mf, form );
                 case QString:
-                    return CompileConstant( isolate, bytecode, form );
+                    return CompileConstant( isolate, mf, bytecode, form );
             }
         case TAtom:
             switch (form.AtomSubType) {
                 case ANil:
                 case AKeyword:
-                    return CompileConstant( isolate, bytecode, form );
+                    return CompileConstant( isolate, mf, bytecode, form );
                 case ASymbol:
                     return CompileSymbol(isolate, bytecode, mf, form);
                 case AOther:
@@ -202,6 +256,12 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     auto comp = new (p) Compilation();
     p += sizeof(Compilation);
     
+    mf->compilationUnit = (CompilationUnit*)p;
+    mf->compilation = comp;
+    new (mf->compilationUnit) CompilationUnit();  //( Instruction* code, VALUE* registers, int sizeUninit )
+    
+    p += sizeof(CompilationUnit);
+    
     p = CompileForm( isolate, p, mf, form );
     //return Compile2( isolate, form );
     
@@ -217,7 +277,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
     
     
     const char* str;
-    VALUE* R = code->StartOfConstants();
+    VALUE* R = code->StartOfRegisters();
     
     int prefix = 6;
     res << "============================================================\n";

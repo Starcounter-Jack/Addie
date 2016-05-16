@@ -478,6 +478,7 @@ enum Symbols {
     SymTrue,
     SymLetStar,
     SymDef,
+    SymDedef,
     SymString,
     SymPlus,
     SymMinus,
@@ -507,6 +508,7 @@ static const char *SymStrings[] = {
     "true",
     "let*",
     "def",
+    "dedef",
     "string",
     "+",
     "-",
@@ -594,10 +596,10 @@ public:
 
 class OpCall : public Instruction {
 public:
-    OpCall( byte symreg, byte p1reg, byte p2reg ) : Instruction( CALL_2, symreg, p1reg, p2reg ) {     }
-    OpCall( byte symreg, byte p1reg ) : Instruction( CALL_1, symreg, p1reg ) {
+    OpCall( byte fnreg, byte p1reg, byte p2reg ) : Instruction( CALL_2, fnreg, p1reg, p2reg ) {     }
+    OpCall( byte fnreg, byte p1reg ) : Instruction( CALL_1, fnreg, p1reg ) {
     }
-    OpCall( byte symreg ) : Instruction( CALL_0, symreg )   { }
+    OpCall( byte fnreg ) : Instruction( CALL_0, fnreg )   { }
 };
 class OpMove : public Instruction {
 public:
@@ -805,14 +807,38 @@ struct CompilationUnit {
     uint16_t SizeOfRegisters;
     uint16_t SizeOfInitializedRegisters;
     
-    VALUE* StartOfConstants() {   return (VALUE*)((byte*)this + sizeof(CompilationUnit)); }
+    VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CompilationUnit)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this + sizeof(CompilationUnit) + SizeOfInitializedRegisters); }
     int GetInitializedRegisterCount() { return SizeOfInitializedRegisters / sizeof(VALUE); }
+
+    
+    CompilationUnit() {
+        // By default, the only known register is the return register
+        SizeOfInitializedRegisters = sizeof(VALUE); // ((byte*)code) - ((byte*)registers);
+        SizeOfRegisters = sizeof(VALUE); // SizeOfInitializedRegisters + sizeUninit;
+    }
+
     
     CompilationUnit( Instruction* code, VALUE* registers, int sizeUninit ) {
+        // TODO! REMOVE THIS CONSTRUCTOR
         SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
         SizeOfRegisters = SizeOfInitializedRegisters + sizeUninit;
     }
+    
+    void ReportLocals( int cnt ) {
+        size_t x = cnt * sizeof(VALUE);
+        SizeOfInitializedRegisters += x;
+        SizeOfRegisters += x;
+    }
+    
+    void SetReturnRegister( VALUE constant ) {
+        (*StartOfRegisters()) = constant;
+    }
+    
+    void ReportIntermediate( int cnt ) {
+        SizeOfRegisters += cnt * sizeof(VALUE);
+    }
+
 };
     
     struct Compilation {
