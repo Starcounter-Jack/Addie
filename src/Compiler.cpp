@@ -182,7 +182,7 @@ void CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
     unit->SetReturnRegister( form );
 }
 
-int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, int resultRegNo ) {
+int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, int resultRegNo, bool deref ) {
 
     
     Instruction* i;
@@ -198,16 +198,22 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, int resultRegN
 //        VALUE* registers = unit->;
         int regNo = mf->AddConstant( symbol );
         
-        i = mf->BeginCodeWrite(isolate);
-        //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
-        (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
-        mf->EndCodeWrite(i);
-        return resultRegNo;
+        if (deref) {
+           i = mf->BeginCodeWrite(isolate);
+           //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
+           (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
+           mf->EndCodeWrite(i);
+           return resultRegNo;
+        }
+        return regNo;
     }
         throw std::runtime_error("Found local variable reference! Not implemented");
     
 }
 
+
+
+/*
 void HonorResultRegister(Isolate* isolate, Metaframe* mf, int regNo) {
     if (regNo != 0) {
        Instruction* c = mf->BeginCodeWrite(isolate);
@@ -215,6 +221,7 @@ void HonorResultRegister(Isolate* isolate, Metaframe* mf, int regNo) {
        mf->EndCodeWrite(c);
     }
 }
+ */
 
 
 void CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
@@ -228,30 +235,29 @@ void CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
     for (int i=1;i<=argCount;i++) {
         tmp = mf->AllocateIntermediateRegister(isolate);
         isolate->MiniPush(tmp);
-//        std::cout << "Preparing argument " << tmp << "\n";
         CompileForm(isolate, mf, form.GetAt(i), tmp);
-//        Instruction* c = mf->BeginCodeWrite(isolate);
-//        (*c++) = Instruction(MOVE,(uint8_t)0,(uint8_t)tmp);
-//        mf->EndCodeWrite(c);
     }
     
-    tmp = mf->AllocateIntermediateRegister(isolate);
-    CompileSymbol(isolate,mf,function,tmp);
+    //tmp = mf->AllocateIntermediateRegister(isolate);
+    tmp = CompileSymbol(isolate,mf,function,0,false);
     // mf->FindBinding( function.Symbol );
+    
+    
     Instruction* i = mf->BeginCodeWrite(isolate);
     uint8_t a1,a2;
     switch (argCount) {
         case 0:
-            (*i++) = OpCall(tmp);
+            (*i++) = Instruction(SCALL_0,(uint8_t)regNo,(uint8_t)tmp);
             break;
         case 1:
             a1 = isolate->MiniPop();
-            (*i++) = OpCall(tmp,a1);
+            (*i++) = Instruction(SCALL_1,regNo,tmp,a1);
             break;
         case 2:
             a2 = isolate->MiniPop();
             a1 = isolate->MiniPop();
-            (*i++) = OpCall(tmp,a1,a2);
+            (*i++) = Instruction(SCALL_1,regNo,tmp,a1);
+            (*i++) = Instruction(SCALL_0,(uint8_t)a2);
             break;
         default:
             throw std::runtime_error("Not Implemented");
@@ -262,7 +268,7 @@ void CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
     
     mf->FreeIntermediateRegisters(usedBefore);
     
-    HonorResultRegister(isolate,mf,regNo);
+   // HonorResultRegister(isolate,mf,regNo);
     
     return;
 }
@@ -387,7 +393,7 @@ void CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
                     CompileConstant( isolate, mf, form, regNo );
                     return;
                 case ASymbol:
-                    CompileSymbol(isolate, mf, form, regNo );
+                    CompileSymbol(isolate, mf, form, regNo, true );
                     return;
                 case AOther:
                     break;
@@ -469,20 +475,6 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << ")";
                 break;
 
-            case (CALL_0):
-                res << str;
-                res << "      (r";
-                res << (int)p->A;
-                res << ")";
-                break;
-            case (CALL_1):
-                res << str;
-                res << "      (r";
-                res << (int)p->A;
-                res << ",r";
-                res << (int)p->B;
-                res << ")";
-                break;
             case (MOVE):
                 res << str;
                 res << "        (r";
@@ -491,9 +483,26 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << (int)p->B;
                 res << ")";
                 break;
+            case (SCALL_0):
+            case (CALL_0):
+                res << str;
+                res << "     (r";
+                res << (int)p->A;
+                res << ")";
+                break;
+            case (SCALL_1):
+            case (CALL_1):
+                res << str;
+                res << "     (r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ")";
+                break;
+            case (SCALL_2):
             case (CALL_2):
                 res << str;
-                res << "      (r";
+                res << "     (r";
                 res << (int)p->A;
                 res << ",r";
                 res << (int)p->B;

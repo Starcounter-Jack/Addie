@@ -82,7 +82,14 @@ public:
         CALL_3,
         CALL_4,
         CALL_5,
-        CALL_6,
+        CALL_N,
+        SCALL_0,
+        SCALL_1,
+        SCALL_2,
+        SCALL_3,
+        SCALL_4,
+        SCALL_5,
+        SCALL_N,
         JMP,
         JMP_IF_TRUE,
         DEREF,
@@ -113,7 +120,14 @@ public:
         "call-3",
         "call-4",
         "call-5",
-        "call-6",
+        "call-n",
+        "scall-0",
+        "scall-1",
+        "scall-2",
+        "scall-3",
+        "scall-4",
+        "scall-5",
+        "scall-n",
         "jmp",
         "jmp-if-true",
         "deref",
@@ -620,6 +634,8 @@ public:
     OpMove( byte reg1, byte reg2 ) : Instruction( MOVE, reg1, reg2 ) {
     }
 };
+    
+    
 
 
 //#include "Addie.hpp"
