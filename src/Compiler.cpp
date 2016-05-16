@@ -224,7 +224,7 @@ void HonorResultRegister(Isolate* isolate, Metaframe* mf, int regNo) {
  */
 
 
-void CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+void CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
     std::cout << "Function call: " << form.First().Print() << "\n";
     VALUE function = form.First();
     int usedBefore = mf->intermediatesUsed;
@@ -244,7 +244,7 @@ void CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
     
     
     Instruction* i = mf->BeginCodeWrite(isolate);
-    uint8_t a1,a2;
+    uint8_t a1,a2,a3;
     switch (argCount) {
         case 0:
             (*i++) = Instruction(SCALL_0,(uint8_t)regNo,(uint8_t)tmp);
@@ -256,8 +256,15 @@ void CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
         case 2:
             a2 = isolate->MiniPop();
             a1 = isolate->MiniPop();
-            (*i++) = Instruction(SCALL_1,regNo,tmp,a1);
-            (*i++) = Instruction(SCALL_0,(uint8_t)a2);
+            (*i++) = Instruction(SCALL_2,regNo,tmp,a1);
+            (*i++) = Instruction(a2);
+            break;
+        case 3:
+            a3 = isolate->MiniPop();
+            a2 = isolate->MiniPop();
+            a1 = isolate->MiniPop();
+            (*i++) = Instruction(SCALL_3,regNo,tmp,a1);
+            (*i++) = Instruction(a2,a3);
             break;
         default:
             throw std::runtime_error("Not Implemented");
@@ -289,7 +296,7 @@ void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, int regNo 
             case (SymFnStar):
                 return CompileFn( isolate, mf, form, regNo );
             default:
-                return CompileFnCall( isolate, mf, form, regNo );
+                return CompileFnCall_SymbolOptimization( isolate, mf, form, regNo );
         }
         
 
@@ -488,6 +495,8 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << str;
                 res << "     (r";
                 res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
                 res << ")";
                 break;
             case (SCALL_1):
@@ -497,6 +506,8 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << (int)p->A;
                 res << ",r";
                 res << (int)p->B;
+                res << ",r";
+                res << (int)p->C;
                 res << ")";
                 break;
             case (SCALL_2):
@@ -508,6 +519,25 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << (int)p->B;
                 res << ",r";
                 res << (int)p->C;
+                p++;
+                res << ",r";
+                res << (int)p->OP;
+                res << ")";
+                break;
+            case (SCALL_3):
+            case (CALL_3):
+                res << str;
+                res << "     (r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ",r";
+                res << (int)p->C;
+                p++;
+                res << ",r";
+                res << (int)p->OP;
+                res << ",r";
+                res << (int)p->A;
                 res << ")";
                 break;
             default:
