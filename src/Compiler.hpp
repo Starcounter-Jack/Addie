@@ -56,6 +56,8 @@ namespace Addie {
             CompilationUnit* compilationUnit = NULL;
             Compilation* compilation = NULL;
             byte* writeHead;
+            int intermediatesUsed = 0;
+            int maxIntermediatesUsed = 0;
             
             Instruction* tempWriteHead;
             Instruction* tempBuffer = NULL; // Will point to a temporary stack allocation during compilation
@@ -71,6 +73,13 @@ namespace Addie {
             
             void EndCodeWrite( Instruction* addr ) {
                 tempWriteHead = addr;
+            }
+            
+            int AddIntermediate() {
+                intermediatesUsed++;
+                if (intermediatesUsed > maxIntermediatesUsed)
+                    maxIntermediatesUsed = intermediatesUsed;
+                return compilationUnit->GetInitializedRegisterCount() + intermediatesUsed - 1;
             }
             
             int AddConstant( VALUE value ) {
@@ -91,6 +100,7 @@ namespace Addie {
                 if (tempBufferUsed != 0) {
                    memcpy( compilationUnit->StartOfInstructions(), tempBuffer, tempBufferUsed);
                 }
+                compilationUnit->ReportIntermediate(maxIntermediatesUsed);
                 //return (byte*)((byte*)compilationUnit->StartOfInstructions() + tempBufferUsed);
                 return sizeof(CompilationUnit) + compilationUnit->SizeOfInitializedRegisters +
                                         tempBufferUsed;

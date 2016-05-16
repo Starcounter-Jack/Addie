@@ -110,7 +110,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 
                 break;
             default:
-                std::cout << "Unknown!";
+                std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;
                 p++;
                 break;
                 //                   throw std::runtime_error("Illegal OP code");

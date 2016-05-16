@@ -156,14 +156,10 @@ void CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form ) {
     unit->SetReturnRegister( form );
 }
 
-byte* CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol ) {
+int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol ) {
 
     
     Instruction* i;
-    
-//    i = (Instruction*)bytecode;
-//    (*i++) = Instruction( DEREF, 0 );
-//    return (byte*)i;
     
     //    mf->Bindings[symbol] ;asddsa
     auto x = mf->Bindings.find(symbol.SymbolId);
@@ -177,15 +173,13 @@ byte* CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol ) {
         int regNo = mf->AddConstant( symbol );
         
         i = mf->BeginCodeWrite(isolate);
-        (*i++) = Instruction( DEREF, regNo );
+        auto resultRegNo = (uint8_t)mf->AddIntermediate();
+        (*i++) = Instruction( DEREF, (uint8_t)regNo, resultRegNo );
         mf->EndCodeWrite(i);
+        return resultRegNo;
     }
-    else {
         throw std::runtime_error("Found local variable reference! Not implemented");
-        
-    }
-    //    throw std::runtime_error("Not Implemented");
-    return (byte*)i;
+    
 }
 
 void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form ) {
@@ -203,11 +197,11 @@ void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form ) {
                 return CompileLet( isolate, mf, form );
             default:
                 std::cout << "Function call: " << form.First().Print() << "\n";
-                CompileSymbol(isolate,mf,function);
+                int regNo = CompileSymbol(isolate,mf,function);
                 // mf->FindBinding( function.Symbol );
                 Instruction* i = mf->BeginCodeWrite(isolate);
 //                 = (Instruction*)bytecode;
-                (*i++) = OpCall(0);
+                (*i++) = OpCall(regNo);
                 mf->EndCodeWrite(i);
                 return;
         }
@@ -328,6 +322,8 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, Compilatio
                 res << str;
                 res << "       (r";
                 res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
                 res << ")";
                 break;
 
