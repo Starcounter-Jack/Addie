@@ -137,14 +137,10 @@ byte* CompilePrototype( Isolate* isolate, Metaframe* mf, VALUE form ) {
     uninitatedRegisters = 1;
     byte* p = (byte*)(c-1);
     
-    header->SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    header->SizeOfRegisters = header->SizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
-    
-    //isolate->NextOnConstant = (u64)p; // Mark the memory as used
+    header->sizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
+    header->sizeOfRegisters = header->sizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
     
     return p;
-    
-    //return header;
 }
 
 
@@ -173,7 +169,7 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol ) {
         int regNo = mf->AddConstant( symbol );
         
         i = mf->BeginCodeWrite(isolate);
-        auto resultRegNo = (uint8_t)mf->AddIntermediate();
+        auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
         (*i++) = Instruction( DEREF, (uint8_t)regNo, resultRegNo );
         mf->EndCodeWrite(i);
         return resultRegNo;
@@ -195,7 +191,10 @@ void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form ) {
         switch (function.SymbolId) {
             case (SymLetStar):
                 return CompileLet( isolate, mf, form );
+            case (SymFnStar):
+                return CompileLet( isolate, mf, form );
             default:
+                int usedBefore = mf->intermediatesUsed;
                 std::cout << "Function call: " << form.First().Print() << "\n";
                 int regNo = CompileSymbol(isolate,mf,function);
                 // mf->FindBinding( function.Symbol );
@@ -203,12 +202,22 @@ void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form ) {
 //                 = (Instruction*)bytecode;
                 (*i++) = OpCall(regNo);
                 mf->EndCodeWrite(i);
+                mf->FreeIntermediateRegisters(usedBefore);
                 return;
         }
+        
+
     }
-//    return CompileConstant(isolate, bytecode, form );
     // This is a direct lambda call such as ((fn [x] (print x)) 123)
-    throw std::runtime_error( "Not implemented");
+
+    int usedBefore = mf->intermediatesUsed;
+    std::cout << "Function call: " << form.First().Print() << "\n";
+    CompileForm(isolate,mf,function);
+    Instruction* i = mf->BeginCodeWrite(isolate);
+    (*i++) = OpCall(0);
+    mf->EndCodeWrite(i);
+    mf->FreeIntermediateRegisters(usedBefore);
+    return;
 }
 
 void CompileList( Isolate* isolate, Metaframe* mf, VALUE form ) {
@@ -275,7 +284,7 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     //return Compile2( isolate, form );
 //    p = ;
     
-    comp->SizeOfCompilation = mf->FinishedWriting(isolate);
+    comp->sizeOfCompilation = mf->FinishedWriting(isolate);
     
     isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     return comp;

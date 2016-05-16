@@ -75,11 +75,15 @@ namespace Addie {
                 tempWriteHead = addr;
             }
             
-            int AddIntermediate() {
+            int AllocateIntermediateRegister() {
                 intermediatesUsed++;
                 if (intermediatesUsed > maxIntermediatesUsed)
                     maxIntermediatesUsed = intermediatesUsed;
                 return compilationUnit->GetInitializedRegisterCount() + intermediatesUsed - 1;
+            }
+            
+            void FreeIntermediateRegisters( int stillUsed ) {
+                intermediatesUsed = stillUsed;
             }
             
             int AddConstant( VALUE value ) {
@@ -102,7 +106,7 @@ namespace Addie {
                 }
                 compilationUnit->ReportIntermediate(maxIntermediatesUsed);
                 //return (byte*)((byte*)compilationUnit->StartOfInstructions() + tempBufferUsed);
-                return sizeof(CompilationUnit) + compilationUnit->SizeOfInitializedRegisters +
+                return sizeof(CompilationUnit) + compilationUnit->sizeOfInitializedRegisters +
                                         tempBufferUsed;
             }
         };

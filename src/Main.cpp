@@ -147,8 +147,8 @@ int main(int argc, const char * argv[]) {
 
     v = TestParse("⏜\nlet* ﹇\n     a 10\n     b 20\n     ﹈\n    (print (+ a b))\n⏝",
                    "(let* [a 10 b 20] (print (+ a b)))");
-    //v = TestParse("⏜\nlet* ﹇\n     a 10\n     b 20\n     ﹈\n    [1 2 3]\n⏝",
-    //               "(let* [a 10 b 20] [1 2 3])");
+    v = TestParse("⏜\nlet* ﹇\n     a 10\n     b 20\n     ﹈\n    (213)\n⏝",
+                   "(let* [a 10 b 20] (213))");
     
 
    // Namespace ns;

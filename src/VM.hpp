@@ -473,12 +473,13 @@ enum Symbols {
     CALL_6,
     JMP,
     JMP_IF_TRUE,
+    DEREF,
     SymNil,
     SymFalse,
     SymTrue,
     SymLetStar,
+    SymFnStar,
     SymDef,
-    DEREF,
     SymString,
     SymPlus,
     SymMinus,
@@ -503,12 +504,13 @@ static const char *SymStrings[] = {
     "call-6",
     "jmp",
     "jmp-if-true",
+    "deref",
     "nil",
     "false",
     "true",
     "let*",
+    "fn*",
     "def",
-    "deref",
     "string",
     "+",
     "-",
@@ -804,18 +806,22 @@ public:
 
 struct CompilationUnit {
 //    uint32_t SizeOfUnit;
-    uint16_t SizeOfRegisters;
-    uint16_t SizeOfInitializedRegisters;
+    uint8_t maxArguments = 0;
+    uint8_t sizeOfInitializedRegisters;
+    uint8_t sizeOfRegisters;
+    uint8_t __unusedForAlignment;
     
     VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CompilationUnit)); }
-    Instruction* StartOfInstructions() { return (Instruction*)((byte*)this + sizeof(CompilationUnit) + SizeOfInitializedRegisters); }
-    int GetInitializedRegisterCount() { return SizeOfInitializedRegisters / sizeof(VALUE); }
+    Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
+                                                sizeof(CompilationUnit) +
+                                                sizeOfInitializedRegisters); }
+    int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
 
     
     CompilationUnit() {
         // By default, the only known register is the return register
-        SizeOfInitializedRegisters = sizeof(VALUE); // ((byte*)code) - ((byte*)registers);
-        SizeOfRegisters = sizeof(VALUE); // SizeOfInitializedRegisters + sizeUninit;
+        sizeOfInitializedRegisters = sizeof(VALUE); // ((byte*)code) - ((byte*)registers);
+        sizeOfRegisters = sizeof(VALUE); // SizeOfInitializedRegisters + sizeUninit;
 //        SizeOfUnit = sizeof(VALUE) +
         *StartOfRegisters() = NIL(); // Return value register (r[0])
     }
@@ -829,9 +835,9 @@ struct CompilationUnit {
     
     int AddInitializedRegister() {
         size_t x = sizeof(VALUE);
-        SizeOfInitializedRegisters += x;
-        SizeOfRegisters += x;
-        return SizeOfInitializedRegisters - 1;
+        sizeOfInitializedRegisters += x;
+        sizeOfRegisters += x;
+        return sizeOfInitializedRegisters - 1;
     }
     
     void SetReturnRegister( VALUE constant ) {
@@ -839,20 +845,20 @@ struct CompilationUnit {
     }
     
     void ReportIntermediate( int cnt ) {
-        SizeOfRegisters += cnt * sizeof(VALUE);
+        sizeOfRegisters += cnt * sizeof(VALUE);
     }
 
 };
     
     struct Compilation {
-        uint32_t SizeOfCompilation;
+        uint32_t sizeOfCompilation;
         
         CompilationUnit* GetFirstCompilationUnit() {
             return (CompilationUnit*)((byte*)this + sizeof(Compilation));
         }
         
         uintptr_t GetLastByteAddress() {
-            return (uintptr_t)this + SizeOfCompilation - 1;
+            return (uintptr_t)this + sizeOfCompilation - 1;
         }
     };
     
@@ -899,8 +905,8 @@ public:
         // The compiled code contains the size of the register machine needed for the
         // code. It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
-        frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->SizeOfRegisters);
-        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(CompilationUnit), code->SizeOfInitializedRegisters );
+        frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->sizeOfRegisters);
+        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(CompilationUnit), code->sizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
     }
