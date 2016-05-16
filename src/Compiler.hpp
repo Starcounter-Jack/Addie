@@ -53,6 +53,7 @@ namespace Addie {
             std::vector<Symbol> Registers;
             std::map<Symbol,Binding> Bindings;
             VALUE Body;
+//            int constants = 0;
             CompilationUnit* compilationUnit = NULL;
             Compilation* compilation = NULL;
             byte* writeHead;
@@ -71,15 +72,22 @@ namespace Addie {
                 return tempWriteHead;
             }
             
+            
             void EndCodeWrite( Instruction* addr ) {
                 tempWriteHead = addr;
             }
             
-            int AllocateIntermediateRegister() {
+//            void FoundConstant( VALUE form ) {
+//                std::cout << "Found constant " << form.Print() << "\n";
+//                constants++;
+//            }
+
+            
+            int AllocateIntermediateRegister(Isolate* isolate) {
                 intermediatesUsed++;
                 if (intermediatesUsed > maxIntermediatesUsed)
                     maxIntermediatesUsed = intermediatesUsed;
-                return compilationUnit->GetInitializedRegisterCount() + intermediatesUsed - 1;
+                return 256 - intermediatesUsed; // - 1;
             }
             
             void FreeIntermediateRegisters( int stillUsed ) {

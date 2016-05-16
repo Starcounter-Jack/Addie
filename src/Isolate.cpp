@@ -20,10 +20,12 @@ Isolate::Isolate() {
     Stack = ReserveMemoryBlock(0x0caff0000000, 0x10000000000);
     Constants = ReserveMemoryBlock(0x0cafe000000, 0x10000000000);
     Heap = ReserveMemoryBlock(0x0cafd000000,0x10000000000);
+    MiniStack = (int*)ReserveMemoryBlock(0x0cafc000000,0x100000); // Small temporary buffer
     
     NextOnStack = (uintptr_t)Stack;
     NextOnHeap = (uintptr_t)Heap;
     NextOnConstant = (uintptr_t)Constants;
+    NextOnMiniStack = (int*)MiniStack;
     
     // Register the known symbols. Each VM bytecode OP also has a corresponding
     // text mnemonic such that the first 256 symbols correspond to a OP code.

@@ -69,6 +69,68 @@ public:
 };
 
 
+    
+    enum Symbols {
+        END,
+        //    SET_REGISTER_WINDOW,
+        EXIT_WITH_CONTINUATION,
+        RETURN,
+        MOVE,
+        CALL_0,
+        CALL_1,
+        CALL_2,
+        CALL_3,
+        CALL_4,
+        CALL_5,
+        CALL_6,
+        JMP,
+        JMP_IF_TRUE,
+        DEREF,
+        SymNil,
+        SymFalse,
+        SymTrue,
+        SymLetStar,
+        SymFnStar,
+        SymDef,
+        SymString,
+        SymPlus,
+        SymMinus,
+        SymStar,
+        SymSlash,
+        SymCons,
+        SymPrint,
+        Sym_Count
+    };
+    static const char *SymStrings[] = {
+        "end",
+        //    "set-register-window",
+        "exit-with-continuation",
+        "return",
+        "move",
+        "call-0",
+        "call-1",
+        "call-2",
+        "call-3",
+        "call-4",
+        "call-5",
+        "call-6",
+        "jmp",
+        "jmp-if-true",
+        "deref",
+        "nil",
+        "false",
+        "true",
+        "let*",
+        "fn*",
+        "def",
+        "string",
+        "+",
+        "-",
+        "*",
+        "/",
+        "Cons",
+        "print"
+    };
 
 
 
@@ -180,6 +242,18 @@ public:
     
     int Count();
     
+    /*
+    bool IsSpecial() {
+        if (IsSymbol()) {
+            switch (SymbolId) {
+                case SymLetStar:
+                case SymFnStar:
+                    return true;
+            }
+        }
+        return false;
+    }
+     */
     
     VALUE( ValueListStyle style) {
         Type = TList;
@@ -458,68 +532,6 @@ public:
 
 
 
-enum Symbols {
-    END,
-    //    SET_REGISTER_WINDOW,
-    EXIT_WITH_CONTINUATION,
-    RETURN,
-    MOVE,
-    CALL_0,
-    CALL_1,
-    CALL_2,
-    CALL_3,
-    CALL_4,
-    CALL_5,
-    CALL_6,
-    JMP,
-    JMP_IF_TRUE,
-    DEREF,
-    SymNil,
-    SymFalse,
-    SymTrue,
-    SymLetStar,
-    SymFnStar,
-    SymDef,
-    SymString,
-    SymPlus,
-    SymMinus,
-    SymStar,
-    SymSlash,
-    SymCons,
-    SymPrint,
-    Sym_Count
-};
-static const char *SymStrings[] = {
-    "end",
-    //    "set-register-window",
-    "exit-with-continuation",
-    "return",
-    "move",
-    "call-0",
-    "call-1",
-    "call-2",
-    "call-3",
-    "call-4",
-    "call-5",
-    "call-6",
-    "jmp",
-    "jmp-if-true",
-    "deref",
-    "nil",
-    "false",
-    "true",
-    "let*",
-    "fn*",
-    "def",
-    "string",
-    "+",
-    "-",
-    "*",
-    "/",
-    "Cons",
-    "print"
-};
-
 
 // Contains fixed registers (used for variables instead of stack)
 // Registers are preloaded with constants
@@ -536,11 +548,11 @@ class Instruction {
 public:
     union {
         uint32_t Whole;
-        int32_t A3 : 24;
+        uint32_t A3 : 24;
         struct {
-            int8_t A;
-            int8_t B;
-            int8_t C;
+            uint8_t A;
+            uint8_t B;
+            uint8_t C;
             Op OP;
         };
     };
@@ -566,7 +578,7 @@ public:
         assert( A3 == a3 );
     }
     
-    Instruction( Op op, int a, int b, int c ) {
+    Instruction( Op op, uint8_t a, uint8_t b, uint8_t c ) {
         OP = op;
         A = a;
         B = b;
@@ -575,7 +587,7 @@ public:
         assert( B == b );
         assert( C == c );
     }
-    Instruction( Op op, byte a, byte b ) {
+    Instruction( Op op, uint8_t a, uint8_t b ) {
         OP = op;
         A = a;
         B = b;
@@ -648,10 +660,12 @@ public:
     uintptr_t Stack;
     uintptr_t Constants;
     uintptr_t Heap;
+    int* MiniStack;
     
     uintptr_t NextOnStack;
     uintptr_t NextOnHeap;
     uintptr_t NextOnConstant;
+    int* NextOnMiniStack;
     
     
     int NumberOfAllocations = 0;
@@ -683,6 +697,14 @@ public:
     
     inline void AlignNextConstant() {
         NextOnConstant = (NextOnConstant + 0b01111) & ~0b01111; // Round up for alignment
+    }
+    
+    int MiniPop() {
+        return *--NextOnMiniStack;
+    }
+    
+    void MiniPush( int value ) {
+        *NextOnMiniStack++ = value;
     }
     
     
@@ -841,6 +863,7 @@ struct CompilationUnit {
     }
     
     void SetReturnRegister( VALUE constant ) {
+        assert( sizeOfInitializedRegisters >= sizeof(VALUE));
         (*StartOfRegisters()) = constant;
     }
     
