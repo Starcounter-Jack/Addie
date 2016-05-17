@@ -9,10 +9,10 @@
 #ifndef Addie_hpp
 #define Addie_hpp
 
-//#define USE_OPTIMIZATIONS
+#define USE_OPTIMIZATIONS
 
 #ifdef USE_OPTIMIZATIONS
-//#define USE_COMBINED_OPS
+#define USE_COMBINED_VM_OPS
 #define USE_CONS
 #define USE_CONS_OPTIMIZATIONS
 #define USE_ARRAY

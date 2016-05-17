@@ -82,7 +82,7 @@ public:
         }
         rest = MALLOC_HEAP(VectorRest);
         new (rest) VectorRest(this,1);
-        return LIST(rest);
+        return VALUE(rest);
     }
     
     // Override of the List interface

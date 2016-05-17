@@ -292,7 +292,7 @@ List* VALUE::CreateDefaultList( VALUE first ) {
 #endif
 
 #ifdef USE_ARRAY
-List* LIST::CreateDefaultList( VALUE first ) {
+List* VALUE::CreateDefaultList( VALUE first ) {
     return Array::Create(first);
 }
 #endif
