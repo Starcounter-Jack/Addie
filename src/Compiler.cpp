@@ -438,7 +438,7 @@ int CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAll
                 return CompileLet( isolate, mf, form, mtd );
             case (SymFnStar):
                 return CompileFn( isolate, mf, form, mtd );
-#ifdef USE_COMBINED_OPS
+#ifdef USE_COMBINED_VM_OPS
             default:
                 return CompileFnCall_SymbolOptimization( isolate, mf, form, mtd );
 #endif
@@ -514,6 +514,90 @@ void AnalyseForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
 }
 */
 
+inline void Translate( uint8_t &reg, int lastFixed ) {
+    if (reg > lastFixed) {
+        int tmp = -reg + 255;
+        reg = tmp + lastFixed + 1;
+      //reg -= unused;
+    }
+}
+
+void PackRegisters( Isolate* isolate, Metaframe* mf ) {
+    
+    
+    CompilationUnit* code = mf->compilationUnit;
+    Instruction* p = code->StartOfInstructions();
+    
+    int lastFixed = code->GetInitializedRegisterCount() - 1;
+    
+    while (true) {
+        
+        switch (p->OP) {
+            case (END):
+                goto end;
+            case (SCALL_0):
+            case (CALL_0):
+            case (MOVE):
+            case (DEREF):
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                break;
+            case (SCALL_1):
+            case (CALL_1):
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                Translate(p->C, lastFixed);
+                break;
+            case (SCALL_2):
+            case (CALL_2):
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                Translate(p->C, lastFixed);
+                p++;
+                Translate(p->OP, lastFixed);
+                break;
+            case (SCALL_3):
+            case (CALL_3):
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                Translate(p->C, lastFixed);
+                p++;
+                Translate(p->OP, lastFixed);
+                Translate(p->A, lastFixed);
+                break;
+            case (SCALL_4):
+            case (CALL_4):
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                Translate(p->C, lastFixed);
+                p++;
+                Translate(p->OP, lastFixed);
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                break;
+            case (SCALL_5):
+            case (CALL_5):
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                Translate(p->C, lastFixed);
+                p++;
+                Translate(p->OP, lastFixed);
+                Translate(p->A, lastFixed);
+                Translate(p->B, lastFixed);
+                Translate(p->C, lastFixed);
+                break;
+            default:
+                throw std::runtime_error("Not implemented");
+                break;
+        }
+        p++;
+    }
+end:
+    return;
+    //return (uintptr_t)p;
+}
+
+
 int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     switch (form.Type) {
         case TNumber:
@@ -562,10 +646,11 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
 //    AnalyseForm( isolate, mf, form );
     CompileForm( isolate, mf, form, UseReturnRegister );
-    
     comp->sizeOfCompilation = mf->FinishedWriting(isolate);
-    
     isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
+    
+    PackRegisters(isolate, mf);
+
     return comp;
 }
 
@@ -763,3 +848,5 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
     return STRINGOLD(res.str());
 
 }
+
+

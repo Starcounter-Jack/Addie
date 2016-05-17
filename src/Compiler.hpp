@@ -68,7 +68,7 @@ namespace Addie {
             CompilationUnit* compilationUnit = NULL;
             Compilation* compilation = NULL;
             byte* writeHead;
-            int intermediatesUsed = 0;
+//            int intermediatesUsed = 0;
             int maxIntermediatesUsed = 0;
             
             Instruction* tempWriteHead;
@@ -114,9 +114,6 @@ namespace Addie {
             // registers used down to the registers immediatelly following the
             // initialized registers (the lower numbered registers).
             int AllocateIntermediateRegister(Isolate* isolate) {
-                intermediatesUsed++;
-                if (intermediatesUsed > maxIntermediatesUsed)
-                    maxIntermediatesUsed = intermediatesUsed;
                 if (!RegUsage[0].InUse) {
                     // The return register is available
                     RegUsage[0].InUse = true;
@@ -126,6 +123,11 @@ namespace Addie {
                 while (true) {
                     if (!RegUsage[regNo].InUse) {
                         RegUsage[regNo].InUse = true;
+
+                        int used = -regNo + 255;
+                        if (used > maxIntermediatesUsed)
+                            maxIntermediatesUsed = used;
+
                         return regNo;
                     }
                     regNo--;
