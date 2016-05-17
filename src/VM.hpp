@@ -71,7 +71,7 @@ public:
     
     
     enum RegisterAllocationMethod {
-        AllocatedRegister,
+        UseFree,
         UseReturnRegister
     };
 
@@ -882,7 +882,8 @@ struct CompilationUnit {
         size_t x = sizeof(VALUE);
         sizeOfInitializedRegisters += x;
         sizeOfRegisters += x;
-        return sizeOfInitializedRegisters - 1;
+        //return sizeOfInitializedRegisters - 1;
+        return sizeOfInitializedRegisters / sizeof(VALUE);
     }
     
     void SetReturnRegister( VALUE constant ) {

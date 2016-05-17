@@ -38,8 +38,16 @@ namespace Addie {
         //    VALUE defaultValue;
         //};
         
+        struct RegisterUse {
+            bool InUse : 1;
+        };
+        
+        
         class Metaframe {
         public:
+            RegisterUse RegUsage[255] = { {false} };
+            
+            
             Metaframe( Metaframe* parent, CompilationUnit* unit ) :Parent(parent) {
                 if (parent != NULL ){
                     compilation  = parent->compilation;
@@ -70,6 +78,9 @@ namespace Addie {
                 if (mtd == UseReturnRegister) {
                     return 0;
                 }
+                if (existingRegNo == 0) {
+                    return AllocateIntermediateRegister(isolate);
+                }
                 return existingRegNo;
             }
             
@@ -95,11 +106,23 @@ namespace Addie {
                 intermediatesUsed++;
                 if (intermediatesUsed > maxIntermediatesUsed)
                     maxIntermediatesUsed = intermediatesUsed;
-                return 256 - intermediatesUsed; // - 1;
+                if (!RegUsage[0].InUse) {
+                    RegUsage[0].InUse = true;
+                    return 0;
+                }
+                int regNo = 255; // 6 - intermediatesUsed; // - 1;
+                while (true) {
+                    if (!RegUsage[regNo].InUse) {
+                        RegUsage[regNo].InUse = true;
+                        return regNo;
+                    }
+                    regNo--;
+                }
+                throw std::runtime_error("No free register");
             }
             
-            void FreeIntermediateRegisters( int stillUsed ) {
-                intermediatesUsed = stillUsed;
+            void FreeIntermediateRegister( int regNo ) {
+                RegUsage[regNo].InUse = false;
             }
             
             int AddConstant( VALUE value ) {
@@ -107,8 +130,10 @@ namespace Addie {
                 VALUE* reg = (VALUE*)writeHead;
                 (*reg++) = value;
                 writeHead = (byte*)reg;
-                compilationUnit->AddInitializedRegister();
-                return compilationUnit->GetInitializedRegisterCount() - 1;
+                int regNo = compilationUnit->AddInitializedRegister();
+                //int regNo = compilationUnit->GetInitializedRegisterCount() - 1;
+                RegUsage[regNo].InUse = true;
+                return regNo;
             }
             
             size_t FinishedWriting(Isolate* isolate) {

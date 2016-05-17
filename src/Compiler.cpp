@@ -194,7 +194,6 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
     
     Instruction* i;
     
-    int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
     
     //    mf->Bindings[symbol] ;asddsa
     auto x = mf->Bindings.find(symbol.SymbolId);
@@ -208,6 +207,7 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
         int regNo = mf->AddConstant( symbol );
         
         if (deref) {
+            int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
            i = mf->BeginCodeWrite(isolate);
            //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
            (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
@@ -240,36 +240,41 @@ int CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE for
     
     
     VALUE function = form.First();
-    int usedBefore = mf->intermediatesUsed;
     int tmp;
     int argCount = form.Count() - 1;
     
-    int regNo = mf->AllocateRegister(isolate, mtd, 0);
+    int regNo;
     
+    //int usedBefore = mf->intermediatesUsed;
+
     for (int i=1;i<=argCount;i++) {
 //        tmp = mf->AllocateIntermediateRegister(isolate);
-        tmp = CompileForm(isolate, mf, form.GetAt(i), AllocatedRegister );
+        tmp = CompileForm(isolate, mf, form.GetAt(i), UseFree );
         isolate->MiniPush(tmp);
     }
     
-    //tmp = mf->AllocateIntermediateRegister(isolate);
-    tmp = CompileSymbol(isolate,mf,function,AllocatedRegister,false);
-    // mf->FindBinding( function.Symbol );
+    tmp = CompileSymbol(isolate,mf,function,UseFree,false);
     
     
     Instruction* i = mf->BeginCodeWrite(isolate);
     uint8_t a1,a2,a3,a4,a5;
     switch (argCount) {
         case 0:
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(SCALL_0,(uint8_t)regNo,(uint8_t)tmp);
             break;
         case 1:
             a1 = isolate->MiniPop();
+            mf->FreeIntermediateRegister(a1);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(SCALL_1,regNo,tmp,a1);
             break;
         case 2:
             a2 = isolate->MiniPop();
             a1 = isolate->MiniPop();
+            mf->FreeIntermediateRegister(a1);
+            mf->FreeIntermediateRegister(a2);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(SCALL_2,regNo,tmp,a1);
             (*i++) = Instruction(a2);
             break;
@@ -277,6 +282,10 @@ int CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE for
             a3 = isolate->MiniPop();
             a2 = isolate->MiniPop();
             a1 = isolate->MiniPop();
+            mf->FreeIntermediateRegister(a1);
+            mf->FreeIntermediateRegister(a2);
+            mf->FreeIntermediateRegister(a3);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(SCALL_3,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3);
             break;
@@ -285,6 +294,11 @@ int CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE for
             a3 = isolate->MiniPop();
             a2 = isolate->MiniPop();
             a1 = isolate->MiniPop();
+            mf->FreeIntermediateRegister(a1);
+            mf->FreeIntermediateRegister(a2);
+            mf->FreeIntermediateRegister(a3);
+            mf->FreeIntermediateRegister(a4);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(SCALL_4,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3,a4);
             break;
@@ -294,6 +308,12 @@ int CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE for
             a3 = isolate->MiniPop();
             a2 = isolate->MiniPop();
             a1 = isolate->MiniPop();
+            mf->FreeIntermediateRegister(a1);
+            mf->FreeIntermediateRegister(a2);
+            mf->FreeIntermediateRegister(a3);
+            mf->FreeIntermediateRegister(a4);
+            mf->FreeIntermediateRegister(a5);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(SCALL_5,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3,a4,a5);
             break;
@@ -304,7 +324,7 @@ int CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE for
     mf->EndCodeWrite(i);
     
     
-    mf->FreeIntermediateRegisters(usedBefore);
+   // mf->FreeIntermediateRegisters(usedBefore);
     
    // HonorResultRegister(isolate,mf,regNo);
     
@@ -331,16 +351,9 @@ int CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAll
         
 
     }
-    // This is a direct lambda call such as ((fn [x] (print x)) 123)
+    
+    throw std::runtime_error("Not implemented");
 
-    int usedBefore = mf->intermediatesUsed;
-    std::cout << "Function call: " << form.First().Print() << "\n";
-    int regNo = CompileForm(isolate,mf,function,mtd);
-    Instruction* i = mf->BeginCodeWrite(isolate);
-    (*i++) = OpCall(0);
-    mf->EndCodeWrite(i);
-    mf->FreeIntermediateRegisters(usedBefore);
-    return regNo;
 }
 
 int CompileList( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
