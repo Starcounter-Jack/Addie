@@ -14,13 +14,14 @@ using namespace Addie;
 using namespace Addie::Internals;
 
 
-void CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, int regNo );
+int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd );
 
 
 
 // Compile a function/lambda declaration
-void CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     
+    assert( mtd == UseReturnRegister);
     
     VALUE args = form.Rest().First();
     
@@ -30,25 +31,26 @@ void CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
         Symbol argName = args.GetAt(t).SymbolId;
         mf->Registers.push_back(argName);
         //int regno = mf->AddConstant(NIL());
-        mf->Bindings[argName] = Binding(mf,regNo);
+        mf->Bindings[argName] = Binding(mf,mf->AddConstant(NIL()));
     }
     
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
         std::cout << "Statements following fn:" << form.First().Print() << "\n";
-        CompileForm(isolate,mf,form.First(),0);
+        CompileForm( isolate,mf,form.First(), UseReturnRegister );
         form = form.Rest();
     }
     
     //    new (unit) CompilationUnit( code, registers,  );
     
-    return;
+    return 0;
 }
 
 
 // Find all declared variables and their default values
-void CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
 
+    assert( mtd == UseReturnRegister );
     
     VALUE lets = form.Rest().First();
 
@@ -84,13 +86,13 @@ void CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
         std::cout << "Statements following let:" << form.First().Print() << "\n";
-        CompileForm(isolate,mf,form.First(),0);
+        CompileForm(isolate,mf,form.First(),UseReturnRegister);
         form = form.Rest();
     }
     
 //    new (unit) CompilationUnit( code, registers,  );
 
-    return;
+    return 0;
 }
 
 /*
@@ -175,22 +177,29 @@ byte* CompilePrototype( Isolate* isolate, Metaframe* mf, VALUE form ) {
 
 
 
-void CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     // Compile a constant. If this is the last statement, it will
     // occupy the return register (r[0]).
     CompilationUnit* unit = mf->compilationUnit;
-    unit->SetReturnRegister( form );
+    if (mtd == UseReturnRegister) {
+        unit->SetReturnRegister( form );
+        return 0;
+    }
+    throw new std::runtime_error("Error");
 }
 
-int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, int resultRegNo, bool deref ) {
+
+int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAllocationMethod mtd, bool deref ) {
 
     
     Instruction* i;
     
+    int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
+    
     //    mf->Bindings[symbol] ;asddsa
     auto x = mf->Bindings.find(symbol.SymbolId);
     
-    if (true || x == mf->Bindings.end()) {
+    if ( x == mf->Bindings.end()) {
         
 //        throw std::runtime_error("Variable is not declared");
     
@@ -207,7 +216,9 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, int resultRegN
         }
         return regNo;
     }
-        throw std::runtime_error("Found local variable reference! Not implemented");
+    
+    return x->second.Register;
+//        throw std::runtime_error("Found local variable reference! Not implemented");
     
 }
 
@@ -224,22 +235,25 @@ void HonorResultRegister(Isolate* isolate, Metaframe* mf, int regNo) {
  */
 
 
-void CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     std::cout << "Function call: " << form.First().Print() << "\n";
+    
+    
     VALUE function = form.First();
     int usedBefore = mf->intermediatesUsed;
     int tmp;
     int argCount = form.Count() - 1;
     
+    int regNo = mf->AllocateRegister(isolate, mtd, 0);
     
     for (int i=1;i<=argCount;i++) {
-        tmp = mf->AllocateIntermediateRegister(isolate);
+//        tmp = mf->AllocateIntermediateRegister(isolate);
+        tmp = CompileForm(isolate, mf, form.GetAt(i), AllocatedRegister );
         isolate->MiniPush(tmp);
-        CompileForm(isolate, mf, form.GetAt(i), tmp);
     }
     
     //tmp = mf->AllocateIntermediateRegister(isolate);
-    tmp = CompileSymbol(isolate,mf,function,0,false);
+    tmp = CompileSymbol(isolate,mf,function,AllocatedRegister,false);
     // mf->FindBinding( function.Symbol );
     
     
@@ -294,26 +308,25 @@ void CompileFnCall_SymbolOptimization( Isolate* isolate, Metaframe* mf, VALUE fo
     
    // HonorResultRegister(isolate,mf,regNo);
     
-    return;
+    return regNo;
 }
 
-void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     if (form.IsEmpty()) {
         // () evaluates to an empty list whereas other lists are treated as/
         // function/procedure calls.
-        CompileConstant(isolate, mf, form, 0 );
-        return;
+        return CompileConstant(isolate, mf, form, mtd );
     }
     VALUE function = form.First();
     if (function.IsSymbol()) {
         // This is a regular predefined function/procedure call such as (print 123)
         switch (function.SymbolId) {
             case (SymLetStar):
-                return CompileLet( isolate, mf, form, regNo );
+                return CompileLet( isolate, mf, form, mtd );
             case (SymFnStar):
-                return CompileFn( isolate, mf, form, regNo );
+                return CompileFn( isolate, mf, form, mtd );
             default:
-                return CompileFnCall_SymbolOptimization( isolate, mf, form, regNo );
+                return CompileFnCall_SymbolOptimization( isolate, mf, form, mtd );
         }
         
 
@@ -322,17 +335,17 @@ void CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, int regNo 
 
     int usedBefore = mf->intermediatesUsed;
     std::cout << "Function call: " << form.First().Print() << "\n";
-    CompileForm(isolate,mf,function,0);
+    int regNo = CompileForm(isolate,mf,function,mtd);
     Instruction* i = mf->BeginCodeWrite(isolate);
     (*i++) = OpCall(0);
     mf->EndCodeWrite(i);
     mf->FreeIntermediateRegisters(usedBefore);
-    return;
+    return regNo;
 }
 
-void CompileList( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileList( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     // TODO! We don't know that this list is a constant. Temporary code.
-    CompileConstant(isolate, mf, form, regNo );
+    return CompileConstant(isolate, mf, form, mtd );
 }
 
 /*
@@ -392,33 +405,27 @@ void AnalyseForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
 }
 */
 
-void CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, int regNo ) {
+int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     switch (form.Type) {
         case TNumber:
-            CompileConstant( isolate, mf, form, regNo );
-            return;
+            return CompileConstant( isolate, mf, form, mtd );
         case TList:
             switch (form.ListStyle) {
                 case QParenthesis:
-                    CompileParenthesis( isolate, mf, form, regNo );
-                    return;
+                    return CompileParenthesis( isolate, mf, form, mtd );
                 case QCurly:
                 case QBracket:
-                    CompileList( isolate, mf, form, regNo );
-                    return;
+                    return CompileList( isolate, mf, form, mtd );
                 case QString:
-                    CompileConstant( isolate, mf, form, regNo );
-                    return;
+                    return CompileConstant( isolate, mf, form, mtd );
             }
         case TAtom:
             switch (form.AtomSubType) {
                 case ANil:
                 case AKeyword:
-                    CompileConstant( isolate, mf, form, regNo );
-                    return;
+                    return CompileConstant( isolate, mf, form, mtd );
                 case ASymbol:
-                    CompileSymbol(isolate, mf, form, regNo, true );
-                    return;
+                    return CompileSymbol(isolate, mf, form, mtd, true );
                 case AOther:
                     break;
             }
@@ -445,7 +452,7 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     mf->compilationUnit = u;
     
 //    AnalyseForm( isolate, mf, form );
-    CompileForm( isolate, mf, form, 0 );
+    CompileForm( isolate, mf, form, UseReturnRegister );
     
     comp->sizeOfCompilation = mf->FinishedWriting(isolate);
     

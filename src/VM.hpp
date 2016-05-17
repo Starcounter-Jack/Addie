@@ -68,6 +68,13 @@ public:
 
 };
 
+    
+    
+    enum RegisterAllocationMethod {
+        AllocatedRegister,
+        UseReturnRegister
+    };
+
 
     
     enum Symbols {

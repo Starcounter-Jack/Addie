@@ -29,6 +29,7 @@ namespace Addie {
             uint8_t Register;
         };
         
+        
         //struct Variable {
         //public:
         //    Variable( Symbol sym, VALUE val ) : symbol(sym), defaultValue(val) {
@@ -64,6 +65,13 @@ namespace Addie {
             Instruction* tempBuffer = NULL; // Will point to a temporary stack allocation during compilation
             // size_t CodeBufferUsed = 0; // To pop (free) the temporary stack allocation during compilation
             
+            
+            int AllocateRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
+                if (mtd == UseReturnRegister) {
+                    return 0;
+                }
+                return existingRegNo;
+            }
             
             Instruction* BeginCodeWrite( Isolate* isolate ) {
                 if (tempBuffer == NULL) {
