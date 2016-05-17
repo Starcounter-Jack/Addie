@@ -59,8 +59,10 @@ namespace Addie {
 //            Metaframe( Metaframe* parent, CompilationUnit cu, Compilation c ) :Parent(parent),
 //                                            compilationUnit(cu), compilation(c) {}
             Metaframe* Parent = NULL;
+            
             std::vector<Symbol> Registers;
             std::map<Symbol,Binding> Bindings;
+            
             VALUE Body;
 //            int constants = 0;
             CompilationUnit* compilationUnit = NULL;
@@ -126,13 +128,33 @@ namespace Addie {
             }
             
             int AddConstant( VALUE value ) {
+                
+                int regNo;
+                
+                if (value.IsSymbol()) {
+                    
+                    Symbol id = value.SymbolId;
+                    auto x = Bindings.find(id);
+                    
+                    if ( x != Bindings.end()) {
+                        regNo = x->second.Register;
+                        RegUsage[regNo].InUse = true;
+                        return regNo;
+                    }
+                }
+                
                 std::cout << "Adding constant " << value.Print() << "\n";
                 VALUE* reg = (VALUE*)writeHead;
                 (*reg++) = value;
                 writeHead = (byte*)reg;
-                int regNo = compilationUnit->AddInitializedRegister();
-                //int regNo = compilationUnit->GetInitializedRegisterCount() - 1;
+                regNo = compilationUnit->AddInitializedRegister();
                 RegUsage[regNo].InUse = true;
+                
+                if (value.IsSymbol()) {
+                    Bindings[value.SymbolId] = Binding(this,regNo);
+                    Registers[regNo] = value.SymbolId;
+                }
+                
                 return regNo;
             }
             

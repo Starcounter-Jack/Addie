@@ -72,14 +72,9 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
-        //std::cout << "Found r[" << varCount << "] as local variable " << lets.GetAt(t).Print() << "=" << lets.GetAt(t+1).Print() << "\n";
-        //mf->LocalsAndArguments.push_back(Variable(variableName,form.GetAt(t+1)));
         mf->Registers.push_back(variableName);
         int regno = mf->AddConstant(lets.GetAt(t+1));
-        //uint8_t regno = mf->Registers.size()-1;
-        //mf->compilationUnit->AddInitializedRegister();
         mf->Bindings[variableName] = Binding(mf,regno);
-        //(*registers++) = lets.GetAt(t+1);
     }
     //byte* bytecode = (byte*)registers;
     
