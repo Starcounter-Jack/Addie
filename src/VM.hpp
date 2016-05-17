@@ -883,7 +883,7 @@ struct CompilationUnit {
         sizeOfInitializedRegisters += x;
         sizeOfRegisters += x;
         //return sizeOfInitializedRegisters - 1;
-        return sizeOfInitializedRegisters / sizeof(VALUE);
+        return ( sizeOfInitializedRegisters / sizeof(VALUE) ) - 1;
     }
     
     void SetReturnRegister( VALUE constant ) {
