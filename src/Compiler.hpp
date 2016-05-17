@@ -104,11 +104,21 @@ namespace Addie {
 //            }
 
             
+            // Finds an available register that is not associated with
+            // a variable, a constant or an argument. Marks the register
+            // as being in use and returns the register number.
+            // The function assumes that we don't know how many registers will be
+            // used for variables, constants and arguments, so it allocates
+            // registers from the other end (beginning with 255). A second pass
+            // is needed to avoid big registers gaps. This is done by moving the
+            // registers used down to the registers immediatelly following the
+            // initialized registers (the lower numbered registers).
             int AllocateIntermediateRegister(Isolate* isolate) {
                 intermediatesUsed++;
                 if (intermediatesUsed > maxIntermediatesUsed)
                     maxIntermediatesUsed = intermediatesUsed;
                 if (!RegUsage[0].InUse) {
+                    // The return register is available
                     RegUsage[0].InUse = true;
                     return 0;
                 }
@@ -120,11 +130,16 @@ namespace Addie {
                     }
                     regNo--;
                 }
-                throw std::runtime_error("No free register");
+                throw std::runtime_error("No free registers");
             }
             
+            // Called when a register is no longer in use. In this way,
+            // registers can be reused.
             void FreeIntermediateRegister( int regNo ) {
-                RegUsage[regNo].InUse = false;
+                int highestFixedRegisterNo = compilationUnit->GetInitializedRegisterCount()-1;
+                if (regNo == 0 || regNo > highestFixedRegisterNo ) {
+                   RegUsage[regNo].InUse = false;
+                }
             }
             
             int AddConstant( VALUE value ) {
