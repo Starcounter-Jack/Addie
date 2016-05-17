@@ -514,14 +514,18 @@ void AnalyseForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
 }
 */
 
-inline void Translate( uint8_t &reg, int lastFixed ) {
+// Relocate register
+inline void Pack( uint8_t &reg, int lastFixed ) {
     if (reg > lastFixed) {
+        // This is an intermediate result register. Let's use the register space
+        // adjacent to the prematererialized registers (constants/locals/arguments)
         int tmp = -reg + 255;
         reg = tmp + lastFixed + 1;
-      //reg -= unused;
     }
 }
 
+// Pack registers such that there is no unused registers
+// inbetween constants/arguments/locals and intermediate registers
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     
     
@@ -539,52 +543,52 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
             case (CALL_0):
             case (MOVE):
             case (DEREF):
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
                 break;
             case (SCALL_1):
             case (CALL_1):
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
-                Translate(p->C, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
+                Pack(p->C, lastFixed);
                 break;
             case (SCALL_2):
             case (CALL_2):
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
-                Translate(p->C, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
+                Pack(p->C, lastFixed);
                 p++;
-                Translate(p->OP, lastFixed);
+                Pack(p->OP, lastFixed);
                 break;
             case (SCALL_3):
             case (CALL_3):
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
-                Translate(p->C, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
+                Pack(p->C, lastFixed);
                 p++;
-                Translate(p->OP, lastFixed);
-                Translate(p->A, lastFixed);
+                Pack(p->OP, lastFixed);
+                Pack(p->A, lastFixed);
                 break;
             case (SCALL_4):
             case (CALL_4):
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
-                Translate(p->C, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
+                Pack(p->C, lastFixed);
                 p++;
-                Translate(p->OP, lastFixed);
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
+                Pack(p->OP, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
                 break;
             case (SCALL_5):
             case (CALL_5):
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
-                Translate(p->C, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
+                Pack(p->C, lastFixed);
                 p++;
-                Translate(p->OP, lastFixed);
-                Translate(p->A, lastFixed);
-                Translate(p->B, lastFixed);
-                Translate(p->C, lastFixed);
+                Pack(p->OP, lastFixed);
+                Pack(p->A, lastFixed);
+                Pack(p->B, lastFixed);
+                Pack(p->C, lastFixed);
                 break;
             default:
                 throw std::runtime_error("Not implemented");
