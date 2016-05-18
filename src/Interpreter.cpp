@@ -24,7 +24,12 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
     //        int regCount = cont.frame->Comp->SizeOfRegisters/sizeof(VALUE);
     
     Symbol sym;
+    int sum;
+    std::string str;
+
     //        uintptr_t address;
+    VALUE a1,a2,a3,a4;
+
     
     while (true) {
         
@@ -62,19 +67,29 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 //std::cout << "\nexit-with-continuation @(" << p << ")";
                 goto end;
-            case (CALL_0):
-                //std::cout << "CALL-0";
-                //std::cout << " Symbol=";
-                //std::cout << r[i.A].Integer;
-                //std::cout << "\n";
+            case (SCALL_0):
+                sym = r[i.B].SymbolId;
+                // TODO!
                 p++;
                 break;
-            case (CALL_1):
-                //std::cout << "CALL-1";
-                sym = r[i.A].SymbolId;
+            case (SCALL_1):
+                sym = r[i.B].SymbolId;
+                a1 = r[i.C];
+                // TODO!
                 if (sym == SymPrint) {
-                    std::cout << "\nPrinting " << r[0].Print() << "\n";
-                    r[0].Print();
+                    std::cout << "\nPrinting " << a1.Print() << "\n";
+                }
+                p++;
+                break;
+            case (SCALL_2):
+                //std::cout << "CALL-1";
+                sym = r[i.B].SymbolId;
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+                // TODO!
+                if (sym == SymPrint) {
+                    std::cout << "\nPrinting " << a1.Print() << ", " << a2.Print() << "\n";
                 }
                 
                 p++;
@@ -98,16 +113,42 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 
                 break;
-            case (CALL_2):
-                //                   std::cout << "CALL-2";
+            case (SCALL_3):
                 
-                sym = r[i.A].SymbolId;
-                if (sym == SymPlus) {
-                    r[0] = INTEGER(r[i.B].Integer + r[i.C].Integer);
-                }
-                
+                sym = r[i.B].SymbolId;
+                str = isolate->GetStringFromSymbolId(sym);
+                a1 = r[i.C];
                 p++;
+                a2 = r[(*p).OP];
+                a3 = r[(*p).A];
+                if (sym == SymPlus) {
+                    sum = a1.Integer + a2.Integer + a3.Integer;
+                    r[i.A] = INTEGER(sum);
+                }
+                p++;
+                break;
+            case (SCALL_4):
                 
+                sym = r[i.B].SymbolId;
+                str = isolate->GetStringFromSymbolId(sym);
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+                a3 = r[(*p).A];
+                a4 = r[(*p).B];
+                if (sym == SymPlus) {
+                    sum = a1.Integer + a2.Integer + a3.Integer + a4.Integer;
+                    r[i.A] = INTEGER(sum);
+                }
+                p++;
+                break;
+            case (DEREF):
+                sym = r[i.B].SymbolId;
+                std::cout << "Dereferencing r[" << + (unsigned int)i.B << "] (" << isolate->GetStringFromSymbolId(sym) << ")\n";
+                if (str.compare("y")) {
+                    r[i.A] = INTEGER(5);
+                }
+                p++;
                 break;
             default:
                 std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;
