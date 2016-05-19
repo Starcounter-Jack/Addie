@@ -81,20 +81,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 }
                 p++;
                 break;
-            case (SCALL_2):
-                //std::cout << "CALL-1";
-                sym = r[i.B].SymbolId;
-                a1 = r[i.C];
-                p++;
-                a2 = r[(*p).OP];
-                // TODO!
-                if (sym == SymPrint) {
-                    std::cout << "\nPrinting " << a1.Print() << ", " << a2.Print() << "\n";
-                }
-                
-                p++;
-                
-                break;
+
             case (JMP):
                 p += i.A3;
                 break;
@@ -112,6 +99,22 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 std::cout << ")";
                 p++;
                 
+                break;
+            case (SCALL_2):
+                
+                sym = r[i.B].SymbolId;
+                str = isolate->GetStringFromSymbolId(sym);
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+                if (sym == SymPlus) {
+                    sum = a1.Integer + a2.Integer;
+                    r[i.A] = INTEGER(sum);
+                } else if (sym == SymPrint) {
+                    std::cout << "\nPrinting " << a1.Print() << ", " << a2.Print() << "\n";
+                }
+
+                p++;
                 break;
             case (SCALL_3):
                 

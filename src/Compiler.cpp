@@ -19,9 +19,24 @@ int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocation
 
 
 // Compile a function/lambda declaration
-int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocationMethod mtd ) {
     
     assert( mtd == UseReturnRegister);
+    
+    /*
+    Instruction* c = oldMf->BeginCodeWrite(isolate);
+    (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
+    (*c++) = Instruction(RET,(uint8_t)0,(uint8_t)0);
+    oldMf->EndCodeWrite(c);
+    
+    CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
+    new (newCodeFrame) CodeFrame();
+    
+    Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
+    new (newFrame) Metaframe(oldMf->currentScope,newCodeFrame,oldMf->compilation);
+    */
+    Metaframe* newFrame = oldMf;
+
     
     VALUE args = form.Rest().First();
     
@@ -29,14 +44,14 @@ int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMe
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = mf->currentScope->AllocateInitializedRegister(NIL(),argName);
-        mf->RegUsage[regNo].IsArgument = true;
+        int regNo = newFrame->currentScope->AllocateInitializedRegister(NIL(),argName);
+        newFrame->RegUsage[regNo].IsArgument = true;
     }
     
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
         //std::cout << "Statements following fn:" << form.First().Print() << "\n";
-        CompileForm( isolate,mf,form.First(), UseReturnRegister );
+        CompileForm( isolate,newFrame,form.First(), UseReturnRegister );
         form = form.Rest();
     }
     
@@ -411,6 +426,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
             case (CALL_0):
             case (MOVE):
             case (DEREF):
+            case (ENCLOSE_0):
                 Pack(p->A, lastFixed);
                 Pack(p->B, lastFixed);
                 break;
@@ -511,13 +527,12 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     CodeFrame* u = (CodeFrame*)p;
     new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
 
-    new (mf) Metaframe(NULL,u);
+    new (mf) Metaframe(NULL,u,comp);
     
-    mf->compilation = comp;
-    mf->codeFrame = u;
-    u->metaframe = mf;
+//    mf->compilation = comp;
+//    mf->codeFrame = u;
+//    u->metaframe = mf;
     
-    mf->currentScope->AllocateInitializedRegister(NIL(),RET); // Return register
     mf->RegUsage[0].InUse = false;
     
 //    AnalyseForm( isolate, mf, form );

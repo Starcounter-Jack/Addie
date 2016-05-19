@@ -76,7 +76,7 @@ namespace Addie {
             std::vector<Symbol> Registers;
 
             
-            Metaframe( VariableScope* parent, CodeFrame* unit ) :Parent(parent) {
+            Metaframe( VariableScope* parent, CodeFrame* unit, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {
                     Metaframe* parentMetaframe = parent->metaframe;
                     compilation  = parentMetaframe->compilation;
@@ -86,6 +86,15 @@ namespace Addie {
                 rootScope.metaframe = this;
                 currentScope = &rootScope;
                 writeHead = ((byte*)unit) + sizeof(CodeFrame);
+                
+                compilation = comp;
+                codeFrame = unit;
+                unit->metaframe = this;
+                
+                currentScope->AllocateInitializedRegister(NIL(),RET); // Return register
+
+                
+                
             }
 //            Metaframe( Metaframe* parent, CodeFrame cu, Compilation c ) :Parent(parent),
 //                                            codeFrame(cu), compilation(c) {}
