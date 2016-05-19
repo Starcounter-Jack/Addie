@@ -109,6 +109,7 @@ namespace Addie {
             VALUE Body;
 //            int constants = 0;
             CodeFrame* codeFrame = NULL;
+            int sizeOfCodeFrame;
             Compilation* compilation = NULL;
             //byte* writeHead;
 //            int intermediatesUsed = 0;
@@ -241,42 +242,8 @@ namespace Addie {
             }
             
             // We have finished writing a code frame.
-            void Seal(Isolate* isolate) {
-                // Copy the buffer into the compilation unit
-                
-                
-                Instruction* c = BeginCodeWrite(isolate);
-                (*c++) = Instruction(RET);
-                EndCodeWrite(isolate,c);
-                
+            void Seal(Isolate* isolate);
 
-                //codeFrame->SealIntermediate(maxIntermediatesUsed);
-                
-                int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
-                assert( codeFrame == NULL );
-                codeFrame = (CodeFrame*)compilation->GetWriteHead();
-                new (codeFrame) CodeFrame( this, 0, registersUsed, maxInitializedRegisters);
-
-                int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
-                if (tempRegisterBufferUsed != 0) {
-                    std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";
-                    std::cout << "Start-of-regs: " << (uintptr_t)codeFrame->StartOfRegisters() << "\n";
-                    std::cout << "Start-of-code: " << (uintptr_t)codeFrame->StartOfInstructions() << "\n";
-                    memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
-                    isolate->PopStack2(tempRegisterBufferUsed);
-                }
-                
-                int tempCodeBufferUsed = ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
-                if (tempCodeBufferUsed != 0) {
-                    memcpy( codeFrame->StartOfInstructions(), tempCodeBuffer, tempCodeBufferUsed);
-                    isolate->PopStack(tempCodeBufferUsed);
-                }
-                
-                //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
-                size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
-                                        tempCodeBufferUsed;
-                compilation->sizeOfCompilation += written;
-            }
             
             Symbol ExplainRegister( int regNo ) {
                 if (Registers.size() < regNo+1) {

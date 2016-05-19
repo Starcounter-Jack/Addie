@@ -25,16 +25,15 @@ int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocatio
 
     Instruction* c = oldMf->BeginCodeWrite(isolate);
     (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
-//    (*c++) = Instruction(RET,(uint8_t)0,(uint8_t)0);
     oldMf->EndCodeWrite(isolate,c);
-/*
-    CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
-    new (newCodeFrame) CodeFrame();
+
+//    CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
+    //new (newCodeFrame) CodeFrame();
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
-    new (newFrame) Metaframe(isolate,oldMf->currentScope,newCodeFrame,oldMf->compilation);
-*/
-    Metaframe* newFrame = oldMf;
+    new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
+
+//    Metaframe* newFrame = oldMf;
     
     VALUE args = form.Rest().First();
     
@@ -54,6 +53,7 @@ int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocatio
     }
     
     //    new (unit) CodeFrame( code, registers,  );
+    newFrame->Seal(isolate);
     
     return 0;
 }
@@ -410,8 +410,8 @@ inline void Pack( uint8_t &reg, int lastFixed ) {
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     
     
-    CodeFrame* code = mf->codeFrame;
-    Instruction* p = code->StartOfInstructions();
+    //CodeFrame* code = mf->codeFrame;
+    Instruction* p = mf->tempCodeBuffer;
     
     int lastFixed = mf->maxInitializedRegisters - 1;
     
@@ -525,8 +525,8 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     Metaframe* mf = MALLOC_HEAP(Metaframe); // TODO! STACKALLOC
     
     auto comp = new (p) Compilation();
-    p += sizeof(Compilation);
-    CodeFrame* u = (CodeFrame*)p;
+    //p += sizeof(Compilation);
+//    CodeFrame* u = (CodeFrame*)p;
 //    new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
 
     new (mf) Metaframe(isolate,NULL,comp);
@@ -541,9 +541,9 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     CompileForm( isolate, mf, form, UseReturnRegister );
     //comp->sizeOfCompilation += mf->FinishedWriting(isolate);
     mf->Seal(isolate);
-    isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     
-    PackRegisters(isolate, mf);
+//    PackRegisters(isolate, mf);
+    isolate->ReportConstantWrite( (uintptr_t)comp->GetWriteHead() ); // Mark the memory as used
 
     assert( isolate->NextOnStack == isolate->Stack ); // Check of memory leaks
     assert( isolate->NextOnStack2 == isolate->Stack2 ); // Check of memory leaks
@@ -572,8 +572,10 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     
     
     Instruction* p = code->StartOfInstructions();
+    byte* eos = (byte*)code + mf->sizeOfCodeFrame; // - code->sizeOfInitializedRegisters;
+    Instruction* end = (Instruction*)eos;
     
-    while (true) {
+    while (p < end) {
         
         while (prefix++ < 12) res << " ";
         
@@ -583,7 +585,8 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         switch (p->OP) {
             case (RET):
                 res << str;
-                goto end;
+                break;
+                //goto end;
                 /*
                  case (SET_REGISTER_WINDOW):
                  p++;
@@ -729,7 +732,11 @@ end:
         res << R[t].Print();
         res << "\n";
     }
-    res << "============================================================\n";
+//    res << "============================================================\n";
+    
+    //std::cout << "End OP" << (int)p->OP << "\n";
+    //assert( p->OP == 123);
+    
     return (uintptr_t)p;
 }
 
@@ -739,10 +746,15 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
     std::ostringstream res;
 
     uintptr_t p = (uintptr_t)code;
-//    uintptr_t end = (uintptr_t)compilation->GetWriteHead() - 1;
-    //while (p < end ) {
-       p = DisassembleUnit( isolate, res, (CodeFrame*)p );
-    //}
+    uintptr_t end = (uintptr_t)compilation->GetWriteHead() - 1;
+    while (p < end ) {
+        auto cf = (CodeFrame*)p;
+       DisassembleUnit( isolate, res, cf );
+       p += cf->metaframe->sizeOfCodeFrame; // TODO! ERROR! WHY?????
+    }
+    
+    res << "============================================================\n";
+
     
     return STRINGOLD(res.str());
 
@@ -770,6 +782,52 @@ int VariableScope::AllocateInitializedRegister( Isolate* isolate, VALUE value, S
     //std::cout << "Allocating register " << regNo << " to mean " << SYMBOL(symbol).Print() << "\n";
     
     return regNo;
+}
+
+void Metaframe::Seal(Isolate* isolate) {
+    // Copy the buffer into the compilation unit
+    
+    
+    Instruction* c = BeginCodeWrite(isolate);
+    (*c++) = Instruction(RET);
+    //(*c++) = Instruction(123);
+    EndCodeWrite(isolate,c);
+    
+    PackRegisters(isolate, this);
+
+    //codeFrame->SealIntermediate(maxIntermediatesUsed);
+    
+    int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
+    assert( codeFrame == NULL );
+    codeFrame = (CodeFrame*)compilation->GetWriteHead();
+    new (codeFrame) CodeFrame( this, 0, registersUsed, maxInitializedRegisters);
+    
+    int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
+    if (tempRegisterBufferUsed != 0) {
+        memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
+        isolate->PopStack2(tempRegisterBufferUsed);
+    }
+    
+    int tempCodeBufferUsed = ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
+    if (tempCodeBufferUsed != 0) {
+        memcpy( codeFrame->StartOfInstructions(), tempCodeBuffer, tempCodeBufferUsed);
+        isolate->PopStack(tempCodeBufferUsed);
+    }
+    
+    //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
+    size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
+                            tempCodeBufferUsed;
+    sizeOfCodeFrame = written;
+    compilation->sizeOfCompilation += written;
+    
+
+    
+    std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";
+    std::cout << "Start-of-regs: " << (uintptr_t)codeFrame->StartOfRegisters() << "\n";
+    std::cout << "Start-of-code: " << (uintptr_t)codeFrame->StartOfInstructions() << "\n";
+    std::cout << "Register initializations: " << codeFrame->sizeOfInitializedRegisters/sizeof(VALUE) << "\n";
+    std::cout << "Instructions written: " << tempCodeBufferUsed/sizeof(Instruction) << "\n";
+    
 }
 
 
