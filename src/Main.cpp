@@ -163,12 +163,13 @@ int main(int argc, const char * argv[]) {
     //assert(!c.HasRunToCompletion());
     
     Interpreter::Interpret( &isolate,c);
-    
+    c.Free(&isolate);
     
     v = TestParse( "{ :FirstName \"Jack\" }", "{:FirstName \"Jack\"}" );
     code = Compiler::Compile( &isolate, v );
     std::cout << Compiler::Disassemble(&isolate, code).ToString();
     c = Interpreter::Interpret( &isolate, code );
+    c.Free(&isolate);
     
     //assert(c.HasRunToCompletion());
     std::cout << "\nEvaluated:" << c.GetReturnValue().Print();

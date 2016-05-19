@@ -144,6 +144,11 @@ namespace Addie {
                 return tempRegisterWriteHead;
             }
             
+            void SetReturnRegister( VALUE v ) {
+                assert( tempRegisterBuffer != NULL );
+                tempRegisterBuffer[0] = v;
+            }
+            
             void EndRegisterWrite( Isolate* isolate, VALUE* addr ) {
                 size_t size = (byte*)addr - (byte*)tempRegisterWriteHead;
                 tempRegisterWriteHead = addr;

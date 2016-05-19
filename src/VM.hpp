@@ -800,12 +800,11 @@ public:
     
     
     uintptr_t PopStack( size_t size ) {
-        uintptr_t newAddress = (uintptr_t)NextOnStack;
         BytesAllocated -= size;
         NumberOfAllocations--;
         NextOnStack -= size;
         assert( NextOnStack >= Stack );
-        return newAddress;
+        return NextOnStack;
     }
     
     
@@ -818,13 +817,13 @@ public:
     }
     
     uintptr_t PopStack2( size_t size ) {
-        uintptr_t newAddress = (uintptr_t)NextOnStack2;
         BytesAllocated -= size;
         NumberOfAllocations--;
         NextOnStack2 -= size;
         assert( NextOnStack2 >= Stack2 );
-        return newAddress;
+        return NextOnStack2;
     }
+
 
     
     inline void ReportConstantWrite( uintptr_t addr ) {
@@ -942,10 +941,10 @@ struct CodeFrame {
         return ( sizeOfInitializedRegisters / sizeof(VALUE) ) - 1;
     }
     
-    void SetReturnRegister( VALUE constant ) {
-        assert( sizeOfInitializedRegisters >= sizeof(VALUE));
-        (*StartOfRegisters()) = constant;
-    }
+   // void SetReturnRegister( VALUE constant ) {
+   //     assert( sizeOfInitializedRegisters >= sizeof(VALUE));
+   //     (*StartOfRegisters()) = constant;
+   // }
     
     void SealIntermediate( int cnt ) {
         sizeOfRegisters += cnt * sizeof(VALUE);
@@ -1003,16 +1002,20 @@ public:
     //    return (*PC).OP == RET;
     //}
     
-    void EnterIntoNewRuntimeFrame( CodeFrame* code, RegisterRuntimeFrame* parent ) {
+    void EnterIntoNewRuntimeFrame( Isolate* isolate, CodeFrame* code, RegisterRuntimeFrame* parent ) {
         assert( frame == NULL );
         // The compiled code contains the size of the registers needed for the
         // code of a single function (metaframe).
         // It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
-        frame = (RegisterRuntimeFrame*)CurrentIsolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
+        frame = (RegisterRuntimeFrame*)isolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
         memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
+    }
+    
+    void Free( Isolate* isolate ) {
+        isolate->PopStack(sizeof(RegisterRuntimeFrame) + frame->Comp->sizeOfRegisters );
     }
 };
 
@@ -1027,7 +1030,7 @@ public:
     static Continuation Interpret( Isolate* isolate, Compilation* code ) {
         Continuation c;
         CodeFrame* unit = code->GetFirstCodeFrame();
-        c.EnterIntoNewRuntimeFrame(unit, NULL);
+        c.EnterIntoNewRuntimeFrame(isolate,unit, NULL);
         c.PC = unit->StartOfInstructions();
         return Interpreter::Interpret( isolate, c );
     }

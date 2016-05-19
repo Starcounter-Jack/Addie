@@ -22,17 +22,17 @@ int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocation
 int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocationMethod mtd ) {
     
     assert( mtd == UseReturnRegister);
-  /*
+/*
     Instruction* c = oldMf->BeginCodeWrite(isolate);
     (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
     (*c++) = Instruction(RET,(uint8_t)0,(uint8_t)0);
-    oldMf->EndCodeWrite(c);
+    oldMf->EndCodeWrite(isolate,c);
     
     CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
     new (newCodeFrame) CodeFrame();
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
-    new (newFrame) Metaframe(oldMf->currentScope,newCodeFrame,oldMf->compilation);
+    new (newFrame) Metaframe(isolate,oldMf->currentScope,newCodeFrame,oldMf->compilation);
 */
     Metaframe* newFrame = oldMf;
     
@@ -140,7 +140,7 @@ int CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAlloca
     // occupy the return register (r[0]).
     CodeFrame* unit = mf->codeFrame;
     if (mtd == UseReturnRegister) {
-        unit->SetReturnRegister( form );
+        mf->SetReturnRegister( form );
         return 0;
     }
     throw new std::runtime_error("Error");
@@ -516,6 +516,10 @@ int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocation
 
 Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
+    
+    assert( isolate->NextOnStack == isolate->Stack ); // Check of memory leaks
+    assert( isolate->NextOnStack2 == isolate->Stack2 ); // Check of memory leaks
+
     byte* p = (byte*)isolate->NextOnConstant;
     
     Metaframe* mf = MALLOC_HEAP(Metaframe); // TODO! STACKALLOC
@@ -541,6 +545,9 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
     PackRegisters(isolate, mf);
 
+    assert( isolate->NextOnStack == isolate->Stack ); // Check of memory leaks
+    assert( isolate->NextOnStack2 == isolate->Stack2 ); // Check of memory leaks
+    
     return comp;
 }
 
