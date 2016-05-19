@@ -276,6 +276,9 @@ VALUE VALUE::GetAt( int i ) {
 }
 
 int VALUE::Count() {
+    if (IsEmptyList()) {
+        return 0;
+    }
         return GetList()->Count();
 }
 
