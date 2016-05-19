@@ -170,7 +170,7 @@ int main(int argc, const char * argv[]) {
     std::cout << Compiler::Disassemble(&isolate, code).ToString();
     c = Interpreter::Interpret( &isolate, code );
     
-    assert(c.HasRunToCompletion());
+    //assert(c.HasRunToCompletion());
     std::cout << "\nEvaluated:" << c.GetReturnValue().Print();
     
     std::cout << "\n\n";

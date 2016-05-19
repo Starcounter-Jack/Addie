@@ -976,14 +976,15 @@ public:
         return frame->GetStartOfRegisters()[0];
     }
     
-    inline bool HasRunToCompletion() {
-        return (*PC).OP == RET;
-    }
+    //inline bool HasRunToCompletion() {
+    //    return (*PC).OP == RET;
+    //}
     
     void EnterIntoNewRuntimeFrame( CodeFrame* code, RegisterRuntimeFrame* parent ) {
         assert( frame == NULL );
-        // The compiled code contains the size of the register machine needed for the
-        // code. It also contains the initial values for the registers that are either
+        // The compiled code contains the size of the registers needed for the
+        // code of a single function (metaframe).
+        // It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
         frame = (RegisterRuntimeFrame*)CurrentIsolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
         memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
