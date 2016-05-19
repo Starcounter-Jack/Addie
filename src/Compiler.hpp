@@ -52,7 +52,7 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
-            int AllocateConstant( VALUE value, Symbol symbol );
+            int AllocateInitializedRegister( VALUE value, Symbol symbol );
             
 
             int FindRegisterForSymbol( Symbol id ) {
@@ -110,7 +110,7 @@ namespace Addie {
             // size_t CodeBufferUsed = 0; // To pop (free) the temporary stack allocation during compilation
             
             
-            int AllocateRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
+            int AllocateInitializedRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
                 if (mtd == UseReturnRegister) {
                     return 0;
                 }

@@ -29,7 +29,7 @@ int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMe
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = mf->currentScope->AllocateConstant(NIL(),argName);
+        int regNo = mf->currentScope->AllocateInitializedRegister(NIL(),argName);
         mf->RegUsage[regNo].IsArgument = true;
     }
     
@@ -77,7 +77,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
         //mf->currentScope->Registers.push_back(variableName);
-        mf->currentScope->AllocateConstant(lets.GetAt(t+1),variableName);
+        mf->currentScope->AllocateInitializedRegister(lets.GetAt(t+1),variableName);
 //        mf->currentScope->BindSymbolToRegister(variableName, regno);
 //        mf->RegUsage[regno].InUse = true;
 //        mf->RegUsage[regno].IsConstant = true;
@@ -150,10 +150,10 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         //int regNo = mf->AllocateConstant( symbol );
-        int regNo = mf->currentScope->AllocateConstant(symbol, symbol.SymbolId);
+        int regNo = mf->currentScope->AllocateInitializedRegister(symbol, symbol.SymbolId);
         
         if (deref) {
-            int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
+            int resultRegNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
            i = mf->BeginCodeWrite(isolate);
            //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
            (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
@@ -223,13 +223,13 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
     uint8_t a1,a2,a3,a4,a5;
     switch (argCount) {
         case 0:
-            regNo = mf->AllocateRegister(isolate, mtd, 0);
+            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
             (*i++) = Instruction(op,(uint8_t)regNo,(uint8_t)tmp);
             break;
         case 1:
             a1 = isolate->MiniPop();
             mf->FreeIntermediateRegister(a1);
-            regNo = mf->AllocateRegister(isolate, mtd, 0);
+            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+1,regNo,tmp,a1);
             break;
         case 2:
@@ -237,7 +237,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             a1 = isolate->MiniPop();
             mf->FreeIntermediateRegister(a1);
             mf->FreeIntermediateRegister(a2);
-            regNo = mf->AllocateRegister(isolate, mtd, 0);
+            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+2,regNo,tmp,a1);
             (*i++) = Instruction(a2);
             break;
@@ -248,7 +248,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             mf->FreeIntermediateRegister(a1);
             mf->FreeIntermediateRegister(a2);
             mf->FreeIntermediateRegister(a3);
-            regNo = mf->AllocateRegister(isolate, mtd, 0);
+            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+3,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3);
             break;
@@ -261,7 +261,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             mf->FreeIntermediateRegister(a2);
             mf->FreeIntermediateRegister(a3);
             mf->FreeIntermediateRegister(a4);
-            regNo = mf->AllocateRegister(isolate, mtd, 0);
+            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+4,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3,a4);
             break;
@@ -276,7 +276,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             mf->FreeIntermediateRegister(a3);
             mf->FreeIntermediateRegister(a4);
             mf->FreeIntermediateRegister(a5);
-            regNo = mf->AllocateRegister(isolate, mtd, 0);
+            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+5,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3,a4,a5);
             break;
@@ -517,7 +517,7 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     mf->codeFrame = u;
     u->metaframe = mf;
     
-    mf->currentScope->AllocateConstant(NIL(),RET); // Return register
+    mf->currentScope->AllocateInitializedRegister(NIL(),RET); // Return register
     mf->RegUsage[0].InUse = false;
     
 //    AnalyseForm( isolate, mf, form );
@@ -739,7 +739,7 @@ void VariableScope::BindSymbolToRegister( Symbol id, int regNo ) {
     }
 }
 
-int VariableScope::AllocateConstant( VALUE value, Symbol symbol ) {
+int VariableScope::AllocateInitializedRegister( VALUE value, Symbol symbol ) {
     int regNo = metaframe->__allocateConstant(value);
     metaframe->currentScope->BindSymbolToRegister(symbol, regNo);
     assert( metaframe->currentScope->FindRegisterForSymbol(symbol) == regNo);
