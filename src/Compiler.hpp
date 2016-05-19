@@ -42,17 +42,28 @@ namespace Addie {
             bool InUse : 1;
         };
         
+        class VariableScope {
+        public:
+            VariableScope* parent;
+            std::vector<Symbol> Registers;
+            std::map<Symbol,Binding> Bindings;
+            VariableScope( VariableScope* parentScope ) {
+                parent = parentScope;
+            }
+        };
+        
         
         class Metaframe {
         public:
             RegisterUse RegUsage[255] = { {false} };
             
             
-            Metaframe( Metaframe* parent, CompilationUnit* unit ) :Parent(parent) {
+            Metaframe( Metaframe* parent, CompilationUnit* unit ) :Parent(parent), rootScope(NULL) {
                 if (parent != NULL ){
                     compilation  = parent->compilation;
                     compilationUnit = parent->compilationUnit;
                 }
+                currentScope = &rootScope;
                 writeHead = ((byte*)unit) + sizeof(CompilationUnit) + sizeof(VALUE); // Skip return valueÏCo
                 
             }
@@ -60,8 +71,11 @@ namespace Addie {
 //                                            compilationUnit(cu), compilation(c) {}
             Metaframe* Parent = NULL;
             
-            std::vector<Symbol> Registers;
-            std::map<Symbol,Binding> Bindings;
+            VariableScope rootScope;
+            VariableScope* currentScope;
+            
+//            std::vector<Symbol> Registers;
+//            std::map<Symbol,Binding> Bindings;
             
             VALUE Body;
 //            int constants = 0;
@@ -144,16 +158,16 @@ namespace Addie {
                 }
             }
             
-            int AddConstant( VALUE value ) {
+            int AllocateConstant( VALUE value ) {
                 
                 int regNo;
                 
                 if (value.IsSymbol()) {
                     
                     Symbol id = value.SymbolId;
-                    auto x = Bindings.find(id);
+                    auto x = currentScope->Bindings.find(id);
                     
-                    if ( x != Bindings.end()) {
+                    if ( x != currentScope->Bindings.end()) {
                         regNo = x->second.Register;
                         RegUsage[regNo].InUse = true;
                         return regNo;
@@ -168,8 +182,8 @@ namespace Addie {
                 RegUsage[regNo].InUse = true;
                 
                 if (value.IsSymbol()) {
-                    Bindings[value.SymbolId] = Binding(this,regNo);
-                    Registers[regNo] = value.SymbolId;
+                    currentScope->Bindings[value.SymbolId] = Binding(this,regNo);
+                    currentScope->Registers[regNo] = value.SymbolId;
                 }
                 
                 return regNo;
@@ -178,7 +192,7 @@ namespace Addie {
             size_t FinishedWriting(Isolate* isolate) {
                 // Copy the buffer into the compilation unit
                 Instruction* c = BeginCodeWrite(isolate);
-                (*c++) = Instruction(END);
+                (*c++) = Instruction(RET);
                 EndCodeWrite(c);
                 int tempBufferUsed = ((byte*)tempWriteHead - (byte*)tempBuffer);
                 if (tempBufferUsed != 0) {

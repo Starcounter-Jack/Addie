@@ -39,7 +39,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
         // std::cout << "OPERATION!!! " << (int)i.OP;
         
         switch (i.OP) {
-            case END:
+            case RET:
                 goto end;
                 /*
                  case SET_REGISTER_WINDOW:

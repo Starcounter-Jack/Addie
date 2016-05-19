@@ -79,7 +79,7 @@ public:
 
     
     enum Symbols {
-        END,
+        RET,
         //    SET_REGISTER_WINDOW,
         EXIT_WITH_CONTINUATION,
         RETURN,
@@ -101,6 +101,22 @@ public:
         JMP,
         JMP_IF_TRUE,
         DEREF,
+        /*
+        S_ENCLOSE_0,
+        S_ENCLOSE_1,
+        S_ENCLOSE_2,
+        S_ENCLOSE_3,
+        S_ENCLOSE_4,
+        S_ENCLOSE_5,
+        S_ENCLOSE_N,
+        ENCLOSE_0,
+        ENCLOSE_1,
+        ENCLOSE_2,
+        ENCLOSE_3,
+        ENCLOSE_4,
+        ENCLOSE_5,
+        ENCLOSE_N,
+         */
         SymNil,
         SymFalse,
         SymTrue,
@@ -117,7 +133,7 @@ public:
         Sym_Count
     };
     static const char *SymStrings[] = {
-        "end",
+        "ret",
         //    "set-register-window",
         "exit-with-continuation",
         "return",
@@ -129,16 +145,32 @@ public:
         "call-4",
         "call-5",
         "call-n",
-        "scall-0",
-        "scall-1",
-        "scall-2",
-        "scall-3",
-        "scall-4",
-        "scall-5",
-        "scall-n",
+        "s-call-0",
+        "s-call-1",
+        "s-call-2",
+        "s-call-3",
+        "s-call-4",
+        "s-call-5",
+        "s-call-n",
         "jmp",
         "jmp-if-true",
         "deref",
+        /*
+        "s-enclose-0",
+        "s-enclose-1",
+        "s-enclose-2",
+        "s-enclose-3",
+        "s-enclose-4",
+        "s-enclose-5",
+        "s-enclose-n",
+        "enclose-0",
+        "enclose-1",
+        "enclose-2",
+        "enclose-3",
+        "enclose-4",
+        "enclose-5",
+        "enclose-n",
+         */
         "nil",
         "false",
         "true",
@@ -945,7 +977,7 @@ public:
     }
     
     inline bool HasRunToCompletion() {
-        return (*PC).OP == END;
+        return (*PC).OP == RET;
     }
     
     void EnterIntoNewFrame( CompilationUnit* code, Frame* parent ) {
