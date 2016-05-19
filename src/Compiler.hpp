@@ -76,7 +76,7 @@ namespace Addie {
             std::vector<Symbol> Registers;
 
             
-            Metaframe( Isolate* isolate, VariableScope* parent, CodeFrame* unit, Compilation* comp ) :Parent(parent) {
+            Metaframe( Isolate* isolate, VariableScope* parent, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {
                     Metaframe* parentMetaframe = parent->metaframe;
                     compilation  = parentMetaframe->compilation;
@@ -85,11 +85,11 @@ namespace Addie {
                 }
                 rootScope.metaframe = this;
                 currentScope = &rootScope;
-                writeHead = ((byte*)unit) + sizeof(CodeFrame);
+                //writeHead = ((byte*)unit) + sizeof(CodeFrame);
                 
                 compilation = comp;
-                codeFrame = unit;
-                unit->metaframe = this;
+                //codeFrame = unit;
+                //unit->metaframe = this;
                 
                 currentScope->AllocateInitializedRegister(isolate,NIL(),RET); // Return register
 
@@ -110,9 +110,10 @@ namespace Addie {
 //            int constants = 0;
             CodeFrame* codeFrame = NULL;
             Compilation* compilation = NULL;
-            byte* writeHead;
+            //byte* writeHead;
 //            int intermediatesUsed = 0;
             int maxIntermediatesUsed = 0;
+            int maxInitializedRegisters = 0;
             
             Instruction* tempCodeWriteHead;
             Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
@@ -120,7 +121,7 @@ namespace Addie {
             VALUE* tempRegisterBuffer = NULL; // Will point to a temporary stack allocation during compilation
             
             
-            int AllocateInitializedRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
+            int AllocateRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
                 if (mtd == UseReturnRegister) {
                     return 0;
                 }
@@ -201,7 +202,7 @@ namespace Addie {
             // Called when a register is no longer in use. In this way,
             // registers can be reused.
             void FreeIntermediateRegister( int regNo ) {
-                int highestFixedRegisterNo = codeFrame->GetInitializedRegisterCount()-1;
+                int highestFixedRegisterNo = maxInitializedRegisters-1;
                 if (regNo == 0 || regNo > highestFixedRegisterNo ) {
                    RegUsage[regNo].InUse = false;
                 }
@@ -227,7 +228,8 @@ namespace Addie {
                 EndRegisterWrite(isolate,reg);
                 
 //                writeHead = (byte*)reg;
-                regNo = codeFrame->AddInitializedRegister();
+                regNo = maxInitializedRegisters; // codeFrame->AddInitializedRegister();
+                maxInitializedRegisters++;
                 RegUsage[regNo].InUse = true;
                 
                 if (value.IsSymbol()) {
@@ -242,22 +244,34 @@ namespace Addie {
             void Seal(Isolate* isolate) {
                 // Copy the buffer into the compilation unit
                 
-                int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
-                if (tempRegisterBufferUsed != 0) {
-                    memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
-                }
-                isolate->PopStack2(tempRegisterBufferUsed);
                 
                 Instruction* c = BeginCodeWrite(isolate);
                 (*c++) = Instruction(RET);
                 EndCodeWrite(isolate,c);
-                int tempCodeBufferUsed = ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
-                isolate->PopStack(tempCodeBufferUsed);
                 
-                if (tempCodeBufferUsed != 0) {
-                   memcpy( codeFrame->StartOfInstructions(), tempCodeBuffer, tempCodeBufferUsed);
+
+                //codeFrame->SealIntermediate(maxIntermediatesUsed);
+                
+                int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
+                assert( codeFrame == NULL );
+                codeFrame = (CodeFrame*)compilation->GetWriteHead();
+                new (codeFrame) CodeFrame( this, 0, registersUsed, maxInitializedRegisters);
+
+                int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
+                if (tempRegisterBufferUsed != 0) {
+                    std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";
+                    std::cout << "Start-of-regs: " << (uintptr_t)codeFrame->StartOfRegisters() << "\n";
+                    std::cout << "Start-of-code: " << (uintptr_t)codeFrame->StartOfInstructions() << "\n";
+                    memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
+                    isolate->PopStack2(tempRegisterBufferUsed);
                 }
-                codeFrame->SealIntermediate(maxIntermediatesUsed);
+                
+                int tempCodeBufferUsed = ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
+                if (tempCodeBufferUsed != 0) {
+                    memcpy( codeFrame->StartOfInstructions(), tempCodeBuffer, tempCodeBufferUsed);
+                    isolate->PopStack(tempCodeBufferUsed);
+                }
+                
                 //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
                 size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
                                         tempCodeBufferUsed;

@@ -924,44 +924,54 @@ struct CodeFrame {
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
                                                 sizeof(CodeFrame) +
                                                 sizeOfInitializedRegisters); }
-    int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
+//    int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
 
     
-    //CodeFrame( Instruction* code, VALUE* registers, int sizeUninit ) {
-    //    // TODO! REMOVE THIS CONSTRUCTOR
-    //    SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    //    SizeOfRegisters = SizeOfInitializedRegisters + sizeUninit;
-    //}
-    
-    int AddInitializedRegister() {
-        size_t x = sizeof(VALUE);
-        sizeOfInitializedRegisters += x;
-        sizeOfRegisters += x;
-        //return sizeOfInitializedRegisters - 1;
-        return ( sizeOfInitializedRegisters / sizeof(VALUE) ) - 1;
+    CodeFrame( Metaframe* mf, int maxArguments, int regCount, int initRegCount ) {
+        metaframe = mf;
+        maxArguments = maxArguments;
+        sizeOfRegisters = regCount * sizeof(VALUE);
+        sizeOfInitializedRegisters = initRegCount * sizeof(VALUE);
     }
+    
+//    int AddInitializedRegister() {
+//        size_t x = sizeof(VALUE);
+//        sizeOfInitializedRegisters += x;
+//        sizeOfRegisters += x;
+//        //return sizeOfInitializedRegisters - 1;
+//        return ( sizeOfInitializedRegisters / sizeof(VALUE) ) - 1;
+//    }
     
    // void SetReturnRegister( VALUE constant ) {
    //     assert( sizeOfInitializedRegisters >= sizeof(VALUE));
    //     (*StartOfRegisters()) = constant;
    // }
     
-    void SealIntermediate( int cnt ) {
-        sizeOfRegisters += cnt * sizeof(VALUE);
-    }
+//    void SealIntermediate( int cnt ) {
+//        sizeOfRegisters += cnt * sizeof(VALUE);
+//    }
 
 };
     
     struct Compilation {
         uint32_t sizeOfCompilation;
         
+        Compilation() : sizeOfCompilation(sizeof(Compilation)) {
+        }
+        
         CodeFrame* GetFirstCodeFrame() {
             return (CodeFrame*)((byte*)this + sizeof(Compilation));
         }
         
-        uintptr_t GetLastByteAddress() {
-            return (uintptr_t)this + sizeOfCompilation - 1;
+//        uintptr_t GetLastByteAddress() {
+//            return (uintptr_t)this + sizeOfCompilation - 1;
+//        }
+        
+        
+        byte* GetWriteHead() {
+            return ((byte*)this) + sizeOfCompilation;
         }
+
     };
     
 

@@ -22,12 +22,12 @@ int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocation
 int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocationMethod mtd ) {
     
     assert( mtd == UseReturnRegister);
-/*
+
     Instruction* c = oldMf->BeginCodeWrite(isolate);
     (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
-    (*c++) = Instruction(RET,(uint8_t)0,(uint8_t)0);
+//    (*c++) = Instruction(RET,(uint8_t)0,(uint8_t)0);
     oldMf->EndCodeWrite(isolate,c);
-    
+/*
     CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
     new (newCodeFrame) CodeFrame();
     
@@ -166,7 +166,7 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
         int regNo = mf->currentScope->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId);
         
         if (deref) {
-            int resultRegNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
            i = mf->BeginCodeWrite(isolate);
            //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
            (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
@@ -236,13 +236,13 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
     uint8_t a1,a2,a3,a4,a5;
     switch (argCount) {
         case 0:
-            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(op,(uint8_t)regNo,(uint8_t)tmp);
             break;
         case 1:
             a1 = isolate->MiniPop();
             mf->FreeIntermediateRegister(a1);
-            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+1,regNo,tmp,a1);
             break;
         case 2:
@@ -250,7 +250,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             a1 = isolate->MiniPop();
             mf->FreeIntermediateRegister(a1);
             mf->FreeIntermediateRegister(a2);
-            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+2,regNo,tmp,a1);
             (*i++) = Instruction(a2);
             break;
@@ -261,7 +261,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             mf->FreeIntermediateRegister(a1);
             mf->FreeIntermediateRegister(a2);
             mf->FreeIntermediateRegister(a3);
-            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+3,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3);
             break;
@@ -274,7 +274,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             mf->FreeIntermediateRegister(a2);
             mf->FreeIntermediateRegister(a3);
             mf->FreeIntermediateRegister(a4);
-            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+4,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3,a4);
             break;
@@ -289,7 +289,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             mf->FreeIntermediateRegister(a3);
             mf->FreeIntermediateRegister(a4);
             mf->FreeIntermediateRegister(a5);
-            regNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
+            regNo = mf->AllocateRegister(isolate, mtd, 0);
             (*i++) = Instruction(op+5,regNo,tmp,a1);
             (*i++) = Instruction(a2,a3,a4,a5);
             break;
@@ -413,7 +413,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     CodeFrame* code = mf->codeFrame;
     Instruction* p = code->StartOfInstructions();
     
-    int lastFixed = code->GetInitializedRegisterCount() - 1;
+    int lastFixed = mf->maxInitializedRegisters - 1;
     
     while (true) {
         
@@ -527,9 +527,9 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     auto comp = new (p) Compilation();
     p += sizeof(Compilation);
     CodeFrame* u = (CodeFrame*)p;
-    new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
+//    new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
 
-    new (mf) Metaframe(isolate,NULL,u,comp);
+    new (mf) Metaframe(isolate,NULL,comp);
     
 //    mf->compilation = comp;
 //    mf->codeFrame = u;
@@ -718,7 +718,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         prefix = 0;
     }
 end:
-    int regCount = code->GetInitializedRegisterCount();
+    int regCount = mf->maxInitializedRegisters;
     res << "\n------------------------------------------------------------\n";
     for (int t=0;t<regCount;t++) {
         res << "r";
@@ -739,10 +739,10 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
     std::ostringstream res;
 
     uintptr_t p = (uintptr_t)code;
-    uintptr_t end = compilation->GetLastByteAddress();
-    while (p < end ) {
+//    uintptr_t end = (uintptr_t)compilation->GetWriteHead() - 1;
+    //while (p < end ) {
        p = DisassembleUnit( isolate, res, (CodeFrame*)p );
-    }
+    //}
     
     return STRINGOLD(res.str());
 
