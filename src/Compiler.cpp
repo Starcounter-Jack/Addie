@@ -35,7 +35,7 @@ int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMe
     
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
-        std::cout << "Statements following fn:" << form.First().Print() << "\n";
+        //std::cout << "Statements following fn:" << form.First().Print() << "\n";
         CompileForm( isolate,mf,form.First(), UseReturnRegister );
         form = form.Rest();
     }
@@ -86,7 +86,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
-        std::cout << "Statements following let:" << form.First().Print() << "\n";
+        //std::cout << "Statements following let:" << form.First().Print() << "\n";
         CompileForm(isolate,mf,form.First(),UseReturnRegister);
         form = form.Rest();
     }
@@ -518,6 +518,7 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     u->metaframe = mf;
     
     mf->currentScope->AllocateConstant(NIL(),RET); // Return register
+    mf->RegUsage[0].InUse = false;
     
 //    AnalyseForm( isolate, mf, form );
     CompileForm( isolate, mf, form, UseReturnRegister );
@@ -745,7 +746,7 @@ int VariableScope::AllocateConstant( VALUE value, Symbol symbol ) {
     metaframe->RegUsage[regNo].InUse = true;
     metaframe->RegUsage[regNo].IsConstant = true;
     
-    std::cout << "Allocating register " << regNo << " to mean " << SYMBOL(symbol).Print() << "\n";
+    //std::cout << "Allocating register " << regNo << " to mean " << SYMBOL(symbol).Print() << "\n";
     
     return regNo;
 }

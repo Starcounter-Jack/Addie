@@ -203,7 +203,7 @@ namespace Addie {
                     currentScope->BindSymbolToRegister(value.SymbolId,regNo);
                 }
                 
-                std::cout << "Default value r[" << (int)regNo << "]=" << value.Print() << "\n";
+                //std::cout << "Default value r[" << (int)regNo << "]=" << value.Print() << "\n";
                 return regNo;
             }
             
