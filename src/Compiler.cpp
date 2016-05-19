@@ -22,8 +22,7 @@ int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocation
 int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocationMethod mtd ) {
     
     assert( mtd == UseReturnRegister);
-    
-    /*
+  /*
     Instruction* c = oldMf->BeginCodeWrite(isolate);
     (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
     (*c++) = Instruction(RET,(uint8_t)0,(uint8_t)0);
@@ -34,9 +33,8 @@ int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocatio
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(oldMf->currentScope,newCodeFrame,oldMf->compilation);
-    */
+*/
     Metaframe* newFrame = oldMf;
-
     
     VALUE args = form.Rest().First();
     
@@ -44,7 +42,7 @@ int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocatio
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = newFrame->currentScope->AllocateInitializedRegister(NIL(),argName);
+        int regNo = newFrame->currentScope->AllocateInitializedRegister(isolate,NIL(),argName);
         newFrame->RegUsage[regNo].IsArgument = true;
     }
     
@@ -92,7 +90,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
         //mf->currentScope->Registers.push_back(variableName);
-        mf->currentScope->AllocateInitializedRegister(lets.GetAt(t+1),variableName);
+        mf->currentScope->AllocateInitializedRegister(isolate,lets.GetAt(t+1),variableName);
 //        mf->currentScope->BindSymbolToRegister(variableName, regno);
 //        mf->RegUsage[regno].InUse = true;
 //        mf->RegUsage[regno].IsConstant = true;
@@ -165,14 +163,14 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         //int regNo = mf->AllocateConstant( symbol );
-        int regNo = mf->currentScope->AllocateInitializedRegister(symbol, symbol.SymbolId);
+        int regNo = mf->currentScope->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId);
         
         if (deref) {
             int resultRegNo = mf->AllocateInitializedRegister(isolate, mtd, 0);
            i = mf->BeginCodeWrite(isolate);
            //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
            (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
-           mf->EndCodeWrite(i);
+           mf->EndCodeWrite(isolate,i);
            return resultRegNo;
         }
         return regNo;
@@ -299,7 +297,7 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
             throw std::runtime_error("Not Implemented");
             break;
     }
-    mf->EndCodeWrite(i);
+    mf->EndCodeWrite(isolate,i);
     
     
     // mf->FreeIntermediateRegisters(usedBefore);
@@ -527,7 +525,7 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     CodeFrame* u = (CodeFrame*)p;
     new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
 
-    new (mf) Metaframe(NULL,u,comp);
+    new (mf) Metaframe(isolate,NULL,u,comp);
     
 //    mf->compilation = comp;
 //    mf->codeFrame = u;
@@ -537,7 +535,8 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
 //    AnalyseForm( isolate, mf, form );
     CompileForm( isolate, mf, form, UseReturnRegister );
-    comp->sizeOfCompilation = mf->FinishedWriting(isolate);
+    //comp->sizeOfCompilation += mf->FinishedWriting(isolate);
+    mf->Seal(isolate);
     isolate->ReportConstantWrite( (uintptr_t)p ); // Mark the memory as used
     
     PackRegisters(isolate, mf);
@@ -754,8 +753,8 @@ void VariableScope::BindSymbolToRegister( Symbol id, int regNo ) {
     }
 }
 
-int VariableScope::AllocateInitializedRegister( VALUE value, Symbol symbol ) {
-    int regNo = metaframe->__allocateConstant(value);
+int VariableScope::AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol ) {
+    int regNo = metaframe->__allocateConstant(isolate,value);
     metaframe->currentScope->BindSymbolToRegister(symbol, regNo);
     assert( metaframe->currentScope->FindRegisterForSymbol(symbol) == regNo);
     metaframe->RegUsage[regNo].InUse = true;

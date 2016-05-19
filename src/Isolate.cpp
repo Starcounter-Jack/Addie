@@ -18,11 +18,13 @@ Isolate::Isolate() {
     // TODO! This needs to change. We cannot expect these ranges to be available.
     // Nice for debugging however.
     Stack = ReserveMemoryBlock(0x0caff0000000, 0x10000000000);
-    Constants = ReserveMemoryBlock(0x0cafe000000, 0x10000000000);
-    Heap = ReserveMemoryBlock(0x0cafd000000,0x10000000000);
-    MiniStack = (int*)ReserveMemoryBlock(0x0cafc000000,0x100000); // Small temporary buffer
+    Stack2 = ReserveMemoryBlock(0x0cafe0000000, 0x10000000000);
+    Constants = ReserveMemoryBlock(0x0cafd000000, 0x10000000000);
+    Heap = ReserveMemoryBlock(0x0cafc000000,0x10000000000);
+    MiniStack = (int*)ReserveMemoryBlock(0x0cafb000000,0x100000); // Small temporary buffer
     
     NextOnStack = (uintptr_t)Stack;
+    NextOnStack2 = (uintptr_t)Stack2;
     NextOnHeap = (uintptr_t)Heap;
     NextOnConstant = (uintptr_t)Constants;
     NextOnMiniStack = (int*)MiniStack;

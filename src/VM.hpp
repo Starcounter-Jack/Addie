@@ -714,11 +714,13 @@ public:
 
     
     uintptr_t Stack;
+    uintptr_t Stack2;
     uintptr_t Constants;
     uintptr_t Heap;
     int* MiniStack;
     
     uintptr_t NextOnStack;
+    uintptr_t NextOnStack2;
     uintptr_t NextOnHeap;
     uintptr_t NextOnConstant;
     int* NextOnMiniStack;
@@ -791,10 +793,39 @@ public:
         BytesAllocated += size;
         NumberOfAllocations++;
         NextOnStack += size;
-        NextOnStack = (NextOnStack + 0b01111) & ~0b01111; // Round up for alignment
-        CheckAddress(newAddress);
         return newAddress;
     }
+    
+    
+    
+    
+    uintptr_t PopStack( size_t size ) {
+        uintptr_t newAddress = (uintptr_t)NextOnStack;
+        BytesAllocated -= size;
+        NumberOfAllocations--;
+        NextOnStack -= size;
+        assert( NextOnStack >= Stack );
+        return newAddress;
+    }
+    
+    
+    uintptr_t AdvanceStack2( size_t size ) {
+        uintptr_t newAddress = (uintptr_t)NextOnStack2;
+        BytesAllocated += size;
+        NumberOfAllocations++;
+        NextOnStack2 += size;
+        return newAddress;
+    }
+    
+    uintptr_t PopStack2( size_t size ) {
+        uintptr_t newAddress = (uintptr_t)NextOnStack2;
+        BytesAllocated -= size;
+        NumberOfAllocations--;
+        NextOnStack2 -= size;
+        assert( NextOnStack2 >= Stack2 );
+        return newAddress;
+    }
+
     
     inline void ReportConstantWrite( uintptr_t addr ) {
         NextOnConstant = addr;
@@ -916,7 +947,7 @@ struct CodeFrame {
         (*StartOfRegisters()) = constant;
     }
     
-    void ReportIntermediate( int cnt ) {
+    void SealIntermediate( int cnt ) {
         sizeOfRegisters += cnt * sizeof(VALUE);
     }
 

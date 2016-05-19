@@ -52,7 +52,7 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
-            int AllocateInitializedRegister( VALUE value, Symbol symbol );
+            int AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol );
             
 
             int FindRegisterForSymbol( Symbol id ) {
@@ -76,7 +76,7 @@ namespace Addie {
             std::vector<Symbol> Registers;
 
             
-            Metaframe( VariableScope* parent, CodeFrame* unit, Compilation* comp ) :Parent(parent) {
+            Metaframe( Isolate* isolate, VariableScope* parent, CodeFrame* unit, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {
                     Metaframe* parentMetaframe = parent->metaframe;
                     compilation  = parentMetaframe->compilation;
@@ -91,7 +91,7 @@ namespace Addie {
                 codeFrame = unit;
                 unit->metaframe = this;
                 
-                currentScope->AllocateInitializedRegister(NIL(),RET); // Return register
+                currentScope->AllocateInitializedRegister(isolate,NIL(),RET); // Return register
 
                 
                 
@@ -114,9 +114,10 @@ namespace Addie {
 //            int intermediatesUsed = 0;
             int maxIntermediatesUsed = 0;
             
-            Instruction* tempWriteHead;
-            Instruction* tempBuffer = NULL; // Will point to a temporary stack allocation during compilation
-            // size_t CodeBufferUsed = 0; // To pop (free) the temporary stack allocation during compilation
+            Instruction* tempCodeWriteHead;
+            Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
+            VALUE* tempRegisterWriteHead;
+            VALUE* tempRegisterBuffer = NULL; // Will point to a temporary stack allocation during compilation
             
             
             int AllocateInitializedRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
@@ -130,15 +131,29 @@ namespace Addie {
             }
             
             Instruction* BeginCodeWrite( Isolate* isolate ) {
-                if (tempBuffer == NULL) {
-                    tempWriteHead = tempBuffer = (Instruction*)(isolate->NextOnStack);
+                if (tempCodeBuffer == NULL) {
+                    tempCodeWriteHead = tempCodeBuffer = (Instruction*)(isolate->NextOnStack);
                 }
-                return tempWriteHead;
+                return tempCodeWriteHead;
             }
             
+            VALUE* BeginRegisterWrite( Isolate* isolate ) {
+                if (tempRegisterBuffer == NULL) {
+                    tempRegisterWriteHead = tempRegisterBuffer = (VALUE*)(isolate->NextOnStack2);
+                }
+                return tempRegisterWriteHead;
+            }
             
-            void EndCodeWrite( Instruction* addr ) {
-                tempWriteHead = addr;
+            void EndRegisterWrite( Isolate* isolate, VALUE* addr ) {
+                size_t size = (byte*)addr - (byte*)tempRegisterWriteHead;
+                tempRegisterWriteHead = addr;
+                isolate->AdvanceStack2(size);
+            }
+            
+            void EndCodeWrite( Isolate* isolate, Instruction* addr ) {
+                size_t size = (byte*)addr - (byte*)tempCodeWriteHead;
+                tempCodeWriteHead = addr;
+                isolate->AdvanceStack(size);
             }
             
 //            void FoundConstant( VALUE form ) {
@@ -187,7 +202,7 @@ namespace Addie {
                 }
             }
             
-            int __allocateConstant( VALUE value ) {
+            int __allocateConstant( Isolate* isolate, VALUE value ) {
                 
                 int regNo;
                 
@@ -202,9 +217,11 @@ namespace Addie {
                     }
                 }
                 
-                VALUE* reg = (VALUE*)writeHead;
+                VALUE* reg = BeginRegisterWrite(isolate); //(VALUE*)writeHead;
                 (*reg++) = value;
-                writeHead = (byte*)reg;
+                EndRegisterWrite(isolate,reg);
+                
+//                writeHead = (byte*)reg;
                 regNo = codeFrame->AddInitializedRegister();
                 RegUsage[regNo].InUse = true;
                 
@@ -216,19 +233,30 @@ namespace Addie {
                 return regNo;
             }
             
-            size_t FinishedWriting(Isolate* isolate) {
+            // We have finished writing a code frame.
+            void Seal(Isolate* isolate) {
                 // Copy the buffer into the compilation unit
+                
+                int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
+                if (tempRegisterBufferUsed != 0) {
+                    memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
+                }
+                isolate->PopStack2(tempRegisterBufferUsed);
+                
                 Instruction* c = BeginCodeWrite(isolate);
                 (*c++) = Instruction(RET);
-                EndCodeWrite(c);
-                int tempBufferUsed = ((byte*)tempWriteHead - (byte*)tempBuffer);
-                if (tempBufferUsed != 0) {
-                   memcpy( codeFrame->StartOfInstructions(), tempBuffer, tempBufferUsed);
+                EndCodeWrite(isolate,c);
+                int tempCodeBufferUsed = ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
+                isolate->PopStack(tempCodeBufferUsed);
+                
+                if (tempCodeBufferUsed != 0) {
+                   memcpy( codeFrame->StartOfInstructions(), tempCodeBuffer, tempCodeBufferUsed);
                 }
-                codeFrame->ReportIntermediate(maxIntermediatesUsed);
+                codeFrame->SealIntermediate(maxIntermediatesUsed);
                 //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
-                return sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
-                                        tempBufferUsed;
+                size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
+                                        tempCodeBufferUsed;
+                compilation->sizeOfCompilation += written;
             }
             
             Symbol ExplainRegister( int regNo ) {
