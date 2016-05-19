@@ -29,11 +29,8 @@ int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMe
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-//        mf->currentScope->Registers.push_back(argName);
-        int regNo = mf->AllocateConstant(NIL());
-        mf->currentScope->BindSymbolToRegister(argName, regNo);
-        //int regno = mf->AllocateConstant(NIL());
-//        mf->currentScope->Bindings[argName] = Binding(mf,mf->AllocateConstant(NIL()));
+        int regNo = mf->currentScope->AllocateConstant(NIL(),argName);
+        mf->RegUsage[regNo].IsArgument = true;
     }
     
     form = form.Rest().Rest();
@@ -58,6 +55,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
 
     VariableScope* scope = MALLOC_HEAP(VariableScope); // TODO! GC
     new (scope) VariableScope();
+    scope->metaframe = mf;
     scope->parent = mf->currentScope;
     mf->currentScope = scope;
     
@@ -79,9 +77,10 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
         //mf->currentScope->Registers.push_back(variableName);
-        int regno = mf->AllocateConstant(lets.GetAt(t+1));
-        mf->currentScope->BindSymbolToRegister(variableName, regno);
-        //mf->currentScope->Bindings[variableName] = Binding(mf,regno);
+        mf->currentScope->AllocateConstant(lets.GetAt(t+1),variableName);
+//        mf->currentScope->BindSymbolToRegister(variableName, regno);
+//        mf->RegUsage[regno].InUse = true;
+//        mf->RegUsage[regno].IsConstant = true;
     }
     //byte* bytecode = (byte*)registers;
     
@@ -119,63 +118,7 @@ Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE 
 
 */
 
-byte* CompilePrototype( Isolate* isolate, Metaframe* mf, VALUE form ) {
-    
-//    byte* start = p; //(byte*)isolate->NextOnConstant;
-    //byte* p = (byte*)start;
-    
-    Instruction* code;
-    Instruction* c;
-    VALUE* registers;
-    VALUE* r;
-    int uninitatedRegisters;
-    
-    //    CodeFrame* header = (CodeFrame*)p;
-//    p += sizeof(CodeFrame);
-    CodeFrame* header = mf->codeFrame;
-    
-    registers = r = header->StartOfRegisters();
-    
-    std::cout << "\nCompiling (print (+ 10 20))\n";
-    
-    *((VALUE*)r++) = NIL();             // R0 retval
-    *((VALUE*)r++) = SYMBOL(SymPlus);   // R1
-    *((VALUE*)r++) = SYMBOL(SymPrint);  // R2
-    *((VALUE*)r++) = INTEGER(10);       // R3
-    *((VALUE*)r++) = INTEGER(20);       // R4
-    
-    // R5
-    
-    code = c = (Instruction*)r;
-    
-    //            *(c++) = Instruction(SET_REGISTER_WINDOW);     // CODE START 0=SymPlus 1=10 2=20
-    //            uint64_t temp1 = (uint64_t)registers;
-    
-    //            *((VALUE*)c) = INTEGER(temp1);
-    //            uint64_t temp2 = (uint64_t)(*((VALUE*)c)).Integer;
-    
-    //            if (temp1 != temp2 ) {
-    //                std::cout << temp1 << "!=" << temp2 << "\n";
-    //            }
-    
-    
-    //            std::cout << (*((VALUE*)c)).Integer;
-    //            c += sizeof(INTEGER)/sizeof(Instruction);
-    *(c++) = OpCall(1,3,4);     // CODE START 0=SymPlus 1=10 2=20
-    //*(c++) = OpMove(0,5);       // retval -> intermediate1
-    *(c++) = Instruction(EXIT_WITH_CONTINUATION);
-    *(c++) = OpCall(2,0);       // 3=Print 5=internadiate1
-    //*(c++) = Instruction(END);       // 3=Print 5=internadiate1
-    
-    //*(c++) = Instruction(JMP_IF_TRUE,(int32_t)-1);       // 3=Print 5=internadiate1
-    uninitatedRegisters = 1;
-    byte* p = (byte*)(c-1);
-    
-    header->sizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
-    header->sizeOfRegisters = header->sizeOfInitializedRegisters + uninitatedRegisters * sizeof(VALUE);
-    
-    return p;
-}
+
 
 
 
@@ -206,7 +149,8 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
     
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
-        int regNo = mf->AllocateConstant( symbol );
+        //int regNo = mf->AllocateConstant( symbol );
+        int regNo = mf->currentScope->AllocateConstant(symbol, symbol.SymbolId);
         
         if (deref) {
             int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
@@ -571,6 +515,9 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
     mf->compilation = comp;
     mf->codeFrame = u;
+    u->metaframe = mf;
+    
+    mf->currentScope->AllocateConstant(NIL(),RET); // Return register
     
 //    AnalyseForm( isolate, mf, form );
     CompileForm( isolate, mf, form, UseReturnRegister );
@@ -592,7 +539,7 @@ void Indent( std::ostringstream& res, std::string str ) {
 
 uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame* code ) {
     
-    
+    Metaframe* mf = code->metaframe;
     
     const char* str;
     VALUE* R = code->StartOfRegisters();
@@ -754,7 +701,9 @@ end:
     for (int t=0;t<regCount;t++) {
         res << "r";
         res << t;
-        res << ":         ";
+        res << " (";
+        res << SYMBOL(mf->ExplainRegister(t)).Print();
+        res << "):     ";
         res << R[t].Print();
         res << "\n";
     }
@@ -776,5 +725,30 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
     return STRINGOLD(res.str());
 
 }
+
+
+void VariableScope::BindSymbolToRegister( Symbol id, int regNo ) {
+    Bindings[id] = Binding(this->metaframe,regNo);
+    if (metaframe->Registers.size()<=regNo) {
+        assert( metaframe->Registers.size() == regNo );
+        metaframe->Registers.push_back(id);
+    }
+    else {
+        metaframe->Registers[regNo] = id;
+    }
+}
+
+int VariableScope::AllocateConstant( VALUE value, Symbol symbol ) {
+    int regNo = metaframe->__allocateConstant(value);
+    metaframe->currentScope->BindSymbolToRegister(symbol, regNo);
+    assert( metaframe->currentScope->FindRegisterForSymbol(symbol) == regNo);
+    metaframe->RegUsage[regNo].InUse = true;
+    metaframe->RegUsage[regNo].IsConstant = true;
+    
+    std::cout << "Allocating register " << regNo << " to mean " << SYMBOL(symbol).Print() << "\n";
+    
+    return regNo;
+}
+
 
 

@@ -880,29 +880,21 @@ public:
 };
 
     
-
+   class Metaframe;
 
 struct CodeFrame {
 //    uint32_t SizeOfUnit;
     uint8_t maxArguments = 0;
-    uint8_t sizeOfInitializedRegisters;
-    uint8_t sizeOfRegisters;
+    uint8_t sizeOfInitializedRegisters = 0;
+    uint8_t sizeOfRegisters = 0;
     uint8_t __unusedForAlignment;
+    Metaframe* metaframe = NULL; // Optional metaframe for debugging
     
     VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CodeFrame)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
                                                 sizeof(CodeFrame) +
                                                 sizeOfInitializedRegisters); }
     int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
-
-    
-    CodeFrame() {
-        // By default, the only known register is the return register
-        sizeOfInitializedRegisters = sizeof(VALUE); // ((byte*)code) - ((byte*)registers);
-        sizeOfRegisters = sizeof(VALUE); // SizeOfInitializedRegisters + sizeUninit;
-//        SizeOfUnit = sizeof(VALUE) +
-        *StartOfRegisters() = NIL(); // Return value register (r[0])
-    }
 
     
     //CodeFrame( Instruction* code, VALUE* registers, int sizeUninit ) {

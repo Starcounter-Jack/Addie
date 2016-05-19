@@ -41,16 +41,20 @@ namespace Addie {
         struct RegisterUse {
             bool InUse : 1;
             bool IsClosure : 1;
+            bool IsArgument: 1;
+            bool IsConstant: 1;
         };
         
         class VariableScope {
         private:
-//            std::vector<Symbol> Registers;
             std::map<Symbol,Binding> Bindings;
         public:
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
+            int AllocateConstant( VALUE value, Symbol symbol );
+            
+
             int FindRegisterForSymbol( Symbol id ) {
                 auto x = Bindings.find(id);
                 if ( x != Bindings.end()) {
@@ -61,23 +65,16 @@ namespace Addie {
                 return -1;
             }
             
-            void BindSymbolToRegister( Symbol id, int regNo ) {
-                Bindings[id] = Binding(this->metaframe,regNo);
-//                if (regNo < Registers.size() ) {
-//                   Registers[regNo] = id;
-//                }
-//                else {
-//                    assert( regNo == Registers.size() );
-//                    Registers.push_back(id);
-//                }
-            }
+            void BindSymbolToRegister( Symbol id, int regNo );
+            
         };
         
         
         class Metaframe {
         public:
-            RegisterUse RegUsage[255] = { {false,false} };
-            
+            RegisterUse RegUsage[255] = { {false,false,false,false} };
+            std::vector<Symbol> Registers;
+
             
             Metaframe( VariableScope* parent, CodeFrame* unit ) :Parent(parent) {
                 if (parent != NULL ) {
@@ -88,8 +85,7 @@ namespace Addie {
                 }
                 rootScope.metaframe = this;
                 currentScope = &rootScope;
-                writeHead = ((byte*)unit) + sizeof(CodeFrame) + sizeof(VALUE); // Skip return valueÏCo
-                
+                writeHead = ((byte*)unit) + sizeof(CodeFrame);
             }
 //            Metaframe( Metaframe* parent, CodeFrame cu, Compilation c ) :Parent(parent),
 //                                            codeFrame(cu), compilation(c) {}
@@ -182,7 +178,7 @@ namespace Addie {
                 }
             }
             
-            int AllocateConstant( VALUE value ) {
+            int __allocateConstant( VALUE value ) {
                 
                 int regNo;
                 
@@ -197,7 +193,6 @@ namespace Addie {
                     }
                 }
                 
-                std::cout << "Adding constant " << value.Print() << "\n";
                 VALUE* reg = (VALUE*)writeHead;
                 (*reg++) = value;
                 writeHead = (byte*)reg;
@@ -208,6 +203,7 @@ namespace Addie {
                     currentScope->BindSymbolToRegister(value.SymbolId,regNo);
                 }
                 
+                std::cout << "Default value r[" << (int)regNo << "]=" << value.Print() << "\n";
                 return regNo;
             }
             
@@ -225,6 +221,14 @@ namespace Addie {
                 return sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
                                         tempBufferUsed;
             }
+            
+            Symbol ExplainRegister( int regNo ) {
+                if (Registers.size() < regNo+1) {
+                    return RET;
+                }
+                return Registers[regNo];
+            }
+
         };
 
     }
