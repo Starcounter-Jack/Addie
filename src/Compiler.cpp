@@ -565,18 +565,22 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     const char* str;
     VALUE* R = code->StartOfRegisters();
     
-    int prefix = 6;
+    int prefix = 10;
     res << "============================================================\n";
-    res << "START:";
+    res << "Procedure:";
     
     
     Instruction* p = code->StartOfInstructions();
     byte* eos = (byte*)code + mf->sizeOfCodeFrame; // - code->sizeOfInitializedRegisters;
     Instruction* end = (Instruction*)eos;
+    int t = 0;
     
     while (p < end) {
-        
-        while (prefix++ < 12) res << " ";
+        if (t>0)
+            res << "\n";
+        t++;
+
+        while (prefix++ < 15) res << " ";
         
         res << ".";
         str = isolate->GetStringFromSymbolId((*p).OP).c_str();
@@ -713,7 +717,6 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << str;
                 break;
         }
-        res << "\n";
         
         p++;
         
@@ -723,11 +726,19 @@ end:
     int regCount = mf->maxInitializedRegisters;
     res << "\n------------------------------------------------------------\n";
     for (int t=0;t<regCount;t++) {
-        res << "r";
-        res << t;
-        res << " (";
-        res << SYMBOL(mf->ExplainRegister(t)).Print();
-        res << "):     ";
+        std::ostringstream str;
+        str << "r";
+        str << t;
+        str << " (";
+        str << SYMBOL(mf->ExplainRegister(t)).Print();
+        str << "):";
+        std::string s =  str.str();
+        res << s;
+        prefix = s.length();
+        while (prefix < 15) {
+            res << " ";
+            prefix++;
+        }
         res << R[t].Print();
         res << "\n";
     }
@@ -794,8 +805,7 @@ void Metaframe::Seal(Isolate* isolate) {
     
     PackRegisters(isolate, this);
 
-    //codeFrame->SealIntermediate(maxIntermediatesUsed);
-    
+
     int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
     assert( codeFrame == NULL );
     codeFrame = (CodeFrame*)compilation->GetWriteHead();

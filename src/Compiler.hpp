@@ -242,7 +242,6 @@ namespace Addie {
                 return regNo;
             }
             
-            // We have finished writing a code frame.
             void Seal(Isolate* isolate);
 
             

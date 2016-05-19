@@ -933,23 +933,6 @@ struct CodeFrame {
         sizeOfRegisters = regCount * sizeof(VALUE);
         sizeOfInitializedRegisters = initRegCount * sizeof(VALUE);
     }
-    
-//    int AddInitializedRegister() {
-//        size_t x = sizeof(VALUE);
-//        sizeOfInitializedRegisters += x;
-//        sizeOfRegisters += x;
-//        //return sizeOfInitializedRegisters - 1;
-//        return ( sizeOfInitializedRegisters / sizeof(VALUE) ) - 1;
-//    }
-    
-   // void SetReturnRegister( VALUE constant ) {
-   //     assert( sizeOfInitializedRegisters >= sizeof(VALUE));
-   //     (*StartOfRegisters()) = constant;
-   // }
-    
-//    void SealIntermediate( int cnt ) {
-//        sizeOfRegisters += cnt * sizeof(VALUE);
-//    }
 
 };
     
