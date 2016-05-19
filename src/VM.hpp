@@ -882,21 +882,21 @@ public:
     
 
 
-struct CompilationUnit {
+struct CodeFrame {
 //    uint32_t SizeOfUnit;
     uint8_t maxArguments = 0;
     uint8_t sizeOfInitializedRegisters;
     uint8_t sizeOfRegisters;
     uint8_t __unusedForAlignment;
     
-    VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CompilationUnit)); }
+    VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CodeFrame)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
-                                                sizeof(CompilationUnit) +
+                                                sizeof(CodeFrame) +
                                                 sizeOfInitializedRegisters); }
     int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
 
     
-    CompilationUnit() {
+    CodeFrame() {
         // By default, the only known register is the return register
         sizeOfInitializedRegisters = sizeof(VALUE); // ((byte*)code) - ((byte*)registers);
         sizeOfRegisters = sizeof(VALUE); // SizeOfInitializedRegisters + sizeUninit;
@@ -905,7 +905,7 @@ struct CompilationUnit {
     }
 
     
-    //CompilationUnit( Instruction* code, VALUE* registers, int sizeUninit ) {
+    //CodeFrame( Instruction* code, VALUE* registers, int sizeUninit ) {
     //    // TODO! REMOVE THIS CONSTRUCTOR
     //    SizeOfInitializedRegisters = ((byte*)code) - ((byte*)registers);
     //    SizeOfRegisters = SizeOfInitializedRegisters + sizeUninit;
@@ -933,8 +933,8 @@ struct CompilationUnit {
     struct Compilation {
         uint32_t sizeOfCompilation;
         
-        CompilationUnit* GetFirstCompilationUnit() {
-            return (CompilationUnit*)((byte*)this + sizeof(Compilation));
+        CodeFrame* GetFirstCodeFrame() {
+            return (CodeFrame*)((byte*)this + sizeof(Compilation));
         }
         
         uintptr_t GetLastByteAddress() {
@@ -952,13 +952,13 @@ struct CompilationUnit {
 // than pushing and popping.
 // Frames are NOT using the garbage collector as frames can more cheaply allocated and
 // deallocated.
-struct Frame
+struct RegisterRuntimeFrame
 {
-    Frame* Parent;
-    CompilationUnit* Comp;
+    RegisterRuntimeFrame* Parent;
+    CodeFrame* Comp;
     
     VALUE* GetStartOfRegisters() {
-        return (VALUE*)(((byte*)this) + sizeof(Frame));
+        return (VALUE*)(((byte*)this) + sizeof(RegisterRuntimeFrame));
     }
 };
         
@@ -970,7 +970,7 @@ extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
 class Continuation {
 public:
     Instruction* PC;                    // Program Counter (aka Instruction Pointer).
-    Frame* frame = NULL;
+    RegisterRuntimeFrame* frame = NULL;
     
     inline VALUE GetReturnValue() {
         return frame->GetStartOfRegisters()[0];
@@ -980,13 +980,13 @@ public:
         return (*PC).OP == RET;
     }
     
-    void EnterIntoNewFrame( CompilationUnit* code, Frame* parent ) {
+    void EnterIntoNewRuntimeFrame( CodeFrame* code, RegisterRuntimeFrame* parent ) {
         assert( frame == NULL );
         // The compiled code contains the size of the register machine needed for the
         // code. It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
-        frame = (Frame*)CurrentIsolate->AdvanceStack(sizeof(Frame) + code->sizeOfRegisters);
-        memcpy( ((byte*)frame) + sizeof(Frame), ((byte*)code) + sizeof(CompilationUnit), code->sizeOfInitializedRegisters );
+        frame = (RegisterRuntimeFrame*)CurrentIsolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
+        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
     }
@@ -1002,8 +1002,8 @@ public:
     
     static Continuation Interpret( Isolate* isolate, Compilation* code ) {
         Continuation c;
-        CompilationUnit* unit = code->GetFirstCompilationUnit();
-        c.EnterIntoNewFrame(unit, NULL);
+        CodeFrame* unit = code->GetFirstCodeFrame();
+        c.EnterIntoNewRuntimeFrame(unit, NULL);
         c.PC = unit->StartOfInstructions();
         return Interpreter::Interpret( isolate, c );
     }

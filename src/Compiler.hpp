@@ -44,12 +44,13 @@ namespace Addie {
         
         class VariableScope {
         public:
-            VariableScope* parent;
+            Metaframe* metaframe;
+            VariableScope* parent = NULL;
             std::vector<Symbol> Registers;
             std::map<Symbol,Binding> Bindings;
-            VariableScope( VariableScope* parentScope ) {
-                parent = parentScope;
-            }
+            //VariableScope( VariableScope* parentScope ) {
+            //    parent = parentScope;
+            //}
         };
         
         
@@ -58,18 +59,21 @@ namespace Addie {
             RegisterUse RegUsage[255] = { {false} };
             
             
-            Metaframe( Metaframe* parent, CompilationUnit* unit ) :Parent(parent), rootScope(NULL) {
-                if (parent != NULL ){
-                    compilation  = parent->compilation;
-                    compilationUnit = parent->compilationUnit;
+            Metaframe( VariableScope* parent, CodeFrame* unit ) :Parent(parent) {
+                if (parent != NULL ) {
+                    Metaframe* parentMetaframe = parent->metaframe;
+                    compilation  = parentMetaframe->compilation;
+                    codeFrame = parentMetaframe->codeFrame;
+                    rootScope.parent = parent;
                 }
+                rootScope.metaframe = this;
                 currentScope = &rootScope;
-                writeHead = ((byte*)unit) + sizeof(CompilationUnit) + sizeof(VALUE); // Skip return valueÏCo
+                writeHead = ((byte*)unit) + sizeof(CodeFrame) + sizeof(VALUE); // Skip return valueÏCo
                 
             }
-//            Metaframe( Metaframe* parent, CompilationUnit cu, Compilation c ) :Parent(parent),
-//                                            compilationUnit(cu), compilation(c) {}
-            Metaframe* Parent = NULL;
+//            Metaframe( Metaframe* parent, CodeFrame cu, Compilation c ) :Parent(parent),
+//                                            codeFrame(cu), compilation(c) {}
+            VariableScope* Parent = NULL;
             
             VariableScope rootScope;
             VariableScope* currentScope;
@@ -79,7 +83,7 @@ namespace Addie {
             
             VALUE Body;
 //            int constants = 0;
-            CompilationUnit* compilationUnit = NULL;
+            CodeFrame* codeFrame = NULL;
             Compilation* compilation = NULL;
             byte* writeHead;
 //            int intermediatesUsed = 0;
@@ -152,7 +156,7 @@ namespace Addie {
             // Called when a register is no longer in use. In this way,
             // registers can be reused.
             void FreeIntermediateRegister( int regNo ) {
-                int highestFixedRegisterNo = compilationUnit->GetInitializedRegisterCount()-1;
+                int highestFixedRegisterNo = codeFrame->GetInitializedRegisterCount()-1;
                 if (regNo == 0 || regNo > highestFixedRegisterNo ) {
                    RegUsage[regNo].InUse = false;
                 }
@@ -178,7 +182,7 @@ namespace Addie {
                 VALUE* reg = (VALUE*)writeHead;
                 (*reg++) = value;
                 writeHead = (byte*)reg;
-                regNo = compilationUnit->AddInitializedRegister();
+                regNo = codeFrame->AddInitializedRegister();
                 RegUsage[regNo].InUse = true;
                 
                 if (value.IsSymbol()) {
@@ -196,11 +200,11 @@ namespace Addie {
                 EndCodeWrite(c);
                 int tempBufferUsed = ((byte*)tempWriteHead - (byte*)tempBuffer);
                 if (tempBufferUsed != 0) {
-                   memcpy( compilationUnit->StartOfInstructions(), tempBuffer, tempBufferUsed);
+                   memcpy( codeFrame->StartOfInstructions(), tempBuffer, tempBufferUsed);
                 }
-                compilationUnit->ReportIntermediate(maxIntermediatesUsed);
-                //return (byte*)((byte*)compilationUnit->StartOfInstructions() + tempBufferUsed);
-                return sizeof(CompilationUnit) + compilationUnit->sizeOfInitializedRegisters +
+                codeFrame->ReportIntermediate(maxIntermediatesUsed);
+                //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
+                return sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
                                         tempBufferUsed;
             }
         };

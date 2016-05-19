@@ -41,7 +41,7 @@ int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMe
         form = form.Rest();
     }
     
-    //    new (unit) CompilationUnit( code, registers,  );
+    //    new (unit) CodeFrame( code, registers,  );
     
     return 0;
 }
@@ -65,7 +65,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
 //        newMf->Parent = mf;
 //    }
 
-//    VALUE* registers = mf->compilationUnit->StartOfRegisters();
+//    VALUE* registers = mf->codeFrame->StartOfRegisters();
 //    (*registers++) = NIL();
     //mf->AllocateConstant(NIL()); // Return value
     int cnt = lets.Count();
@@ -85,7 +85,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
         form = form.Rest();
     }
     
-//    new (unit) CompilationUnit( code, registers,  );
+//    new (unit) CodeFrame( code, registers,  );
 
     return 0;
 }
@@ -123,9 +123,9 @@ byte* CompilePrototype( Isolate* isolate, Metaframe* mf, VALUE form ) {
     VALUE* r;
     int uninitatedRegisters;
     
-    //    CompilationUnit* header = (CompilationUnit*)p;
-//    p += sizeof(CompilationUnit);
-    CompilationUnit* header = mf->compilationUnit;
+    //    CodeFrame* header = (CodeFrame*)p;
+//    p += sizeof(CodeFrame);
+    CodeFrame* header = mf->codeFrame;
     
     registers = r = header->StartOfRegisters();
     
@@ -175,7 +175,7 @@ byte* CompilePrototype( Isolate* isolate, Metaframe* mf, VALUE form ) {
 int CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
     // Compile a constant. If this is the last statement, it will
     // occupy the return register (r[0]).
-    CompilationUnit* unit = mf->compilationUnit;
+    CodeFrame* unit = mf->codeFrame;
     if (mtd == UseReturnRegister) {
         unit->SetReturnRegister( form );
         return 0;
@@ -197,7 +197,7 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
         
 //        throw std::runtime_error("Variable is not declared");
     
-//        CompilationUnit* unit = mf->compilationUnit;
+//        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         int regNo = mf->AllocateConstant( symbol );
         
@@ -446,7 +446,7 @@ inline void Pack( uint8_t &reg, int lastFixed ) {
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     
     
-    CompilationUnit* code = mf->compilationUnit;
+    CodeFrame* code = mf->codeFrame;
     Instruction* p = code->StartOfInstructions();
     
     int lastFixed = code->GetInitializedRegisterCount() - 1;
@@ -557,13 +557,13 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
     auto comp = new (p) Compilation();
     p += sizeof(Compilation);
-    CompilationUnit* u = (CompilationUnit*)p;
-    new (u) CompilationUnit();  //( Instruction* code, VALUE* registers, int sizeUninit )
+    CodeFrame* u = (CodeFrame*)p;
+    new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
 
     new (mf) Metaframe(NULL,u);
     
     mf->compilation = comp;
-    mf->compilationUnit = u;
+    mf->codeFrame = u;
     
 //    AnalyseForm( isolate, mf, form );
     CompileForm( isolate, mf, form, UseReturnRegister );
@@ -583,7 +583,7 @@ void Indent( std::ostringstream& res, std::string str ) {
 }
 
 
-uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CompilationUnit* code ) {
+uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame* code ) {
     
     
     
@@ -757,13 +757,13 @@ end:
 
 STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
     
-    CompilationUnit* code = compilation->GetFirstCompilationUnit();
+    CodeFrame* code = compilation->GetFirstCodeFrame();
     std::ostringstream res;
 
     uintptr_t p = (uintptr_t)code;
     uintptr_t end = compilation->GetLastByteAddress();
     while (p < end ) {
-       p = DisassembleUnit( isolate, res, (CompilationUnit*)p );
+       p = DisassembleUnit( isolate, res, (CodeFrame*)p );
     }
     
     return STRINGOLD(res.str());
