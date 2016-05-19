@@ -92,6 +92,7 @@ namespace Addie {
                 //unit->metaframe = this;
                 
                 currentScope->AllocateInitializedRegister(isolate,NIL(),RET); // Return register
+                RegUsage[0].InUse = false;
 
                 
                 

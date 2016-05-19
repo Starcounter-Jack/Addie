@@ -196,7 +196,7 @@ void HonorResultRegister(Isolate* isolate, Metaframe* mf, int regNo) {
 
 
 int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
-    std::cout << "Function call: " << form.First().Print() << "\n";
+    //std::cout << "Function call: " << form.First().Print() << "\n";
     
     
     VALUE function = form.First();
@@ -535,7 +535,6 @@ Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
 //    mf->codeFrame = u;
 //    u->metaframe = mf;
     
-    mf->RegUsage[0].InUse = false;
     
 //    AnalyseForm( isolate, mf, form );
     CompileForm( isolate, mf, form, UseReturnRegister );
@@ -821,13 +820,13 @@ void Metaframe::Seal(Isolate* isolate) {
     compilation->sizeOfCompilation += written;
     
 
-    
+    /*
     std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";
     std::cout << "Start-of-regs: " << (uintptr_t)codeFrame->StartOfRegisters() << "\n";
     std::cout << "Start-of-code: " << (uintptr_t)codeFrame->StartOfInstructions() << "\n";
     std::cout << "Register initializations: " << codeFrame->sizeOfInitializedRegisters/sizeof(VALUE) << "\n";
     std::cout << "Instructions written: " << tempCodeBufferUsed/sizeof(Instruction) << "\n";
-    
+     */
 }
 
 
