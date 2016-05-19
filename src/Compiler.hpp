@@ -40,23 +40,43 @@ namespace Addie {
         
         struct RegisterUse {
             bool InUse : 1;
+            bool IsClosure : 1;
         };
         
         class VariableScope {
+        private:
+//            std::vector<Symbol> Registers;
+            std::map<Symbol,Binding> Bindings;
         public:
             Metaframe* metaframe;
             VariableScope* parent = NULL;
-            std::vector<Symbol> Registers;
-            std::map<Symbol,Binding> Bindings;
-            //VariableScope( VariableScope* parentScope ) {
-            //    parent = parentScope;
-            //}
+            
+            int FindRegisterForSymbol( Symbol id ) {
+                auto x = Bindings.find(id);
+                if ( x != Bindings.end()) {
+                    return x->second.Register;
+                }
+                if (parent != NULL)
+                    return parent->FindRegisterForSymbol(id);
+                return -1;
+            }
+            
+            void BindSymbolToRegister( Symbol id, int regNo ) {
+                Bindings[id] = Binding(this->metaframe,regNo);
+//                if (regNo < Registers.size() ) {
+//                   Registers[regNo] = id;
+//                }
+//                else {
+//                    assert( regNo == Registers.size() );
+//                    Registers.push_back(id);
+//                }
+            }
         };
         
         
         class Metaframe {
         public:
-            RegisterUse RegUsage[255] = { {false} };
+            RegisterUse RegUsage[255] = { {false,false} };
             
             
             Metaframe( VariableScope* parent, CodeFrame* unit ) :Parent(parent) {
@@ -169,10 +189,9 @@ namespace Addie {
                 if (value.IsSymbol()) {
                     
                     Symbol id = value.SymbolId;
-                    auto x = currentScope->Bindings.find(id);
+                    int regNo = currentScope->FindRegisterForSymbol(id);
                     
-                    if ( x != currentScope->Bindings.end()) {
-                        regNo = x->second.Register;
+                    if ( regNo != -1 ) {
                         RegUsage[regNo].InUse = true;
                         return regNo;
                     }
@@ -186,8 +205,7 @@ namespace Addie {
                 RegUsage[regNo].InUse = true;
                 
                 if (value.IsSymbol()) {
-                    currentScope->Bindings[value.SymbolId] = Binding(this,regNo);
-                    currentScope->Registers[regNo] = value.SymbolId;
+                    currentScope->BindSymbolToRegister(value.SymbolId,regNo);
                 }
                 
                 return regNo;

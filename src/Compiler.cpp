@@ -29,9 +29,11 @@ int CompileFn( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMe
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        mf->currentScope->Registers.push_back(argName);
+//        mf->currentScope->Registers.push_back(argName);
+        int regNo = mf->AllocateConstant(NIL());
+        mf->currentScope->BindSymbolToRegister(argName, regNo);
         //int regno = mf->AllocateConstant(NIL());
-        mf->currentScope->Bindings[argName] = Binding(mf,mf->AllocateConstant(NIL()));
+//        mf->currentScope->Bindings[argName] = Binding(mf,mf->AllocateConstant(NIL()));
     }
     
     form = form.Rest().Rest();
@@ -54,6 +56,10 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     
     VALUE lets = form.Rest().First();
 
+    VariableScope* scope = MALLOC_HEAP(VariableScope); // TODO! GC
+    new (scope) VariableScope();
+    scope->parent = mf->currentScope;
+    mf->currentScope = scope;
     
 //    auto newMf = MALLOC_HEAP(Metaframe); // TODO! GC
 //    new (newMf) Metaframe( mf );
@@ -72,9 +78,10 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
-        mf->currentScope->Registers.push_back(variableName);
+        //mf->currentScope->Registers.push_back(variableName);
         int regno = mf->AllocateConstant(lets.GetAt(t+1));
-        mf->currentScope->Bindings[variableName] = Binding(mf,regno);
+        mf->currentScope->BindSymbolToRegister(variableName, regno);
+        //mf->currentScope->Bindings[variableName] = Binding(mf,regno);
     }
     //byte* bytecode = (byte*)registers;
     
@@ -191,9 +198,9 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
     
     
     //    mf->Bindings[symbol] ;asddsa
-    auto x = mf->currentScope->Bindings.find(symbol.SymbolId);
+    int x = mf->currentScope->FindRegisterForSymbol(symbol.SymbolId);
     
-    if ( x == mf->currentScope->Bindings.end()) {
+    if ( x == -1 ) {
         
 //        throw std::runtime_error("Variable is not declared");
     
@@ -212,7 +219,7 @@ int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAlloca
         return regNo;
     }
     
-    return x->second.Register;
+    return x;
 //        throw std::runtime_error("Found local variable reference! Not implemented");
     
 }
