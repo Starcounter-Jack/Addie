@@ -29,7 +29,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     Instruction* forward = oldMf->BeginCodeWrite(isolate);
     oldMf->EndCodeWrite(isolate,forward+1);
     
-    int regFunc = oldMf->currentScope->AllocateInitializedRegister(isolate,NIL(),0,RegAddress);
+    int regFunc = oldMf->currentScope->AllocatePrefixRegister(isolate,NIL(),0,RegAddress);
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
@@ -44,7 +44,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = newFrame->currentScope->AllocateInitializedRegister(isolate,NIL(),argName,RegArgument);
+        int regNo = newFrame->currentScope->AllocatePrefixRegister(isolate,NIL(),argName,RegArgument);
         newFrame->RegUsage[regNo].IsArgument = true;
     }
     
@@ -99,7 +99,7 @@ int CompileLet( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloc
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
         //mf->currentScope->Registers.push_back(variableName);
-        mf->currentScope->AllocateInitializedRegister(isolate,lets.GetAt(t+1),variableName,RegLocal);
+        mf->currentScope->AllocatePrefixRegister(isolate,lets.GetAt(t+1),variableName,RegLocal);
 //        mf->currentScope->BindSymbolToRegister(variableName, regno);
 //        mf->RegUsage[regno].InUse = true;
 //        mf->RegUsage[regno].IsConstant = true;
@@ -172,7 +172,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
         x = mf->currentScope->ExtendedFindRegisterForSymbol(isolate, symbol.SymbolId, true, foundInFrame);
         if ( x != -1 ) {
             int parentReg = x;
-            x = mf->TopScopeInSameFrame()->AllocateInitializedRegister(isolate,NIL(), symbol.SymbolId,RegClosure);
+            x = mf->TopScopeInSameFrame()->AllocatePrefixRegister(isolate,NIL(), symbol.SymbolId,RegClosure);
             mf->enclosedVariables.push_back(Capture(parentReg,x));
          //   std::cout << "Found " << isolate->GetStringFromSymbolId(symbol.SymbolId) << " in parent\n";
         }
@@ -186,7 +186,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         //int regNo = mf->AllocateConstant( symbol );
-        int regNo = mf->currentScope->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId,RegRuntimeReference);
+        int regNo = mf->currentScope->AllocatePrefixRegister(isolate,symbol, symbol.SymbolId,RegRuntimeReference);
         
         if (deref) {
             int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
@@ -447,9 +447,9 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
 //    return;
     
     
-    int lastFixed = mf->maxInitializedRegisters - 1;
+    int lastFixed = mf->maxPrefixRegisters - 1;
     VALUE* reg = mf->tempRegisterBuffer;
-    int regCount = mf->maxInitializedRegisters;
+    int regCount = mf->maxPrefixRegisters;
     int capturedCount = mf->enclosedVariables.size();
     
     int packed = 0;
@@ -488,7 +488,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     Instruction* p = mf->tempCodeBuffer;
     
     
-    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;
+    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfPrefixRegisters;
     Instruction* end = (Instruction*)eos;
     
     while (p < end) {
@@ -655,7 +655,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     res << tit;
     
     Instruction* p = code->StartOfInstructions();
-    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;
+    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfPrefixRegisters;
     Instruction* end = (Instruction*)eos;
     int t = 0;
     
@@ -818,7 +818,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         prefix = 0;
     }
 
-    int regCount = mf->maxInitializedRegisters;
+    int regCount = mf->maxPrefixRegisters;
     res << "\n------------------------------------------------------------\n";
     for (int t=0;t<regCount;t++) {
         std::ostringstream str;
@@ -837,7 +837,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         res << R[t].Print();
         res << "\n";
     }
-    for (int t=mf->maxInitializedRegisters;t<mf->GetMaxRegistersUsed();t++) {
+    for (int t=mf->maxPrefixRegisters;t<mf->GetMaxRegistersUsed();t++) {
         res << "r";
         res << t;
         res << " (";
@@ -881,7 +881,7 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation, Met
 
 
 
-int VariableScope::AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type ) {
+int VariableScope::AllocatePrefixRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type ) {
     int regNo = metaframe->__allocateConstant(isolate,value);
     //metaframe->currentScope->BindSymbolToRegister(symbol, regNo,type);
     metaframe->RegUsage[regNo].InUse = true;
@@ -901,10 +901,10 @@ void Metaframe::Flush(Isolate* isolate) {
     
     PackRegisters(isolate, this);
     
-    int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
+    int registersUsed = maxPrefixRegisters + maxIntermediatesUsed;
     assert( codeFrame == NULL );
     codeFrame = (CodeFrame*)compilation->GetWriteHead();
-    new (codeFrame) CodeFrame( this, 0, registersUsed, maxInitializedRegisters);
+    new (codeFrame) CodeFrame( this, 0, registersUsed, maxPrefixRegisters);
     
     int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
     if (tempRegisterBufferUsed != 0) {
@@ -924,7 +924,7 @@ void Metaframe::Flush(Isolate* isolate) {
     tempCodeBufferUsed += sizeof(Instruction);
     
     //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
-    size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
+    size_t written = sizeof(CodeFrame) + codeFrame->sizeOfPrefixRegisters +
                             tempCodeBufferUsed;
     
     sizeOfCodeFrame = written;
@@ -937,7 +937,7 @@ void Metaframe::Flush(Isolate* isolate) {
     std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";
     std::cout << "Start-of-regs: " << (uintptr_t)codeFrame->StartOfRegisters() << "\n";
     std::cout << "Start-of-code: " << (uintptr_t)codeFrame->StartOfInstructions() << "\n";
-    std::cout << "Register initializations: " << codeFrame->sizeOfInitializedRegisters/sizeof(VALUE) << "\n";
+    std::cout << "Register initializations: " << codeFrame->sizeOfPrefixRegisters/sizeof(VALUE) << "\n";
     std::cout << "Instructions written: " << tempCodeBufferUsed/sizeof(Instruction) << "\n";
      */
 }

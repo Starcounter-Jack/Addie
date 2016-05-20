@@ -913,7 +913,7 @@ public:
 struct CodeFrame {
 //    uint32_t SizeOfUnit;
     uint8_t maxArguments = 0;
-    uint8_t sizeOfInitializedRegisters = 0;
+    uint8_t sizeOfPrefixRegisters = 0;
     uint8_t sizeOfRegisters = 0;
     uint8_t __unusedForAlignment;
 //    Metaframe* metaframe = NULL; // Optional metaframe for debugging
@@ -921,13 +921,13 @@ struct CodeFrame {
     VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CodeFrame)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
                                                 sizeof(CodeFrame) +
-                                                sizeOfInitializedRegisters); }
+                                                sizeOfPrefixRegisters); }
 
     
     CodeFrame( Metaframe* mf, int maxArgs, int regCount, int initRegCount ) {
         maxArguments = maxArgs;
         sizeOfRegisters = regCount * sizeof(VALUE);
-        sizeOfInitializedRegisters = initRegCount * sizeof(VALUE);
+        sizeOfPrefixRegisters = initRegCount * sizeof(VALUE);
     }
 
 };
@@ -998,7 +998,7 @@ public:
         // It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
         frame = (RegisterRuntimeFrame*)isolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
-        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
+        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfPrefixRegisters );
         frame->Comp = code;
         frame->Parent = parent;
     }
