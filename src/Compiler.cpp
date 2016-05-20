@@ -495,9 +495,11 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
         RegUsageTranslation[newRegNo] = mf->RegUsage[t];
         //std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
-    for (int t=1;t<mf->GetMaxRegistersUsed();t++) {
-        reg[t] = RegValueTranslation[t];
+    int regNo = 0;
+    for (int t=notInitializedCount;t < mf->maxInitializedRegisters;t++) {
+        reg[regNo] = RegValueTranslation[t];
         mf->RegUsage[t] = RegUsageTranslation[t];
+        regNo++;
     }
 
 
