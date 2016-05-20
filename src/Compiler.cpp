@@ -422,7 +422,6 @@ inline void Pack( uint8_t &reg, int lastFixed ) {
 // Pack registers such that there is no unused registers
 // inbetween constants/arguments/locals and intermediate registers
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
-    return;
     
     //CodeFrame* code = mf->codeFrame;
     Instruction* p = mf->tempCodeBuffer;
@@ -817,6 +816,8 @@ int VariableScope::AllocateInitializedRegister( Isolate* isolate, VALUE value, S
 
 void Metaframe::Flush(Isolate* isolate) {
     // Copy the buffer into the compilation unit
+    
+    PackRegisters(isolate, this);
     
     int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
     assert( codeFrame == NULL );
