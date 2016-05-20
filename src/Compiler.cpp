@@ -26,9 +26,11 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     
     Metaframe* oldMf = mc->currentMetaframe;
 
-    Instruction* c = oldMf->BeginCodeWrite(isolate);
-    (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
-    oldMf->EndCodeWrite(isolate,c);
+    Instruction* forward = oldMf->BeginCodeWrite(isolate);
+    oldMf->EndCodeWrite(isolate,forward+1);
+    
+    int regFunc = oldMf->currentScope->AllocateInitializedRegister(isolate,NIL(),0,RegAddress);
+    //int regCaptured = oldMf->currentScope->AllocateInitializedRegister(isolate,INTEGER(oldMf->enclosedVariables.size()),0,RegConstant);
 
 //    CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
     //new (newCodeFrame) CodeFrame();
@@ -38,6 +40,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
 
 //    Metaframe* newFrame = oldMf;
     mc->metaframes.push_back(newFrame);
+    newFrame->identifier = mc->metaframes.size() - 1;
     mc->currentMetaframe = newFrame;
 //    Metaframe* newFrame = oldMf;
     
@@ -47,7 +50,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = newFrame->currentScope->AllocateInitializedRegister(isolate,NIL(),argName,Argument);
+        int regNo = newFrame->currentScope->AllocateInitializedRegister(isolate,NIL(),argName,RegArgument);
         newFrame->RegUsage[regNo].IsArgument = true;
     }
     
@@ -61,6 +64,9 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     //    new (unit) CodeFrame( code, registers,  );
     //newFrame->Seal(isolate);
     mc->currentMetaframe = oldMf;
+
+    (*forward) = Instruction(FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
+    oldMf->tempRegisterBuffer[regFunc] = INTEGER(newFrame->identifier);
 
     
     return 0;
@@ -99,7 +105,7 @@ int CompileLet( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloc
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
         //mf->currentScope->Registers.push_back(variableName);
-        mf->currentScope->AllocateInitializedRegister(isolate,lets.GetAt(t+1),variableName,Local);
+        mf->currentScope->AllocateInitializedRegister(isolate,lets.GetAt(t+1),variableName,RegLocal);
 //        mf->currentScope->BindSymbolToRegister(variableName, regno);
 //        mf->RegUsage[regno].InUse = true;
 //        mf->RegUsage[regno].IsConstant = true;
@@ -172,7 +178,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
         x = mf->currentScope->ExtendedFindRegisterForSymbol(isolate, symbol.SymbolId, true, foundInFrame);
         if ( x != -1 ) {
             int parentReg = x;
-            x = mf->TopScopeInSameFrame()->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId,Closure);
+            x = mf->TopScopeInSameFrame()->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId,RegClosure);
             mf->enclosedVariables.push_back(Capture(parentReg,x));
             std::cout << "Found " << isolate->GetStringFromSymbolId(symbol.SymbolId) << " in parent\n";
 //            throw std::runtime_error("Found in parent");
@@ -187,7 +193,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         //int regNo = mf->AllocateConstant( symbol );
-        int regNo = mf->currentScope->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId,RuntimeReference);
+        int regNo = mf->currentScope->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId,RegRuntimeReference);
         
         if (deref) {
             int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
@@ -458,7 +464,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     RegValueTranslation[0] = reg[0];
     RegExplanationTranslation[0] = mf->Registers[0];
     for (int t=1;t<regCount;t++) {
-        if (mf->Registers[t].type == Closure) {
+        if (mf->Registers[t].type == RegClosure) {
             packed++;
             RegNoTranslation[t] = packed;
             RegValueTranslation[packed] = reg[t];
@@ -498,7 +504,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
             case (CALL_0):
             case (MOVE):
             case (DEREF):
-            case (ENCLOSE_0):
+            case (FORWARD):
                 Pack(p->A);
                 Pack(p->B);
                 break;
@@ -602,6 +608,7 @@ MetaCompilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     Metaframe* mf = MALLOC_HEAP(Metaframe); // TODO! STACKALLOC
     new (mf) Metaframe(isolate,NULL,comp);
     meta->metaframes.push_back(mf);
+    mf->identifier = meta->metaframes.size() - 1;
     meta->currentMetaframe = mf;
     meta->compilation = comp;
     
@@ -610,9 +617,6 @@ MetaCompilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
 
     for (int t=0;t<meta->metaframes.size();t++) {
-        std::ostringstream id;
-        id << t;
-        meta->metaframes[t]->identifierStr = id.str();
         meta->metaframes[t]->Flush(isolate);
     }
     
@@ -643,17 +647,18 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     int prefix;
     res << "============================================================\n";
     
+    std::ostringstream title;
     if (mf->enclosedVariables.size() != 0) {
-        res << "Inner procedure ";
-        prefix = 16;
+        title << "Inner procedure ";
     }
     else {
-        res << "Procedure ";
-        prefix = 10;
-            
+        title << "Procedure ";
+        
     }
-    res << mf->identifierStr << ":";
-    prefix += mf->identifierStr.length() + 1;
+    title << mf->identifier << ":";
+    std::string tit = title.str();
+    prefix = tit.length();
+    res << tit;
     
     Instruction* p = code->StartOfInstructions();
     byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;
@@ -705,7 +710,6 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << (int)p->B;
                 res << ")";
                 break;
-            case (ENCLOSE_0):
             case (SCALL_0):
             case (CALL_0):
                 res << str;
@@ -796,6 +800,17 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << ",r";
                 res << (int)p->B;
                 res << ",r";
+                res << (int)p->C;
+                res << ")";
+                break;
+            case (FORWARD):
+                res << str;
+                Indent( res, str );
+                res << "(r";
+                res << (int)p->A;
+                res << ",r";
+                res << (int)p->B;
+                res << ",enclosed=";
                 res << (int)p->C;
                 res << ")";
                 break;

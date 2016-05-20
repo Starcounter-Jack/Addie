@@ -27,18 +27,20 @@ namespace Addie {
         };
         
         enum RegisterType {
-            Argument,
-            Closure,
-            Intermediate,
-            Local,
-            Return,
-            RuntimeReference
+            RegArgument,
+            RegClosure,
+            RegConstant,
+            RegIntermediate,
+            RegLocal,
+            RegReturn,
+            RegRuntimeReference,
+            RegAddress,
         };
         
         struct Explanation {
             Symbol symbol;
             RegisterType type;
-            Explanation() : symbol(0), type(Return) {};
+            Explanation() : symbol(0), type(RegReturn) {};
             Explanation( Symbol sym, RegisterType t ) : symbol(sym), type(t) {};
             std::string Print() {
                 
@@ -46,23 +48,29 @@ namespace Addie {
 
                 
                 switch (type) {
-                    case Closure:
+                    case RegClosure:
                         res << "clo";
                         break;
-                    case Argument:
+                    case RegConstant:
+                        res << "con";
+                        break;
+                    case RegArgument:
                         res << "arg";
                         break;
-                    case Local:
+                    case RegLocal:
                         res << "loc";
                         break;
-                    case RuntimeReference:
+                    case RegRuntimeReference:
                         res << "ext";
                         break;
-                    case Intermediate:
+                    case RegIntermediate:
                         res << "tmp";
                         break;
-                    case Return:
+                    case RegReturn:
                         res << "ret";
+                        break;
+                    case RegAddress:
+                        res << "adr";
                         break;
                     default:
                         res << "???";
@@ -186,7 +194,7 @@ namespace Addie {
                 //codeFrame = unit;
                 //unit->metaframe = this;
                 
-                currentScope->AllocateInitializedRegister(isolate,NIL(),RET,Return); // Return register
+                currentScope->AllocateInitializedRegister(isolate,NIL(),RET,RegReturn); // Return register
                 RegUsage[0].InUse = false;
 
                 

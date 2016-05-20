@@ -100,7 +100,7 @@ public:
         JMP,
         JMP_IF_TRUE,
         DEREF,
-        ENCLOSE_0,
+        FORWARD,
         /*
          ENCLOSE_1,
          ENCLOSE_2,
@@ -153,7 +153,7 @@ public:
         "jmp",
         "jmp-if-true",
         "deref",
-        "enclose-0",
+        "forward",
         /*
         "enclose-1",
         "enclose-2",
