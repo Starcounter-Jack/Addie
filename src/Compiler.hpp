@@ -235,14 +235,8 @@ namespace Addie {
                 return maxPrefixRegisters - maxInitializedRegisters;
             }
             
-            VALUE GetInitializationForRegister( int t ) {
-                assert( codeFrame != NULL );
-                //assert( initRegisterBuffer == NULL );
-//                VALUE* r = codeFrame->StartOfRegisters();
-//                t -= GetNonInitializedRegisterCount();
-//                return r[t];
+            inline VALUE GetInitializationForRegister( int t ) {
                 return initRegisterBuffer[ RegUsage[t].InitializedAt ];
-                
             }
             
             void SetInitializationForRegister( int t, VALUE v ) {

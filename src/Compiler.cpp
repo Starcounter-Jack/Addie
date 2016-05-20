@@ -935,9 +935,11 @@ void Metaframe::Flush(Isolate* isolate) {
         VALUE* r = codeFrame->StartOfRegisters();
         for (int t = 0 ; t < maxPrefixRegisters ; t++) {
             if (RegUsage[t].IsInitialized) {
-                *(r++) = initRegisterBuffer[RegUsage[t].InitializedAt];
+                *(r++) = GetInitializationForRegister(t);
             }
         }
+        //mf->GetInitializationForRegister(t)
+        
         isolate->PopStack2(initRegisterBufferUsed);
         //initRegisterBuffer = NULL;
     }
