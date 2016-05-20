@@ -43,6 +43,12 @@ namespace Addie {
             bool IsClosure : 1;
             bool IsArgument: 1;
             bool IsConstant: 1;
+            RegisterUse() {
+                InUse = false;
+                IsClosure = false;
+                IsArgument = false;
+                IsConstant = false;
+            }
         };
         
         class VariableScope {
@@ -69,10 +75,18 @@ namespace Addie {
             
         };
         
-        
-        class Metaframe {
+        class MetaCompilation : Object {
         public:
-            RegisterUse RegUsage[255] = { {false,false,false,false} };
+            std::vector<Metaframe*> metaframes;
+            Compilation* compilation;
+            Metaframe* currentMetaframe;
+        };
+        
+        
+        class Metaframe  {
+        public:
+            bool IsFlushed = false;
+            RegisterUse RegUsage[256];
             std::vector<Symbol> Registers;
 
             
@@ -145,6 +159,16 @@ namespace Addie {
                     tempRegisterWriteHead = tempRegisterBuffer = (VALUE*)(isolate->NextOnStack2);
                 }
                 return tempRegisterWriteHead;
+            }
+            
+            size_t GetSizeOfCode() {
+                if (!IsFlushed) {
+                    if (tempCodeWriteHead == NULL) {
+                        return 0;
+                    }
+                   return ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
+                }
+                return sizeOfCodeFrame - codeFrame->sizeOfInitializedRegisters - sizeof(CodeFrame);
             }
             
             void SetReturnRegister( VALUE v ) {
@@ -234,15 +258,15 @@ namespace Addie {
                 maxInitializedRegisters++;
                 RegUsage[regNo].InUse = true;
                 
-                if (value.IsSymbol()) {
-                    currentScope->BindSymbolToRegister(value.SymbolId,regNo);
-                }
+                //if (value.IsSymbol()) {
+                //    currentScope->BindSymbolToRegister(value.SymbolId,regNo);
+                //}
                 
                 //std::cout << "Default value r[" << (int)regNo << "]=" << value.Print() << "\n";
                 return regNo;
             }
             
-            void Seal(Isolate* isolate);
+            void Flush(Isolate* isolate);
 
             
             Symbol ExplainRegister( int regNo ) {
@@ -258,9 +282,9 @@ namespace Addie {
     
     class Compiler {
     public:
-        static Compilation* Compile( Isolate* isolate, VALUE form );
+        static MetaCompilation* Compile( Isolate* isolate, VALUE form );
 //        static Compilation* CompilePrototype( Isolate* isolate, VALUE form );
-        static STRINGOLD Disassemble(  Isolate* isolate, Compilation* code );
+        static STRINGOLD Disassemble(  Isolate* isolate, Compilation* code, MetaCompilation* meta );
     };
     
 

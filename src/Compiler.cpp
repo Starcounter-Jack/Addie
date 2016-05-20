@@ -14,14 +14,16 @@ using namespace Addie;
 using namespace Addie::Internals;
 
 
-int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd );
+int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd );
 
 
 
 // Compile a function/lambda declaration
-int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     
     assert( mtd == UseReturnRegister);
+    
+    Metaframe* oldMf = mc->currentMetaframe;
 
     Instruction* c = oldMf->BeginCodeWrite(isolate);
     (*c++) = Instruction(ENCLOSE_0,(uint8_t)0,(uint8_t)0);
@@ -33,6 +35,9 @@ int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocatio
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
 
+//    Metaframe* newFrame = oldMf;
+    mc->metaframes.push_back(newFrame);
+    mc->currentMetaframe = newFrame;
 //    Metaframe* newFrame = oldMf;
     
     VALUE args = form.Rest().First();
@@ -47,22 +52,25 @@ int CompileFn( Isolate* isolate, Metaframe* oldMf, VALUE form, RegisterAllocatio
     
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
-        //std::cout << "Statements following fn:" << form.First().Print() << "\n";
-        CompileForm( isolate,newFrame,form.First(), UseReturnRegister );
+        std::cout << "Statements following fn:" << form.First().Print() << "\n";
+        CompileForm( isolate,mc,form.First(), UseReturnRegister );
         form = form.Rest();
     }
     
     //    new (unit) CodeFrame( code, registers,  );
-    newFrame->Seal(isolate);
+    //newFrame->Seal(isolate);
+    mc->currentMetaframe = oldMf;
+
     
     return 0;
 }
 
 
 // Find all declared variables and their default values
-int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileLet( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
 
     assert( mtd == UseReturnRegister );
+    Metaframe* mf = mc->currentMetaframe;
     
     VALUE lets = form.Rest().First();
 
@@ -100,7 +108,7 @@ int CompileLet( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationM
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
         //std::cout << "Statements following let:" << form.First().Print() << "\n";
-        CompileForm(isolate,mf,form.First(),UseReturnRegister);
+        CompileForm(isolate,mc,form.First(),UseReturnRegister);
         form = form.Rest();
     }
     
@@ -135,10 +143,11 @@ Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE 
 
 
 
-int CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileConstant( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     // Compile a constant. If this is the last statement, it will
     // occupy the return register (r[0]).
-    CodeFrame* unit = mf->codeFrame;
+    Metaframe* mf = mc->currentMetaframe;
+
     if (mtd == UseReturnRegister) {
         mf->SetReturnRegister( form );
         return 0;
@@ -147,12 +156,13 @@ int CompileConstant( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAlloca
 }
 
 
-int CompileSymbol( Isolate* isolate, Metaframe* mf, VALUE symbol, RegisterAllocationMethod mtd, bool deref ) {
+int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, RegisterAllocationMethod mtd, bool deref ) {
 
     
     Instruction* i;
     
-    
+    Metaframe* mf = mc->currentMetaframe;
+
     //    mf->Bindings[symbol] ;asddsa
     int x = mf->currentScope->FindRegisterForSymbol(symbol.SymbolId);
     
@@ -195,7 +205,7 @@ void HonorResultRegister(Isolate* isolate, Metaframe* mf, int regNo) {
 
 
 
-int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileFnCall( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     //std::cout << "Function call: " << form.First().Print() << "\n";
     
     
@@ -207,10 +217,11 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
     int regNo;
     
     //int usedBefore = mf->intermediatesUsed;
-    
+    Metaframe* mf = mc->currentMetaframe;
+
     for (int i=1;i<=argCount;i++) {
         //        tmp = mf->AllocateIntermediateRegister(isolate);
-        tmp = CompileForm(isolate, mf, form.GetAt(i), UseFree );
+        tmp = CompileForm(isolate, mc, form.GetAt(i), UseFree );
         isolate->MiniPush(tmp);
     }
 
@@ -220,17 +231,17 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
     if (isSymbol) {
         // Optimization such that symbol dereferencing is done
         // in the same cycle as the call.
-        tmp = CompileSymbol(isolate,mf,function,UseFree,false);
+        tmp = CompileSymbol(isolate,mc,function,UseFree,false);
         op = SCALL_0;
     }
     else {
 #endif
-        tmp = CompileForm(isolate,mf,function,UseFree);
+        tmp = CompileForm(isolate,mc,function,UseFree);
         op = CALL_0;
 #ifdef USE_COMBINED_VM_OPS
     }
 #endif
-    
+
     
     Instruction* i = mf->BeginCodeWrite(isolate);
     uint8_t a1,a2,a3,a4,a5;
@@ -309,33 +320,36 @@ int CompileFnCall( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocati
 
 
 
-int CompileParenthesis( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileParenthesis( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
+
+   // Metaframe* mf = mc->currentMetaframe;
+
     if (form.IsEmpty()) {
         // () evaluates to an empty list whereas other lists are treated as/
         // function/procedure calls.
-        return CompileConstant(isolate, mf, form, mtd );
+        return CompileConstant(isolate, mc, form, mtd );
     }
     VALUE function = form.First();
     if (function.IsSymbol()) {
         // This is a regular predefined function/procedure call such as (print 123)
         switch (function.SymbolId) {
             case (SymLetStar):
-                return CompileLet( isolate, mf, form, mtd );
+                return CompileLet( isolate, mc, form, mtd );
             case (SymFnStar):
-                return CompileFn( isolate, mf, form, mtd );
+                return CompileFn( isolate, mc, form, mtd );
         }
         
 
     }
-    return CompileFnCall( isolate, mf, form, mtd );
+    return CompileFnCall( isolate, mc, form, mtd );
     
 //    throw std::runtime_error("Not implemented");
 
 }
 
-int CompileList( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileList( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     // TODO! We don't know that this list is a constant. Temporary code.
-    return CompileConstant(isolate, mf, form, mtd );
+    return CompileConstant(isolate, mc, form, mtd );
 }
 
 /*
@@ -408,18 +422,20 @@ inline void Pack( uint8_t &reg, int lastFixed ) {
 // Pack registers such that there is no unused registers
 // inbetween constants/arguments/locals and intermediate registers
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
-    
+    return;
     
     //CodeFrame* code = mf->codeFrame;
     Instruction* p = mf->tempCodeBuffer;
     
     int lastFixed = mf->maxInitializedRegisters - 1;
     
-    while (true) {
+    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;
+    Instruction* end = (Instruction*)eos;
+    
+    while (p < end) {
         
         switch (p->OP) {
             case (RET):
-                goto end;
             case (SCALL_0):
             case (CALL_0):
             case (MOVE):
@@ -478,33 +494,32 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
         }
         p++;
     }
-end:
     return;
     //return (uintptr_t)p;
 }
 
 
-int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocationMethod mtd ) {
+int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     switch (form.Type) {
         case TNumber:
-            return CompileConstant( isolate, mf, form, mtd );
+            return CompileConstant( isolate, mc, form, mtd );
         case TList:
             switch (form.ListStyle) {
                 case QParenthesis:
-                    return CompileParenthesis( isolate, mf, form, mtd );
+                    return CompileParenthesis( isolate, mc, form, mtd );
                 case QCurly:
                 case QBracket:
-                    return CompileList( isolate, mf, form, mtd );
+                    return CompileList( isolate, mc, form, mtd );
                 case QString:
-                    return CompileConstant( isolate, mf, form, mtd );
+                    return CompileConstant( isolate, mc, form, mtd );
             }
         case TAtom:
             switch (form.AtomSubType) {
                 case ANil:
                 case AKeyword:
-                    return CompileConstant( isolate, mf, form, mtd );
+                    return CompileConstant( isolate, mc, form, mtd );
                 case ASymbol:
-                    return CompileSymbol(isolate, mf, form, mtd, true );
+                    return CompileSymbol(isolate, mc, form, mtd, true );
                 case AOther:
                     break;
             }
@@ -514,40 +529,38 @@ int CompileForm( Isolate* isolate, Metaframe* mf, VALUE form, RegisterAllocation
     throw std::runtime_error("Compilation error");
 }
 
-Compilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
+MetaCompilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     
-    
+    auto meta = MALLOC_HEAP(MetaCompilation); // TODO! GC!
+    new (meta) MetaCompilation();
+
     assert( isolate->NextOnStack == isolate->Stack ); // Check of memory leaks
     assert( isolate->NextOnStack2 == isolate->Stack2 ); // Check of memory leaks
 
     byte* p = (byte*)isolate->NextOnConstant;
     
-    Metaframe* mf = MALLOC_HEAP(Metaframe); // TODO! STACKALLOC
-    
     auto comp = new (p) Compilation();
-    //p += sizeof(Compilation);
-//    CodeFrame* u = (CodeFrame*)p;
-//    new (u) CodeFrame();  //( Instruction* code, VALUE* registers, int sizeUninit )
 
+    Metaframe* mf = MALLOC_HEAP(Metaframe); // TODO! STACKALLOC
     new (mf) Metaframe(isolate,NULL,comp);
+    meta->metaframes.push_back(mf);
+    meta->currentMetaframe = mf;
+    meta->compilation = comp;
     
-//    mf->compilation = comp;
-//    mf->codeFrame = u;
-//    u->metaframe = mf;
+    CompileForm( isolate, meta, form, UseReturnRegister );
+    //mf->Seal(isolate);
     
+    for (int t=0;t<meta->metaframes.size();t++) {
+        meta->metaframes[t]->Flush(isolate);
+    }
     
-//    AnalyseForm( isolate, mf, form );
-    CompileForm( isolate, mf, form, UseReturnRegister );
-    //comp->sizeOfCompilation += mf->FinishedWriting(isolate);
-    mf->Seal(isolate);
-    
-//    PackRegisters(isolate, mf);
     isolate->ReportConstantWrite( (uintptr_t)comp->GetWriteHead() ); // Mark the memory as used
 
     assert( isolate->NextOnStack == isolate->Stack ); // Check of memory leaks
     assert( isolate->NextOnStack2 == isolate->Stack2 ); // Check of memory leaks
     
-    return comp;
+    
+    return meta;
 }
 
 
@@ -558,9 +571,9 @@ void Indent( std::ostringstream& res, std::string str ) {
 }
 
 
-uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame* code ) {
+uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame* code, Metaframe* mf ) {
     
-    Metaframe* mf = code->metaframe;
+//    Metaframe* mf = code->metaframe;
     
     const char* str;
     VALUE* R = code->StartOfRegisters();
@@ -571,7 +584,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     
     
     Instruction* p = code->StartOfInstructions();
-    byte* eos = (byte*)code + mf->sizeOfCodeFrame; // - code->sizeOfInitializedRegisters;
+    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;
     Instruction* end = (Instruction*)eos;
     int t = 0;
     
@@ -722,7 +735,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         
         prefix = 0;
     }
-end:
+
     int regCount = mf->maxInitializedRegisters;
     res << "\n------------------------------------------------------------\n";
     for (int t=0;t<regCount;t++) {
@@ -750,17 +763,22 @@ end:
     return (uintptr_t)p;
 }
 
-STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
+STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation, MetaCompilation* meta ) {
     
     CodeFrame* code = compilation->GetFirstCodeFrame();
     std::ostringstream res;
 
     uintptr_t p = (uintptr_t)code;
     uintptr_t end = (uintptr_t)compilation->GetWriteHead() - 1;
+    //VALUE rest = metaFrames->GetRest();
+    Metaframe* mf;
+    int t = 0;
     while (p < end ) {
         auto cf = (CodeFrame*)p;
-       DisassembleUnit( isolate, res, cf );
-       p += cf->metaframe->sizeOfCodeFrame; // TODO! ERROR! WHY?????
+        mf = meta->metaframes[t];
+        t++;
+       DisassembleUnit( isolate, res, cf, mf );
+       p += mf->sizeOfCodeFrame;
     }
     
     res << "============================================================\n";
@@ -773,9 +791,12 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation ) {
 
 void VariableScope::BindSymbolToRegister( Symbol id, int regNo ) {
     Bindings[id] = Binding(this->metaframe,regNo);
-    if (metaframe->Registers.size()<=regNo) {
-        assert( metaframe->Registers.size() == regNo );
+    //std::cout << "Binding " << CurrentIsolate->GetStringFromSymbolId(id) << " to " << regNo << "\n";
+    int cnt = metaframe->Registers.size();
+    if (cnt<=regNo) {
+        assert( cnt == regNo );
         metaframe->Registers.push_back(id);
+        assert( metaframe->Registers.size() == cnt + 1);
     }
     else {
         metaframe->Registers[regNo] = id;
@@ -794,18 +815,9 @@ int VariableScope::AllocateInitializedRegister( Isolate* isolate, VALUE value, S
     return regNo;
 }
 
-void Metaframe::Seal(Isolate* isolate) {
+void Metaframe::Flush(Isolate* isolate) {
     // Copy the buffer into the compilation unit
     
-    
-    Instruction* c = BeginCodeWrite(isolate);
-    (*c++) = Instruction(RET);
-    //(*c++) = Instruction(123);
-    EndCodeWrite(isolate,c);
-    
-    PackRegisters(isolate, this);
-
-
     int registersUsed = maxInitializedRegisters + maxIntermediatesUsed;
     assert( codeFrame == NULL );
     codeFrame = (CodeFrame*)compilation->GetWriteHead();
@@ -815,20 +827,28 @@ void Metaframe::Seal(Isolate* isolate) {
     if (tempRegisterBufferUsed != 0) {
         memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
         isolate->PopStack2(tempRegisterBufferUsed);
+        tempRegisterBuffer = NULL;
     }
     
-    int tempCodeBufferUsed = ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
+    int tempCodeBufferUsed = GetSizeOfCode();
     if (tempCodeBufferUsed != 0) {
         memcpy( codeFrame->StartOfInstructions(), tempCodeBuffer, tempCodeBufferUsed);
         isolate->PopStack(tempCodeBufferUsed);
+        tempCodeBuffer = NULL;
     }
+    Instruction* p = codeFrame->StartOfInstructions() + tempCodeBufferUsed/sizeof(Instruction);
+    *(p++) = Instruction(RET);
+    tempCodeBufferUsed += sizeof(Instruction);
     
     //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
     size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
                             tempCodeBufferUsed;
+    
     sizeOfCodeFrame = written;
     compilation->sizeOfCompilation += written;
     
+    
+    IsFlushed = true;
 
     /*
     std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";

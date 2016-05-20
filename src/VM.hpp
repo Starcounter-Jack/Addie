@@ -82,7 +82,6 @@ public:
         RET,
         //    SET_REGISTER_WINDOW,
         EXIT_WITH_CONTINUATION,
-        RETURN,
         MOVE,
         CALL_0,
         CALL_1,
@@ -136,7 +135,6 @@ public:
         "ret",
         //    "set-register-window",
         "exit-with-continuation",
-        "return",
         "move",
         "call-0",
         "call-1",
@@ -918,7 +916,7 @@ struct CodeFrame {
     uint8_t sizeOfInitializedRegisters = 0;
     uint8_t sizeOfRegisters = 0;
     uint8_t __unusedForAlignment;
-    Metaframe* metaframe = NULL; // Optional metaframe for debugging
+//    Metaframe* metaframe = NULL; // Optional metaframe for debugging
     
     VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CodeFrame)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
@@ -927,9 +925,9 @@ struct CodeFrame {
 //    int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
 
     
-    CodeFrame( Metaframe* mf, int maxArguments, int regCount, int initRegCount ) {
-        metaframe = mf;
-        maxArguments = maxArguments;
+    CodeFrame( Metaframe* mf, int maxArgs, int regCount, int initRegCount ) {
+//        metaframe = mf;
+        maxArguments = maxArgs;
         sizeOfRegisters = regCount * sizeof(VALUE);
         sizeOfInitializedRegisters = initRegCount * sizeof(VALUE);
     }

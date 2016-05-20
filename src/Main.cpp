@@ -154,21 +154,21 @@ int main(int argc, const char * argv[]) {
 
    // Namespace ns;
     
-    Compilation* code = Compiler::Compile( &isolate,  v );
-    STRINGOLD str = Compiler::Disassemble(  &isolate, code);
+    MetaCompilation* mc = Compiler::Compile( &isolate,  v );
+    STRINGOLD str = Compiler::Disassemble(  &isolate, mc->compilation, mc );
     
     std::cout << str.ToString();
 
-    Continuation c = Interpreter::Interpret(  &isolate, code);
+    Continuation c = Interpreter::Interpret(  &isolate, mc->compilation );
     //assert(!c.HasRunToCompletion());
     
     Interpreter::Interpret( &isolate,c);
     c.Free(&isolate);
     
     v = TestParse( "{ :FirstName \"Jack\" }", "{:FirstName \"Jack\"}" );
-    code = Compiler::Compile( &isolate, v );
-    std::cout << Compiler::Disassemble(&isolate, code).ToString();
-    c = Interpreter::Interpret( &isolate, code );
+    mc = Compiler::Compile( &isolate, v );
+    std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
+    c = Interpreter::Interpret( &isolate, mc->compilation );
     c.Free(&isolate);
     
     //assert(c.HasRunToCompletion());
