@@ -125,7 +125,7 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
-            int AllocatePrefixRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type );
+            int AllocatePrefixRegister( Isolate* isolate, bool initialize, VALUE value, Symbol symbol, RegisterType type );
             
 
             int ExtendedFindRegisterForSymbol( Isolate* isolate, Symbol id, bool scanForeignParentFrames, Metaframe* &foundInMetaframe ) {
@@ -203,7 +203,7 @@ namespace Addie {
                 
                 compilation = comp;
                 
-                currentScope->AllocatePrefixRegister(isolate,NIL(),RET,RegReturn); // Return register
+                currentScope->AllocatePrefixRegister(isolate,true,NIL(),RET,RegReturn); // Return register
                 RegUsage[0].InUse = false;
 
                 
@@ -330,15 +330,8 @@ namespace Addie {
                 }
             }
             
-            int __allocateArgument( Isolate* isolate ) {
-                int regNo;
-                regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
-                maxPrefixRegisters++;
-                RegUsage[regNo].InUse = true;
-                return regNo;
-            }
             
-            int __allocateConstant( Isolate* isolate, VALUE value ) {
+            int __allocateRegister( Isolate* isolate, bool initialize, VALUE value ) {
                 
                 int regNo;
                 
@@ -353,14 +346,15 @@ namespace Addie {
                     }
                 }
                 
-                VALUE* reg = BeginRegisterWrite(isolate); //(VALUE*)writeHead;
-                (*reg++) = value;
-                EndRegisterWrite(isolate,reg);
+                if (initialize) {
+                   VALUE* reg = BeginRegisterWrite(isolate); //(VALUE*)writeHead;
+                   (*reg++) = value;
+                   EndRegisterWrite(isolate,reg);
+                   maxInitializedRegisters++;
+                }
                 
-//                writeHead = (byte*)reg;
                 regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
                 maxPrefixRegisters++;
-                maxInitializedRegisters++;
 
                 RegUsage[regNo].InUse = true;
                 

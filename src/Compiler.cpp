@@ -29,7 +29,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     Instruction* forward = oldMf->BeginCodeWrite(isolate);
     oldMf->EndCodeWrite(isolate,forward+1);
     
-    int regFunc = oldMf->currentScope->AllocatePrefixRegister(isolate,NIL(),0,RegAddress);
+    int regFunc = oldMf->currentScope->AllocatePrefixRegister(isolate,true,NIL(),0,RegAddress);
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
@@ -44,7 +44,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     
     for (int t=0;t<cnt;t++) {
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = newFrame->currentScope->AllocatePrefixRegister(isolate,NIL(),argName,RegArgument);
+        int regNo = newFrame->currentScope->AllocatePrefixRegister(isolate,true,NIL(),argName,RegArgument);
         newFrame->RegUsage[regNo].IsArgument = true;
     }
     
@@ -99,7 +99,7 @@ int CompileLet( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloc
     for (int t=0;t<cnt;t += 2) {
         Symbol variableName = lets.GetAt(t).SymbolId;
         //mf->currentScope->Registers.push_back(variableName);
-        mf->currentScope->AllocatePrefixRegister(isolate,lets.GetAt(t+1),variableName,RegLocal);
+        mf->currentScope->AllocatePrefixRegister(isolate,true,lets.GetAt(t+1),variableName,RegLocal);
 //        mf->currentScope->BindSymbolToRegister(variableName, regno);
 //        mf->RegUsage[regno].InUse = true;
 //        mf->RegUsage[regno].IsConstant = true;
@@ -172,7 +172,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
         x = mf->currentScope->ExtendedFindRegisterForSymbol(isolate, symbol.SymbolId, true, foundInFrame);
         if ( x != -1 ) {
             int parentReg = x;
-            x = mf->TopScopeInSameFrame()->AllocatePrefixRegister(isolate,NIL(), symbol.SymbolId,RegClosure);
+            x = mf->TopScopeInSameFrame()->AllocatePrefixRegister(isolate,true,NIL(), symbol.SymbolId,RegClosure);
             mf->enclosedVariables.push_back(Capture(parentReg,x));
          //   std::cout << "Found " << isolate->GetStringFromSymbolId(symbol.SymbolId) << " in parent\n";
         }
@@ -186,7 +186,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         //int regNo = mf->AllocateConstant( symbol );
-        int regNo = mf->currentScope->AllocatePrefixRegister(isolate,symbol, symbol.SymbolId,RegRuntimeReference);
+        int regNo = mf->currentScope->AllocatePrefixRegister(isolate,true,symbol, symbol.SymbolId,RegRuntimeReference);
         
         if (deref) {
             int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
@@ -901,8 +901,8 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation, Met
 
 
 
-int VariableScope::AllocatePrefixRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type ) {
-    int regNo = metaframe->__allocateConstant(isolate,value);
+int VariableScope::AllocatePrefixRegister( Isolate* isolate, bool initialize, VALUE value, Symbol symbol, RegisterType type ) {
+    int regNo = metaframe->__allocateRegister(isolate,initialize,value);
     metaframe->RegUsage[regNo].InUse = true;
     metaframe->RegUsage[regNo].IsConstant = true;
     metaframe->RegUsage[regNo].symbol = symbol;
