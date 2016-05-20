@@ -59,7 +59,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     //newFrame->Seal(isolate);
     mc->currentMetaframe = oldMf;
 
-    (*forward) = Instruction(FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
+    (*forward) = Instruction(CALL_FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
     oldMf->tempRegisterBuffer[regFunc] = INTEGER(newFrame->identifier);
 
     
@@ -449,28 +449,46 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     
     int lastFixed = mf->maxPrefixRegisters - 1;
     VALUE* reg = mf->tempRegisterBuffer;
-    int regCount = mf->maxPrefixRegisters;
+    int prefixCount = mf->maxPrefixRegisters;
     int capturedCount = mf->enclosedVariables.size();
+    int notInitializedCount = mf->maxPrefixRegisters - mf->maxInitializedRegisters;
     
     int packed = 0;
     RegNoTranslation[0] = 0;
     RegValueTranslation[0] = reg[0];
     RegUsageTranslation[0] = mf->RegUsage[0];
-    for (int t=1;t<regCount;t++) {
+    for (int t=1;t<prefixCount;t++) {
         if (mf->RegUsage[t].type == RegClosure) {
             packed++;
             RegNoTranslation[t] = packed;
-            RegValueTranslation[packed] = reg[t];
+//            RegValueTranslation[packed] = reg[t];
             RegUsageTranslation[packed] = mf->RegUsage[t];
         }
         else {
             RegNoTranslation[t] = t+capturedCount-packed;
-            RegValueTranslation[t+capturedCount-packed] = reg[t];
+//            RegValueTranslation[t+capturedCount-packed] = reg[t];
             RegUsageTranslation[t+capturedCount-packed] = mf->RegUsage[t];
         }
 //        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
-    int x = 255 - mf->maxIntermediatesUsed;
+    
+    packed = 0;
+    for (int t=notInitializedCount;t<prefixCount;t++) {
+        if (mf->RegUsage[t].type == RegClosure) {
+            packed++;
+            RegValueTranslation[packed] = reg[t];
+        }
+        else {
+            RegValueTranslation[t+capturedCount-packed] = reg[t];
+        }
+    }
+
+    
+//    for (int t=nonInitialized;t<initializedCount;t++) {
+//    }
+
+    
+    int x = 255 - mf->maxIntermediateRegisters;
     for (int t=255;t>x;t--) {
         int newRegNo = 255 - t +lastFixed + 1;
         RegNoTranslation[t] = newRegNo;
@@ -499,7 +517,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
             case (CALL_0):
             case (MOVE):
             case (DEREF):
-            case (FORWARD):
+            case (CALL_FORWARD):
                 Pack(p->A);
                 Pack(p->B);
                 break;
@@ -626,7 +644,7 @@ MetaCompilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
 
 void Indent( std::ostringstream& res, std::string str ) {
     int prefix = str.length();
-    while (prefix++ < 12) res << " ";
+    while (prefix++ < 13) res << " ";
 
 }
 
@@ -797,7 +815,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << (int)p->C;
                 res << ")";
                 break;
-            case (FORWARD):
+            case (CALL_FORWARD):
                 res << str;
                 Indent( res, str );
                 res << "(r";
@@ -883,7 +901,6 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation, Met
 
 int VariableScope::AllocatePrefixRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type ) {
     int regNo = metaframe->__allocateConstant(isolate,value);
-    //metaframe->currentScope->BindSymbolToRegister(symbol, regNo,type);
     metaframe->RegUsage[regNo].InUse = true;
     metaframe->RegUsage[regNo].IsConstant = true;
     metaframe->RegUsage[regNo].symbol = symbol;
@@ -891,7 +908,6 @@ int VariableScope::AllocatePrefixRegister( Isolate* isolate, VALUE value, Symbol
     Bindings[symbol] = Binding(metaframe,regNo);
     //std::cout << "Allocating register " << regNo << " to mean " << SYMBOL(symbol).Print() << "\n";
     assert( metaframe->currentScope->FindRegisterForSymbol(isolate,symbol) == regNo);
-    
     return regNo;
 }
 
@@ -901,7 +917,7 @@ void Metaframe::Flush(Isolate* isolate) {
     
     PackRegisters(isolate, this);
     
-    int registersUsed = maxPrefixRegisters + maxIntermediatesUsed;
+    int registersUsed = maxPrefixRegisters + maxIntermediateRegisters;
     assert( codeFrame == NULL );
     codeFrame = (CodeFrame*)compilation->GetWriteHead();
     new (codeFrame) CodeFrame( this, 0, registersUsed, maxPrefixRegisters);

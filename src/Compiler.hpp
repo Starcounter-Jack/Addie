@@ -174,8 +174,22 @@ namespace Addie {
             std::vector<Capture> enclosedVariables;
             bool IsFlushed = false;
             RegisterUse RegUsage[256];
-            //std::vector<Explanation> Registers;
-            //bool isReturnRegisterMaterialized = false;
+            VariableScope* Parent = NULL;
+            
+            VariableScope rootScope;
+            VariableScope* currentScope;
+            VALUE Body;
+            CodeFrame* codeFrame = NULL;
+            int sizeOfCodeFrame;
+            Compilation* compilation = NULL;
+            int maxIntermediateRegisters = 0;
+            int maxPrefixRegisters = 0;
+            int maxInitializedRegisters = 0;
+            Instruction* tempCodeWriteHead;
+            Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
+            VALUE* tempRegisterWriteHead;
+            VALUE* tempRegisterBuffer = NULL; // Will point to a temporary stack allocation during compilation
+            
             
             Metaframe( Isolate* isolate, VariableScope* parent, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {
@@ -197,30 +211,7 @@ namespace Addie {
             }
 //            Metaframe( Metaframe* parent, CodeFrame cu, Compilation c ) :Parent(parent),
 //                                            codeFrame(cu), compilation(c) {}
-            VariableScope* Parent = NULL;
-            
-            VariableScope rootScope;
-            VariableScope* currentScope;
-            
-//            std::vector<Symbol> Registers;
-//            std::map<Symbol,Binding> Bindings;
-            
-            VALUE Body;
-//            int constants = 0;
-            CodeFrame* codeFrame = NULL;
-            int sizeOfCodeFrame;
-            Compilation* compilation = NULL;
-            //byte* writeHead;
-//            int intermediatesUsed = 0;
-            int maxIntermediatesUsed = 0;
-            int maxPrefixRegisters = 0;
-            
-            Instruction* tempCodeWriteHead;
-            Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
-            VALUE* tempRegisterWriteHead;
-            VALUE* tempRegisterBuffer = NULL; // Will point to a temporary stack allocation during compilation
-            
-            
+
             int AllocateRegister( Isolate* isolate, RegisterAllocationMethod mtd, int existingRegNo ) {
                 if (mtd == UseReturnRegister) {
                     return 0;
@@ -232,7 +223,7 @@ namespace Addie {
             }
             
             int GetMaxRegistersUsed() {
-                return maxPrefixRegisters + maxIntermediatesUsed;
+                return maxPrefixRegisters + maxIntermediateRegisters;
             }
             
             VariableScope* TopScopeInSameFrame() {
@@ -320,8 +311,8 @@ namespace Addie {
                         RegUsage[regNo].type = RegIntermediate;
 
                         int used = -regNo + 255 + 1;
-                        if (used > maxIntermediatesUsed)
-                            maxIntermediatesUsed = used;
+                        if (used > maxIntermediateRegisters)
+                            maxIntermediateRegisters = used;
 
                         return regNo;
                     }
@@ -369,6 +360,8 @@ namespace Addie {
 //                writeHead = (byte*)reg;
                 regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
                 maxPrefixRegisters++;
+                maxInitializedRegisters++;
+
                 RegUsage[regNo].InUse = true;
                 
                 //if (value.IsSymbol()) {
