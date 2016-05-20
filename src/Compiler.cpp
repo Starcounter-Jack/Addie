@@ -43,8 +43,9 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     int cnt = args.Count();
     
     for (int t=0;t<cnt;t++) {
+        newFrame->maxArguments++;
         Symbol argName = args.GetAt(t).SymbolId;
-        int regNo = newFrame->currentScope->AllocatePrefixRegister(isolate,true,NIL(),argName,RegArgument);
+        int regNo = newFrame->currentScope->AllocatePrefixRegister(isolate,false,NIL(),argName,RegArgument);
         newFrame->RegUsage[regNo].IsArgument = true;
     }
     
@@ -60,7 +61,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     mc->currentMetaframe = oldMf;
 
     (*forward) = Instruction(CALL_FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
-    oldMf->tempRegisterBuffer[regFunc] = INTEGER(newFrame->identifier);
+    oldMf->SetInitializationForRegister(regFunc,INTEGER(newFrame->identifier));
 
     
     return 0;
@@ -172,7 +173,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
         x = mf->currentScope->ExtendedFindRegisterForSymbol(isolate, symbol.SymbolId, true, foundInFrame);
         if ( x != -1 ) {
             int parentReg = x;
-            x = mf->TopScopeInSameFrame()->AllocatePrefixRegister(isolate,true,NIL(), symbol.SymbolId,RegClosure);
+            x = mf->TopScopeInSameFrame()->AllocatePrefixRegister(isolate,false,NIL(), symbol.SymbolId,RegClosure);
             mf->enclosedVariables.push_back(Capture(parentReg,x));
          //   std::cout << "Found " << isolate->GetStringFromSymbolId(symbol.SymbolId) << " in parent\n";
         }
@@ -444,11 +445,11 @@ inline void Pack( uint8_t &reg ) {
 // inbetween constants/arguments/locals and intermediate registers
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
  
-//    return;
+    //return;
     
     
     int lastFixed = mf->maxPrefixRegisters - 1;
-    VALUE* reg = mf->tempRegisterBuffer;
+    VALUE* reg = mf->initRegisterBuffer;
     int prefixCount = mf->maxPrefixRegisters;
     int capturedCount = mf->enclosedVariables.size();
     int notInitializedCount = mf->maxPrefixRegisters - mf->maxInitializedRegisters;
@@ -469,10 +470,10 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
 //            RegValueTranslation[t+capturedCount-packed] = reg[t];
             RegUsageTranslation[t+capturedCount-packed] = mf->RegUsage[t];
         }
-//        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
+        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
     
-    packed = 0;
+/*    packed = 0;
     for (int t=notInitializedCount;t<prefixCount;t++) {
         if (mf->RegUsage[t].type == RegClosure) {
             packed++;
@@ -482,6 +483,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
             RegValueTranslation[t+capturedCount-packed] = reg[t];
         }
     }
+ */
 
     
 //    for (int t=nonInitialized;t<initializedCount;t++) {
@@ -495,11 +497,11 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
         RegUsageTranslation[newRegNo] = mf->RegUsage[t];
         //std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
-    int regNo = 0;
-    for (int t=notInitializedCount;t < mf->maxInitializedRegisters;t++) {
-        reg[regNo] = RegValueTranslation[t];
+    //int regNo = 0;
+    for (int t=0;t < prefixCount;t++) {
+        //reg[regNo] = RegValueTranslation[t];
         mf->RegUsage[t] = RegUsageTranslation[t];
-        regNo++;
+        //regNo++;
     }
 
 
@@ -669,10 +671,20 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         title << "Procedure ";
         
     }
-    title << mf->identifier << ":";
+    title << mf->identifier << " (";
+    title << "clo=" << (int)mf->enclosedVariables.size();
+    title << ",arg=" << (int)mf->codeFrame->maxArguments;
+    title << ",con=" << (int)mf->maxInitializedRegisters;
+    title << ",tmp=" << (int)mf->maxIntermediateRegisters;
+    title << ")";
     std::string tit = title.str();
     prefix = tit.length();
     res << tit;
+    res << "\n============================================================\n";
+
+    res << "Start:";
+
+    prefix = 6;
     
     Instruction* p = code->StartOfInstructions();
     byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfPrefixRegisters;
@@ -840,7 +852,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
 
     int regCount = mf->maxPrefixRegisters;
     res << "\n------------------------------------------------------------\n";
-    for (int t=0;t<regCount;t++) {
+    for (int t=0;t<mf->GetMaxRegistersUsed();t++) {
         std::ostringstream str;
         str << "r";
         str << t;
@@ -849,20 +861,14 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         str << "):";
         std::string s =  str.str();
         res << s;
-        prefix = s.length();
-        while (prefix < INDENTATION) {
-            res << " ";
-            prefix++;
+        if (mf->RegUsage[t].IsInitialized) {
+           prefix = s.length();
+           while (prefix < INDENTATION) {
+               res << " ";
+               prefix++;
+           }
+           res << mf->GetInitializationForRegister(t).Print();
         }
-        res << mf->GetInitializationForRegister(t).Print();
-        res << "\n";
-    }
-    for (int t=mf->maxPrefixRegisters;t<mf->GetMaxRegistersUsed();t++) {
-        res << "r";
-        res << t;
-        res << " (";
-        res << mf->RegUsage[t].Print();
-        res << ")";
         res << "\n";
     }
 //    res << "============================================================\n";
@@ -922,13 +928,18 @@ void Metaframe::Flush(Isolate* isolate) {
     int registersUsed = maxPrefixRegisters + maxIntermediateRegisters;
     assert( codeFrame == NULL );
     codeFrame = (CodeFrame*)compilation->GetWriteHead();
-    new (codeFrame) CodeFrame( this, 0, registersUsed, maxPrefixRegisters);
+    new (codeFrame) CodeFrame( this, maxArguments, registersUsed, maxPrefixRegisters);
     
-    int tempRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)tempRegisterBuffer);
-    if (tempRegisterBufferUsed != 0) {
-        memcpy( codeFrame->StartOfRegisters(), tempRegisterBuffer, tempRegisterBufferUsed);
-        isolate->PopStack2(tempRegisterBufferUsed);
-        tempRegisterBuffer = NULL;
+    int initRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)initRegisterBuffer);
+    if (initRegisterBufferUsed != 0) {
+        VALUE* r = codeFrame->StartOfRegisters();
+        for (int t = 0 ; t < maxPrefixRegisters ; t++) {
+            if (RegUsage[t].IsInitialized) {
+                *(r++) = initRegisterBuffer[RegUsage[t].InitializedAt];
+            }
+        }
+        isolate->PopStack2(initRegisterBufferUsed);
+        //initRegisterBuffer = NULL;
     }
     
     int tempCodeBufferUsed = GetSizeOfCode();
