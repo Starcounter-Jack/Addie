@@ -854,7 +854,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
             res << " ";
             prefix++;
         }
-        res << R[t].Print();
+        res << mf->GetInitializationForRegister(t).Print();
         res << "\n";
     }
     for (int t=mf->maxPrefixRegisters;t<mf->GetMaxRegistersUsed();t++) {

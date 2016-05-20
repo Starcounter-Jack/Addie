@@ -189,7 +189,7 @@ namespace Addie {
             Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
             VALUE* tempRegisterWriteHead;
             VALUE* tempRegisterBuffer = NULL; // Will point to a temporary stack allocation during compilation
-            
+            bool haveStartedWritingInitializedRegisters = false;
             
             Metaframe( Isolate* isolate, VariableScope* parent, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {
@@ -224,6 +224,16 @@ namespace Addie {
             
             int GetMaxRegistersUsed() {
                 return maxPrefixRegisters + maxIntermediateRegisters;
+            }
+            
+            inline int GetNonInitializedRegisterCount() {
+                return maxPrefixRegisters - maxInitializedRegisters;
+            }
+            
+            VALUE GetInitializationForRegister( int t ) {
+                VALUE* r = codeFrame->StartOfRegisters();
+                t -= GetNonInitializedRegisterCount();
+                return r[t];
             }
             
             VariableScope* TopScopeInSameFrame() {
@@ -347,10 +357,17 @@ namespace Addie {
                 }
                 
                 if (initialize) {
+                    haveStartedWritingInitializedRegisters = true;
                    VALUE* reg = BeginRegisterWrite(isolate); //(VALUE*)writeHead;
                    (*reg++) = value;
                    EndRegisterWrite(isolate,reg);
                    maxInitializedRegisters++;
+                } else {
+                    if (haveStartedWritingInitializedRegisters) {
+                        // Cannot add non-initialized registers after
+                        // having added initialized registers
+                        assert(false);
+                    }
                 }
                 
                 regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
