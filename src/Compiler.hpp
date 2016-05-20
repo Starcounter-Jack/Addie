@@ -363,7 +363,7 @@ namespace Addie {
                 (*reg++) = value;
                 EndRegisterWrite(isolate,reg);
                 int index = maxInitializedRegisters; // codeFrame->AddPrefixRegister();
-                std::cout << "Writing " << value.Print() << " to slot " << index << "\n";
+                //std::cout << "Writing " << value.Print() << " to slot " << index << "\n";
                 maxInitializedRegisters++;
 
                 return index;
@@ -395,7 +395,7 @@ namespace Addie {
                   //  regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
                     RegUsage[regNo].IsInitialized = true;
                     RegUsage[regNo].InitializedAt = tmp;
-                    std::cout << "r[" << (int)regNo << "]=" << value.Print() << " at slot " << tmp << "\n";
+                    //std::cout << "r[" << (int)regNo << "]=" << value.Print() << " at slot " << tmp << "\n";
                 }
                 
                 maxPrefixRegisters++;

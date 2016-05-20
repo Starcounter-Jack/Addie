@@ -51,7 +51,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     
     form = form.Rest().Rest();
     while (!form.IsEmptyList()) {
-        std::cout << "Statements following fn:" << form.First().Print() << "\n";
+       // std::cout << "Statements following fn:" << form.First().Print() << "\n";
         CompileForm( isolate,mc,form.First(), UseReturnRegister );
         form = form.Rest();
     }
@@ -470,7 +470,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
 //            RegValueTranslation[t+capturedCount-packed] = reg[t];
             RegUsageTranslation[t+capturedCount-packed] = mf->RegUsage[t];
         }
-        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
+        //std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
     
 /*    packed = 0;
@@ -494,7 +494,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     for (int t=255;t>x;t--) {
         int newRegNo = 255 - t +lastFixed + 1;
         RegNoTranslation[t] = newRegNo;
-        RegUsageTranslation[newRegNo] = mf->RegUsage[t];
+        mf->RegUsage[newRegNo] = mf->RegUsage[t];
         //std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
     //int regNo = 0;
