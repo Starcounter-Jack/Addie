@@ -423,24 +423,69 @@ void AnalyseForm( Isolate* isolate, Metaframe* mf, VALUE form ) {
 }
 */
 
-// Relocate register
-inline void Pack( uint8_t &reg, int lastFixed ) {
-    if (reg > lastFixed) {
-        // This is an intermediate result register. Let's use the register space
-        // adjacent to the prematererialized registers (constants/locals/arguments)
-        int tmp = -reg + 255;
-        reg = tmp + lastFixed + 1;
+inline int FindCaptured( Metaframe* mf, int reg ) {
+    for (int t=0;t<mf->enclosedVariables.size();t++) {
+        if (mf->enclosedVariables[t].ChildRegister == reg) {
+            return t+1;
+        }
     }
+    assert( false);
+}
+
+uint8_t RegNoTranslation[256];
+VALUE RegValueTranslation[256];
+Explanation RegExplanationTranslation[256];
+
+// Relocate register
+inline void Pack( uint8_t &reg ) {
+    reg = RegNoTranslation[reg];
 }
 
 // Pack registers such that there is no unused registers
 // inbetween constants/arguments/locals and intermediate registers
 void PackRegisters( Isolate* isolate, Metaframe* mf ) {
+ 
+//    return;
     
+    
+    int lastFixed = mf->maxInitializedRegisters - 1;
+    VALUE* reg = mf->tempRegisterBuffer;
+    int regCount = mf->maxInitializedRegisters;
+    int capturedCount = mf->enclosedVariables.size();
+    
+    int packed = 0;
+    RegNoTranslation[0] = 0;
+    RegValueTranslation[0] = reg[0];
+    RegExplanationTranslation[0] = mf->Registers[0];
+    for (int t=1;t<regCount;t++) {
+        if (mf->Registers[t].type == Closure) {
+            packed++;
+            RegNoTranslation[t] = packed;
+            RegValueTranslation[packed] = reg[t];
+            RegExplanationTranslation[packed] = mf->Registers[t];
+        }
+        else {
+            RegNoTranslation[t] = t+capturedCount-packed;
+            RegValueTranslation[t+capturedCount-packed] = reg[t];
+            RegExplanationTranslation[t+capturedCount-packed] = mf->Registers[t];
+        }
+        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
+    }
+    int x = 255 - mf->maxIntermediatesUsed;
+    for (int t=255;t>x;t--) {
+        RegNoTranslation[t] = 255 - t +lastFixed + 1;
+        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
+    }
+    for (int t=1;t<regCount;t++) {
+        reg[t] = RegValueTranslation[t];
+        mf->Registers[t] = RegExplanationTranslation[t];
+    }
+
+
+
     //CodeFrame* code = mf->codeFrame;
     Instruction* p = mf->tempCodeBuffer;
     
-    int lastFixed = mf->maxInitializedRegisters - 1;
     
     byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;
     Instruction* end = (Instruction*)eos;
@@ -454,52 +499,52 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
             case (MOVE):
             case (DEREF):
             case (ENCLOSE_0):
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
+                Pack(p->A);
+                Pack(p->B);
                 break;
             case (SCALL_1):
             case (CALL_1):
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
-                Pack(p->C, lastFixed);
+                Pack(p->A);
+                Pack(p->B);
+                Pack(p->C);
                 break;
             case (SCALL_2):
             case (CALL_2):
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
-                Pack(p->C, lastFixed);
+                Pack(p->A);
+                Pack(p->B);
+                Pack(p->C);
                 p++;
-                Pack(p->OP, lastFixed);
+                Pack(p->OP);
                 break;
             case (SCALL_3):
             case (CALL_3):
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
-                Pack(p->C, lastFixed);
+                Pack(p->A);
+                Pack(p->B);
+                Pack(p->C);
                 p++;
-                Pack(p->OP, lastFixed);
-                Pack(p->A, lastFixed);
+                Pack(p->OP);
+                Pack(p->A);
                 break;
             case (SCALL_4):
             case (CALL_4):
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
-                Pack(p->C, lastFixed);
+                Pack(p->A);
+                Pack(p->B);
+                Pack(p->C);
                 p++;
-                Pack(p->OP, lastFixed);
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
+                Pack(p->OP);
+                Pack(p->A);
+                Pack(p->B);
                 break;
             case (SCALL_5):
             case (CALL_5):
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
-                Pack(p->C, lastFixed);
+                Pack(p->A);
+                Pack(p->B);
+                Pack(p->C);
                 p++;
-                Pack(p->OP, lastFixed);
-                Pack(p->A, lastFixed);
-                Pack(p->B, lastFixed);
-                Pack(p->C, lastFixed);
+                Pack(p->OP);
+                Pack(p->A);
+                Pack(p->B);
+                Pack(p->C);
                 break;
             default:
                 throw std::runtime_error("Not implemented");
@@ -563,7 +608,11 @@ MetaCompilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
     CompileForm( isolate, meta, form, UseReturnRegister );
     //mf->Seal(isolate);
     
+
     for (int t=0;t<meta->metaframes.size();t++) {
+        std::ostringstream id;
+        id << t;
+        meta->metaframes[t]->identifierStr = id.str();
         meta->metaframes[t]->Flush(isolate);
     }
     
@@ -593,15 +642,18 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     
     int prefix;
     res << "============================================================\n";
+    
     if (mf->enclosedVariables.size() != 0) {
-        res << "Partial:";
-        prefix = 8;
+        res << "Inner procedure ";
+        prefix = 16;
     }
     else {
-        res << "Procedure:";
+        res << "Procedure ";
         prefix = 10;
             
     }
+    res << mf->identifierStr << ":";
+    prefix += mf->identifierStr.length() + 1;
     
     Instruction* p = code->StartOfInstructions();
     byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfInitializedRegisters;

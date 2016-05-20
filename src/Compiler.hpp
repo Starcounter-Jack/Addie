@@ -38,6 +38,7 @@ namespace Addie {
         struct Explanation {
             Symbol symbol;
             RegisterType type;
+            Explanation() : symbol(0), type(Return) {};
             Explanation( Symbol sym, RegisterType t ) : symbol(sym), type(t) {};
             std::string Print() {
                 
@@ -162,6 +163,8 @@ namespace Addie {
         
         class Metaframe  {
         public:
+            int identifier;
+            std::string identifierStr;
             std::vector<Capture> enclosedVariables;
             bool IsFlushed = false;
             RegisterUse RegUsage[256];
@@ -300,7 +303,7 @@ namespace Addie {
                     if (!RegUsage[regNo].InUse) {
                         RegUsage[regNo].InUse = true;
 
-                        int used = -regNo + 255;
+                        int used = -regNo + 255 + 1;
                         if (used > maxIntermediatesUsed)
                             maxIntermediatesUsed = used;
 
