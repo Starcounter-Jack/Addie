@@ -125,7 +125,6 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
-            int AllocatePrefixRegister( Isolate* isolate, Symbol symbol, RegisterType type );
             int AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type );
             
 
@@ -155,7 +154,7 @@ namespace Addie {
             }
 
             
-            void BindSymbolToRegister( Symbol id, int regNo, RegisterType type );
+            //void BindSymbolToRegister( Symbol id, int regNo, RegisterType type );
             
         };
         
@@ -230,6 +229,10 @@ namespace Addie {
                     return AllocateIntermediateRegister(isolate);
                 }
                 return existingRegNo;
+            }
+            
+            int GetMaxRegistersUsed() {
+                return maxInitializedRegisters + maxIntermediatesUsed;
             }
             
             VariableScope* TopScopeInSameFrame() {
@@ -314,6 +317,7 @@ namespace Addie {
                 while (true) {
                     if (!RegUsage[regNo].InUse) {
                         RegUsage[regNo].InUse = true;
+                        RegUsage[regNo].type = RegIntermediate;
 
                         int used = -regNo + 255 + 1;
                         if (used > maxIntermediatesUsed)
