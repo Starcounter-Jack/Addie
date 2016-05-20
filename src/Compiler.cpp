@@ -30,19 +30,13 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     oldMf->EndCodeWrite(isolate,forward+1);
     
     int regFunc = oldMf->currentScope->AllocateInitializedRegister(isolate,NIL(),0,RegAddress);
-    //int regCaptured = oldMf->currentScope->AllocateInitializedRegister(isolate,INTEGER(oldMf->enclosedVariables.size()),0,RegConstant);
-
-//    CodeFrame* newCodeFrame = (CodeFrame*)oldMf->writeHead;
-    //new (newCodeFrame) CodeFrame();
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
 
-//    Metaframe* newFrame = oldMf;
     mc->metaframes.push_back(newFrame);
     newFrame->identifier = mc->metaframes.size() - 1;
     mc->currentMetaframe = newFrame;
-//    Metaframe* newFrame = oldMf;
     
     VALUE args = form.Rest().First();
     
@@ -156,7 +150,7 @@ int CompileConstant( Isolate* isolate, MetaCompilation* mc, VALUE form, Register
     Metaframe* mf = mc->currentMetaframe;
 
     if (mtd == UseReturnRegister) {
-        mf->SetReturnRegister( form );
+        mf->SetReturnRegister( isolate, form );
         return 0;
     }
     throw new std::runtime_error("Error");
@@ -178,10 +172,9 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
         x = mf->currentScope->ExtendedFindRegisterForSymbol(isolate, symbol.SymbolId, true, foundInFrame);
         if ( x != -1 ) {
             int parentReg = x;
-            x = mf->TopScopeInSameFrame()->AllocateInitializedRegister(isolate,symbol, symbol.SymbolId,RegClosure);
+            x = mf->TopScopeInSameFrame()->AllocateInitializedRegister(isolate,NIL(), symbol.SymbolId,RegClosure);
             mf->enclosedVariables.push_back(Capture(parentReg,x));
-            std::cout << "Found " << isolate->GetStringFromSymbolId(symbol.SymbolId) << " in parent\n";
-//            throw std::runtime_error("Found in parent");
+         //   std::cout << "Found " << isolate->GetStringFromSymbolId(symbol.SymbolId) << " in parent\n";
         }
     }
     
@@ -440,7 +433,7 @@ inline int FindCaptured( Metaframe* mf, int reg ) {
 
 uint8_t RegNoTranslation[256];
 VALUE RegValueTranslation[256];
-Explanation RegExplanationTranslation[256];
+RegisterUse RegExplanationTranslation[256];
 
 // Relocate register
 inline void Pack( uint8_t &reg ) {
@@ -462,29 +455,29 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     int packed = 0;
     RegNoTranslation[0] = 0;
     RegValueTranslation[0] = reg[0];
-    RegExplanationTranslation[0] = mf->Registers[0];
+    RegExplanationTranslation[0] = mf->RegUsage[0];
     for (int t=1;t<regCount;t++) {
-        if (mf->Registers[t].type == RegClosure) {
+        if (mf->RegUsage[t].type == RegClosure) {
             packed++;
             RegNoTranslation[t] = packed;
             RegValueTranslation[packed] = reg[t];
-            RegExplanationTranslation[packed] = mf->Registers[t];
+            RegExplanationTranslation[packed] = mf->RegUsage[t];
         }
         else {
             RegNoTranslation[t] = t+capturedCount-packed;
             RegValueTranslation[t+capturedCount-packed] = reg[t];
-            RegExplanationTranslation[t+capturedCount-packed] = mf->Registers[t];
+            RegExplanationTranslation[t+capturedCount-packed] = mf->RegUsage[t];
         }
-        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
+//        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
     int x = 255 - mf->maxIntermediatesUsed;
     for (int t=255;t>x;t--) {
         RegNoTranslation[t] = 255 - t +lastFixed + 1;
-        std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
+        //std::cout << "Move reg " << t << " to " << (int)RegNoTranslation[t] << "\n";
     }
     for (int t=1;t<regCount;t++) {
         reg[t] = RegValueTranslation[t];
-        mf->Registers[t] = RegExplanationTranslation[t];
+        mf->RegUsage[t] = RegExplanationTranslation[t];
     }
 
 
@@ -561,7 +554,6 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     return;
     //return (uintptr_t)p;
 }
-
 
 int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     switch (form.Type) {
@@ -831,7 +823,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         str << "r";
         str << t;
         str << " (";
-        str << mf->ExplainRegister(t).Print();
+        str << mf->RegUsage[t].Print();
         str << "):";
         std::string s =  str.str();
         res << s;
@@ -880,19 +872,34 @@ STRINGOLD Compiler::Disassemble( Isolate* isolate, Compilation* compilation, Met
 void VariableScope::BindSymbolToRegister( Symbol id, int regNo, RegisterType type ) {
     Bindings[id] = Binding(this->metaframe,regNo);
     //std::cout << "Binding " << CurrentIsolate->GetStringFromSymbolId(id) << " to " << regNo << "\n";
-    int cnt = metaframe->Registers.size();
-    if (cnt<=regNo) {
-        assert( cnt == regNo );
-        metaframe->Registers.push_back(Explanation(id,type));
-        assert( metaframe->Registers.size() == cnt + 1);
-    }
-    else {
-        metaframe->Registers[regNo] = Explanation(id,type);
-    }
+//    int cnt = metaframe->Registers.size();
+//    if (cnt<=regNo) {
+//        assert( cnt == regNo );
+//        metaframe->Registers.push_back(Explanation(id,type));
+//        assert( metaframe->Registers.size() == cnt + 1);
+//    }
+//    else {
+    metaframe->RegUsage[regNo].symbol = id;
+    metaframe->RegUsage[regNo].type = type;
+//    }
 }
+
 
 int VariableScope::AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type ) {
     int regNo = metaframe->__allocateConstant(isolate,value);
+    metaframe->currentScope->BindSymbolToRegister(symbol, regNo,type);
+    assert( metaframe->currentScope->FindRegisterForSymbol(isolate,symbol) == regNo);
+    metaframe->RegUsage[regNo].InUse = true;
+    metaframe->RegUsage[regNo].IsConstant = true;
+    
+    //std::cout << "Allocating register " << regNo << " to mean " << SYMBOL(symbol).Print() << "\n";
+    
+    return regNo;
+}
+
+
+int VariableScope::AllocatePrefixRegister( Isolate* isolate, Symbol symbol, RegisterType type ) {
+    int regNo = metaframe->__allocateArgument(isolate);
     metaframe->currentScope->BindSymbolToRegister(symbol, regNo,type);
     assert( metaframe->currentScope->FindRegisterForSymbol(isolate,symbol) == regNo);
     metaframe->RegUsage[regNo].InUse = true;

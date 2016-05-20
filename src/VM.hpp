@@ -922,11 +922,9 @@ struct CodeFrame {
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
                                                 sizeof(CodeFrame) +
                                                 sizeOfInitializedRegisters); }
-//    int GetInitializedRegisterCount() { return sizeOfInitializedRegisters / sizeof(VALUE); }
 
     
     CodeFrame( Metaframe* mf, int maxArgs, int regCount, int initRegCount ) {
-//        metaframe = mf;
         maxArguments = maxArgs;
         sizeOfRegisters = regCount * sizeof(VALUE);
         sizeOfInitializedRegisters = initRegCount * sizeof(VALUE);

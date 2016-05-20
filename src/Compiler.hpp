@@ -37,15 +37,42 @@ namespace Addie {
             RegAddress,
         };
         
-        struct Explanation {
+        
+        class Metaframe;
+        
+        class Binding {
+        public:
+            Binding() {
+                
+            }
+            Binding( Metaframe* frame, uint8_t reg ) : Frame(frame), Register(reg) {
+            }
+            
+            Metaframe* Frame;
+            uint8_t Register;
+        };
+        
+        
+        //struct Variable {
+        //public:
+        //    Variable( Symbol sym, VALUE val ) : symbol(sym), defaultValue(val) {
+        //    }
+        //    Symbol symbol;
+        //    VALUE defaultValue;
+        //};
+        
+        struct RegisterUse {
+            bool InUse : 1;
+            bool IsClosure : 1;
+            bool IsArgument: 1;
+            bool IsConstant: 1;
+            
             Symbol symbol;
             RegisterType type;
-            Explanation() : symbol(0), type(RegReturn) {};
-            Explanation( Symbol sym, RegisterType t ) : symbol(sym), type(t) {};
             std::string Print() {
                 
                 std::ostringstream res;
-
+                
                 
                 switch (type) {
                     case RegClosure:
@@ -82,36 +109,7 @@ namespace Addie {
                 }
                 return res.str();
             }
-        };
-        
-        class Metaframe;
-        
-        class Binding {
-        public:
-            Binding() {
-                
-            }
-            Binding( Metaframe* frame, uint8_t reg ) : Frame(frame), Register(reg) {
-            }
             
-            Metaframe* Frame;
-            uint8_t Register;
-        };
-        
-        
-        //struct Variable {
-        //public:
-        //    Variable( Symbol sym, VALUE val ) : symbol(sym), defaultValue(val) {
-        //    }
-        //    Symbol symbol;
-        //    VALUE defaultValue;
-        //};
-        
-        struct RegisterUse {
-            bool InUse : 1;
-            bool IsClosure : 1;
-            bool IsArgument: 1;
-            bool IsConstant: 1;
             RegisterUse() {
                 InUse = false;
                 IsClosure = false;
@@ -127,6 +125,7 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
+            int AllocatePrefixRegister( Isolate* isolate, Symbol symbol, RegisterType type );
             int AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type );
             
 
@@ -176,8 +175,8 @@ namespace Addie {
             std::vector<Capture> enclosedVariables;
             bool IsFlushed = false;
             RegisterUse RegUsage[256];
-            std::vector<Explanation> Registers;
-
+            //std::vector<Explanation> Registers;
+            //bool isReturnRegisterMaterialized = false;
             
             Metaframe( Isolate* isolate, VariableScope* parent, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {
@@ -188,11 +187,8 @@ namespace Addie {
                 }
                 rootScope.metaframe = this;
                 currentScope = &rootScope;
-                //writeHead = ((byte*)unit) + sizeof(CodeFrame);
                 
                 compilation = comp;
-                //codeFrame = unit;
-                //unit->metaframe = this;
                 
                 currentScope->AllocateInitializedRegister(isolate,NIL(),RET,RegReturn); // Return register
                 RegUsage[0].InUse = false;
@@ -268,8 +264,16 @@ namespace Addie {
                 return sizeOfCodeFrame - codeFrame->sizeOfInitializedRegisters - sizeof(CodeFrame);
             }
             
-            void SetReturnRegister( VALUE v ) {
-                assert( tempRegisterBuffer != NULL );
+            void SetReturnRegister( Isolate* isolate, VALUE v ) {
+                /*
+                if (!isReturnRegisterMaterialized) {
+                    assert(maxInitializedRegisters == 0 );
+                    currentScope->AllocateInitializedRegister(isolate,v,RET,RegReturn); // Return register
+                    RegUsage[0].InUse = false;
+                    isReturnRegisterMaterialized = true;
+                    return;
+                }
+                 */
                 tempRegisterBuffer[0] = v;
             }
             
@@ -331,6 +335,14 @@ namespace Addie {
                 }
             }
             
+            int __allocateArgument( Isolate* isolate ) {
+                int regNo;
+                regNo = maxInitializedRegisters; // codeFrame->AddInitializedRegister();
+                maxInitializedRegisters++;
+                RegUsage[regNo].InUse = true;
+                return regNo;
+            }
+            
             int __allocateConstant( Isolate* isolate, VALUE value ) {
                 
                 int regNo;
@@ -366,9 +378,6 @@ namespace Addie {
             void Flush(Isolate* isolate);
 
             
-            Explanation ExplainRegister( int regNo ) {
-                return Registers[regNo];
-            }
 
         };
 
