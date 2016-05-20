@@ -9,11 +9,71 @@
 #ifndef Compier_hpp
 #define Compier_hpp
 
+#include <sstream>
+
+
 using namespace Addie::Internals;
 
 namespace Addie {
 
     namespace Internals {
+
+        
+        struct Capture {
+            uint8_t ParentRegister;
+            uint8_t ChildRegister;
+            Capture( uint8_t p, uint8_t c ) : ParentRegister(p), ChildRegister(c) {
+            }
+        };
+        
+        enum RegisterType {
+            Argument,
+            Closure,
+            Intermediate,
+            Local,
+            Return,
+            RuntimeReference
+        };
+        
+        struct Explanation {
+            Symbol symbol;
+            RegisterType type;
+            Explanation( Symbol sym, RegisterType t ) : symbol(sym), type(t) {};
+            std::string Print() {
+                
+                std::ostringstream res;
+
+                
+                switch (type) {
+                    case Closure:
+                        res << "clo";
+                        break;
+                    case Argument:
+                        res << "arg";
+                        break;
+                    case Local:
+                        res << "loc";
+                        break;
+                    case RuntimeReference:
+                        res << "ext";
+                        break;
+                    case Intermediate:
+                        res << "tmp";
+                        break;
+                    case Return:
+                        res << "ret";
+                        break;
+                    default:
+                        res << "???";
+                        break;
+                }
+                if (symbol != 0) {
+                    res << " ";
+                    res << SYMBOL(symbol).Print();
+                }
+                return res.str();
+            }
+        };
         
         class Metaframe;
         
@@ -58,20 +118,36 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
-            int AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol );
+            int AllocateInitializedRegister( Isolate* isolate, VALUE value, Symbol symbol, RegisterType type );
             
 
-            int FindRegisterForSymbol( Symbol id ) {
+            int ExtendedFindRegisterForSymbol( Isolate* isolate, Symbol id, bool scanForeignParentFrames, Metaframe* &foundInMetaframe ) {
                 auto x = Bindings.find(id);
                 if ( x != Bindings.end()) {
+                    foundInMetaframe = metaframe;
                     return x->second.Register;
                 }
-                if (parent != NULL)
-                    return parent->FindRegisterForSymbol(id);
+                if (parent != NULL) {
+                    Metaframe* f = NULL;
+                    int i = parent->ExtendedFindRegisterForSymbol(isolate,id,scanForeignParentFrames,f);
+                    if ( i != -1 ) {
+                        assert( f != NULL);
+                        foundInMetaframe = f;
+                        if (f == metaframe || scanForeignParentFrames) {
+                            return i;
+                        }
+                    }
+                }
                 return -1;
             }
             
-            void BindSymbolToRegister( Symbol id, int regNo );
+            int FindRegisterForSymbol( Isolate* isolate, Symbol id ) {
+                Metaframe* foundInMetaframe = NULL;
+                return ExtendedFindRegisterForSymbol(isolate, id, false, foundInMetaframe );
+            }
+
+            
+            void BindSymbolToRegister( Symbol id, int regNo, RegisterType type );
             
         };
         
@@ -82,12 +158,14 @@ namespace Addie {
             Metaframe* currentMetaframe;
         };
         
+
         
         class Metaframe  {
         public:
+            std::vector<Capture> enclosedVariables;
             bool IsFlushed = false;
             RegisterUse RegUsage[256];
-            std::vector<Symbol> Registers;
+            std::vector<Explanation> Registers;
 
             
             Metaframe( Isolate* isolate, VariableScope* parent, Compilation* comp ) :Parent(parent) {
@@ -105,7 +183,7 @@ namespace Addie {
                 //codeFrame = unit;
                 //unit->metaframe = this;
                 
-                currentScope->AllocateInitializedRegister(isolate,NIL(),RET); // Return register
+                currentScope->AllocateInitializedRegister(isolate,NIL(),RET,Return); // Return register
                 RegUsage[0].InUse = false;
 
                 
@@ -145,6 +223,14 @@ namespace Addie {
                     return AllocateIntermediateRegister(isolate);
                 }
                 return existingRegNo;
+            }
+            
+            VariableScope* TopScopeInSameFrame() {
+                auto s = currentScope;
+                while (s->parent != NULL && s->parent->metaframe == this ) {
+                    s = s->parent;
+                }
+                return s;
             }
             
             Instruction* BeginCodeWrite( Isolate* isolate ) {
@@ -241,7 +327,7 @@ namespace Addie {
                 if (value.IsSymbol()) {
                     
                     Symbol id = value.SymbolId;
-                    int regNo = currentScope->FindRegisterForSymbol(id);
+                    int regNo = currentScope->FindRegisterForSymbol(isolate,id);
                     
                     if ( regNo != -1 ) {
                         RegUsage[regNo].InUse = true;
@@ -269,10 +355,7 @@ namespace Addie {
             void Flush(Isolate* isolate);
 
             
-            Symbol ExplainRegister( int regNo ) {
-                if (Registers.size() < regNo+1) {
-                    return RET;
-                }
+            Explanation ExplainRegister( int regNo ) {
                 return Registers[regNo];
             }
 
