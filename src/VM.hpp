@@ -468,6 +468,10 @@ public:
     
     std::string ToString();
     
+    bool Equals( VALUE other ) {
+        return Whole == other.Whole;
+    }
+    
 //    std::string Print();
 };
 
@@ -913,7 +917,7 @@ public:
 struct CodeFrame {
 //    uint32_t SizeOfUnit;
     uint8_t maxArguments = 0;
-    uint8_t sizeOfPrefixRegisters = 0;
+    uint8_t sizeOfFixedRegisters = 0;
     uint8_t sizeOfRegisters = 0;
     uint8_t __unusedForAlignment;
 //    Metaframe* metaframe = NULL; // Optional metaframe for debugging
@@ -921,13 +925,13 @@ struct CodeFrame {
     VALUE* StartOfRegisters() {   return (VALUE*)((byte*)this + sizeof(CodeFrame)); }
     Instruction* StartOfInstructions() { return (Instruction*)((byte*)this +
                                                 sizeof(CodeFrame) +
-                                                sizeOfPrefixRegisters); }
+                                                sizeOfFixedRegisters); }
 
     
     CodeFrame( Metaframe* mf, int maxArgs, int regCount, int initRegCount ) {
         maxArguments = maxArgs;
         sizeOfRegisters = regCount * sizeof(VALUE);
-        sizeOfPrefixRegisters = initRegCount * sizeof(VALUE);
+        sizeOfFixedRegisters = initRegCount * sizeof(VALUE);
     }
 
 };
@@ -998,12 +1002,12 @@ public:
         // It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
         frame = (RegisterRuntimeFrame*)isolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
-        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfPrefixRegisters );
+        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame), ((byte*)code) + sizeof(CodeFrame), code->sizeOfFixedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
     }
     
-    void Free( Isolate* isolate ) {
+    void ExitRuntimeFrame( Isolate* isolate ) {
         isolate->PopStack(sizeof(RegisterRuntimeFrame) + frame->Comp->sizeOfRegisters );
     }
 };

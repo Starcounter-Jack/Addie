@@ -104,7 +104,10 @@ extern ParseSomething Parsers[128];
 class Parser {
     public:
     
-    static VALUE ParseForm( StreamReader* r );
+    static VALUE Parse( const char* source );    
+    static VALUE Parse( StreamReader* r );
+    
+    
     static VALUE ParseString( StreamReader* r);
     static VALUE ParseList( StreamReader* r);
     static VALUE ParseSymbol( StreamReader* r );

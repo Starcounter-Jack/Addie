@@ -113,6 +113,9 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 } else if (sym == SymPrint) {
                     std::cout << "\nPrinting " << a1.Print() << ", " << a2.Print() << "\n";
                 }
+                else {
+                    throw std::runtime_error("Not implemented");
+                }
 
                 p++;
                 break;

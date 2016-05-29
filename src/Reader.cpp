@@ -240,8 +240,14 @@ Char Addie::Internals::Chars[256] = {
     {0,1},{0,1}
 };
 
+
+VALUE Parser::Parse( const char* source ) {
+    StringReader teststr = StringReader(source,strlen(source));
+    return Parse( &teststr );
+}
+
 // Parse any form
-VALUE Parser::ParseForm( StreamReader* r ) {
+VALUE Parser::Parse( StreamReader* r ) {
     
     r->SkipWhitespace(r);
     unsigned char c = r->Read();
@@ -332,7 +338,7 @@ VALUE Parser::ParseList( StreamReader* r) {
             return list;
         }
         
-        VALUE elem = ParseForm( r );
+        VALUE elem = Parse( r );
         list = list.Append( elem );
     }
 }
@@ -422,7 +428,7 @@ VALUE Parser::ParseVector( StreamReader* r) {
             return list;
         }
         
-        VALUE elem = ParseForm( r );
+        VALUE elem = Parse( r );
         list = list.Append(elem);
         //list.Style = QBrackets;
     }
@@ -447,7 +453,7 @@ VALUE Parser::ParseCurly( StreamReader* r) {
             return list;
         }
         
-        VALUE elem = ParseForm( r );
+        VALUE elem = Parse( r );
         list = list.Append(elem);
     }
 }

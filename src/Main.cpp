@@ -94,7 +94,7 @@ VALUE IllustrateParse( const char* str ) {
     std::cout << "===>\n";
     
     auto teststr = StringReader(str,strlen(str));
-    VALUE v = Parser::ParseForm( &teststr );
+    VALUE v = Parser::Parse( &teststr );
     std::cout << v.Print();
     std::cout << "\n";
     return v;
@@ -115,6 +115,18 @@ VALUE TestParse( const char* input, int expectedCount, const char* expectedOutpu
     const char* output = v.Print().c_str();
     assert( actualCount == expectedCount );
     assert( strcmp( expectedOutput, output ) == 0 );
+    return v;
+}
+
+VALUE TestRun( const char* input, VALUE expectedOutput ) {
+    Isolate isolate;
+    VALUE v = Parser::Parse( input );
+    MetaCompilation* mc = Compiler::Compile( &isolate,  v );
+    std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
+    Continuation c = Interpreter::Interpret( &isolate, mc->compilation );
+    c.ExitRuntimeFrame(&isolate);
+    v = c.GetReturnValue();
+    assert( v.Equals(expectedOutput) );
     return v;
 }
 
@@ -163,18 +175,21 @@ int main(int argc, const char * argv[]) {
     //assert(!c.HasRunToCompletion());
     
     Interpreter::Interpret( &isolate,c);
-    c.Free(&isolate);
+    c.ExitRuntimeFrame(&isolate);
     
     v = TestParse( "{ :FirstName \"Jack\" }", "{:FirstName \"Jack\"}" );
     mc = Compiler::Compile( &isolate, v );
     std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
     c = Interpreter::Interpret( &isolate, mc->compilation );
-    c.Free(&isolate);
+    c.ExitRuntimeFrame(&isolate);
     
     //assert(c.HasRunToCompletion());
     std::cout << "\nEvaluated:" << c.GetReturnValue().Print();
     
     std::cout << "\n\n";
+    
+    TestRun("(+ 1 2)",INTEGER(3));
+
     
 #ifdef USE_VECTOR
     TestMap();

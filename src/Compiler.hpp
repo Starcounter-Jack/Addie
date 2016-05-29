@@ -33,7 +33,7 @@ namespace Addie {
             RegIntermediate,
             RegLocal,
             RegReturn,
-            RegRuntimeReference,
+            //RegRuntimeReference,
             RegAddress,
         };
         
@@ -90,9 +90,9 @@ namespace Addie {
                     case RegLocal:
                         res << "loc";
                         break;
-                    case RegRuntimeReference:
-                        res << "ext";
-                        break;
+                   // case RegRuntimeReference:
+                   //     res << "ext";
+                   //     break;
                     case RegIntermediate:
                         res << "tmp";
                         break;
@@ -129,7 +129,7 @@ namespace Addie {
             Metaframe* metaframe;
             VariableScope* parent = NULL;
             
-            int AllocatePrefixRegister( Isolate* isolate, bool initialize, VALUE value, Symbol symbol, RegisterType type );
+            int AllocateFixedRegister( Isolate* isolate, bool initialize, VALUE value, Symbol symbol, RegisterType type );
             
 
             int ExtendedFindRegisterForSymbol( Isolate* isolate, Symbol id, bool scanForeignParentFrames, Metaframe* &foundInMetaframe ) {
@@ -188,7 +188,7 @@ namespace Addie {
             int sizeOfCodeFrame;
             Compilation* compilation = NULL;
             int maxIntermediateRegisters = 0;
-            int maxPrefixRegisters = 0;
+            int maxFixedRegisters = 0;
             int maxInitializedRegisters = 0;
             Instruction* tempCodeWriteHead;
             Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
@@ -208,7 +208,7 @@ namespace Addie {
                 
                 compilation = comp;
                 
-                currentScope->AllocatePrefixRegister(isolate,false,NIL(),RET,RegReturn); // Return register
+                currentScope->AllocateFixedRegister(isolate,false,NIL(),RET,RegReturn); // Return register
                 RegUsage[0].InUse = false;
 
                 
@@ -228,15 +228,17 @@ namespace Addie {
             }
             
             int GetMaxRegistersUsed() {
-                return maxPrefixRegisters + maxIntermediateRegisters;
+                return maxFixedRegisters + maxIntermediateRegisters;
             }
             
             inline int GetNonInitializedRegisterCount() {
-                return maxPrefixRegisters - maxInitializedRegisters;
+                return maxFixedRegisters - maxInitializedRegisters;
             }
             
             inline VALUE GetInitializationForRegister( int t ) {
-                return initRegisterBuffer[ RegUsage[t].InitializedAt ];
+                assert( IsFlushed); // return initRegisterBuffer[ RegUsage[t].InitializedAt ];
+                int offset = t - GetNonInitializedRegisterCount();
+                return codeFrame->StartOfRegisters()[offset];
             }
             
             void SetInitializationForRegister( int t, VALUE v ) {
@@ -278,7 +280,7 @@ namespace Addie {
                     }
                    return ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
                 }
-                return sizeOfCodeFrame - codeFrame->sizeOfPrefixRegisters - sizeof(CodeFrame);
+                return sizeOfCodeFrame - codeFrame->sizeOfFixedRegisters - sizeof(CodeFrame);
             }
             
             void SetReturnRegister( Isolate* isolate, VALUE v ) {
@@ -346,7 +348,7 @@ namespace Addie {
             // Called when a register is no longer in use. In this way,
             // registers can be reused.
             void FreeIntermediateRegister( int regNo ) {
-                int highestFixedRegisterNo = maxPrefixRegisters-1;
+                int highestFixedRegisterNo = maxFixedRegisters-1;
                 if (regNo == 0 || regNo > highestFixedRegisterNo ) {
                    RegUsage[regNo].InUse = false;
                 }
@@ -356,7 +358,7 @@ namespace Addie {
                 VALUE* reg = BeginRegisterWrite(isolate); //(VALUE*)writeHead;
                 (*reg++) = value;
                 EndRegisterWrite(isolate,reg);
-                int index = maxInitializedRegisters; // codeFrame->AddPrefixRegister();
+                int index = maxInitializedRegisters; // codeFrame->AddFixedRegister();
                 //std::cout << "Writing " << value.Print() << " to slot " << index << "\n";
                 maxInitializedRegisters++;
 
@@ -378,7 +380,7 @@ namespace Addie {
                     }
                 }
                 
-                regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
+                regNo = maxFixedRegisters; // codeFrame->AddFixedRegister();
                 if (initialize) {
                     
                     int tmp = AddInitialized(isolate,value);
@@ -386,13 +388,13 @@ namespace Addie {
                   // VALUE* reg = BeginRegisterWrite(isolate); //(VALUE*)writeHead;
                   // (*reg++) = value;
                   // EndRegisterWrite(isolate,reg);
-                  //  regNo = maxPrefixRegisters; // codeFrame->AddPrefixRegister();
+                  //  regNo = maxFixedRegisters; // codeFrame->AddFixedRegister();
                     RegUsage[regNo].IsInitialized = true;
                     RegUsage[regNo].InitializedAt = tmp;
                     //std::cout << "r[" << (int)regNo << "]=" << value.Print() << " at slot " << tmp << "\n";
                 }
                 
-                maxPrefixRegisters++;
+                maxFixedRegisters++;
 
                 RegUsage[regNo].InUse = true;
                 
