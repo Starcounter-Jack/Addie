@@ -91,6 +91,12 @@ std::string NIL::Print() {
     return res.str();
 }
 
+std::string printFunction(VALUE* v) {
+    std::ostringstream res;
+    res << "fn:" << v->Integer;
+    return res.str();
+}
+
 
 
 std::string VALUE::Print() {
@@ -99,7 +105,12 @@ std::string VALUE::Print() {
             case (TList) :
                 return this->PrintList();
             case (TOther) :
-                return ((STRINGOLD*)this)->Print();
+            if (OtherSubType == OOldString) {
+                    return ((STRINGOLD*)this)->Print();
+            } else if (OtherSubType == OFunction) {
+                return printFunction(this);
+            }
+            break;
             case (TAtom) :
                 switch (AtomSubType) {
                     case (ASymbol) :
@@ -111,10 +122,10 @@ std::string VALUE::Print() {
                         break;
                 }
             case (TNumber) :
-            switch (NumberSubType) {
-                case (NInteger) :
-                    return ((INTEGER*)this)->Print();
-                default:
+             switch (NumberSubType) {
+                  case (NInteger) :
+                     return ((INTEGER*)this)->Print();
+                  default:
                     break;
             }
     }

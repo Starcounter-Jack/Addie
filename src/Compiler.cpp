@@ -27,9 +27,14 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     Metaframe* oldMf = mc->currentMetaframe;
 
     Instruction* forward = oldMf->BeginCodeWrite(isolate);
-    oldMf->EndCodeWrite(isolate,forward+1);
     
-    int regFunc = oldMf->currentScope->AllocateFixedRegister(isolate,true,NIL(),0,RegAddress);
+    int regFunc;
+    if (mtd == UseFree) {
+       regFunc = oldMf->currentScope->AllocateFixedRegister(isolate,true,NIL(),0,RegConstant);
+    }
+    else {
+        regFunc = 0;
+    }
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
@@ -59,9 +64,16 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     //    new (unit) CodeFrame( code, registers,  );
     //newFrame->Seal(isolate);
     mc->currentMetaframe = oldMf;
+    
+    if (newFrame->GetEnclosedVariableCount() > 0) {
+        (*forward++) = Instruction(CALL_FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
+    } //else {
+      //  (*forward) = Instruction(NOP); // ,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
+    //}
+    oldMf->EndCodeWrite(isolate,forward);
 
-    (*forward) = Instruction(CALL_FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
-    oldMf->SetInitializationForRegister(regFunc,INTEGER(newFrame->identifier));
+
+    oldMf->SetInitializationForRegister(isolate,regFunc,VALUE(OFunction,newFrame->identifier));
 
     
     return 0;
@@ -527,7 +539,12 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     while (p < end) {
         
         switch (p->OP) {
+            case (NOP):
             case (RET):
+                break;
+                // case ():
+//                Pack(p->A);
+//                break;
             case (SCALL_0):
             case (CALL_0):
             case (MOVE):
@@ -683,7 +700,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         
     }
     title << mf->identifier << " (";
-    title << "clo=" << (int)mf->enclosedVariables.size();
+    title << "clo=" << (int)mf->GetEnclosedVariableCount();
     title << ",arg=" << (int)mf->codeFrame->maxArguments;
     title << ",con=" << (int)mf->maxInitializedRegisters;
     title << ",tmp=" << (int)mf->maxIntermediateRegisters;
@@ -714,6 +731,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         
         switch (p->OP) {
             case (RET):
+            case (NOP):
                 res << str;
                 break;
                 //goto end;
@@ -728,6 +746,12 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                  p = (Instruction*)(((VALUE*)p) + 1); // Move IP past the address
                  break;
                  */
+                res << str;
+                Indent( res, str );
+//                res << "(r";
+//                res << (int)p->A;
+//                res << ")";
+                break;
             case (DEREF):
                 res << str;
                 Indent( res, str );
@@ -939,7 +963,14 @@ void Metaframe::Flush(Isolate* isolate) {
     int registersUsed = maxFixedRegisters + maxIntermediateRegisters;
     assert( codeFrame == NULL );
     codeFrame = (CodeFrame*)compilation->GetWriteHead();
-    new (codeFrame) CodeFrame( this, maxArguments, registersUsed, maxFixedRegisters);
+    int prefixRegs = 0;
+    int t=0;
+    int cnt = maxFixedRegisters;
+    while (t<cnt && !RegUsage[t].IsInitialized) {
+        prefixRegs++;
+        t++;
+    }
+    new (codeFrame) CodeFrame( this, prefixRegs, maxArguments, registersUsed, maxFixedRegisters);
     
     int initRegisterBufferUsed = ((byte*)tempRegisterWriteHead - (byte*)initRegisterBuffer);
     if (initRegisterBufferUsed != 0) {

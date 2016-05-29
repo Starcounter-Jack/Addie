@@ -126,10 +126,43 @@ VALUE TestRun( const char* input, VALUE expectedOutput ) {
     Continuation c = Interpreter::Interpret( &isolate, mc->compilation );
     c.ExitRuntimeFrame(&isolate);
     v = c.GetReturnValue();
+    std::cout << input << " == " << v.Print() << "\n";
     assert( v.Equals(expectedOutput) );
     return v;
 }
 
+void TestFn() {
+    Isolate isolate;
+    VALUE v;
+    v = TestParse("⏜\nlet* [y 6 z 5]\n   ⏜\n   fn* [x]\n      ⏜\n      let* ﹇\n           a 10\n           b 20\n           ﹈\n           (print (+ a b x y) (+ a z))\n      ⏝\n   ⏝\n⏝",
+                  "(let* [y 6 z 5] (fn* [x] (let* [a 10 b 20] (print (+ a b x y) (+ a z)))))");
+    
+    
+    
+    // Namespace ns;
+    
+    MetaCompilation* mc = Compiler::Compile( &isolate,  v );
+    STRINGOLD str = Compiler::Disassemble(  &isolate, mc->compilation, mc );
+    
+    std::cout << str.ToString();
+    
+    Continuation c = Interpreter::Interpret(  &isolate, mc->compilation );
+    
+    Interpreter::Interpret( &isolate,c);
+    c.ExitRuntimeFrame(&isolate);
+    
+    v = TestParse( "{ :FirstName \"Jack\" }", "{:FirstName \"Jack\"}" );
+    mc = Compiler::Compile( &isolate, v );
+    std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
+    c = Interpreter::Interpret( &isolate, mc->compilation );
+    c.ExitRuntimeFrame(&isolate);
+    
+    //assert(c.HasRunToCompletion());
+    std::cout << "\nEvaluated:" << c.GetReturnValue().Print();
+    
+    std::cout << "\n\n";
+
+}
 
 int main(int argc, const char * argv[]) {
     
@@ -156,39 +189,12 @@ int main(int argc, const char * argv[]) {
                     "(if (= einstein genius) (print \"e=mc²\") (print \"e!=mc²\"))");
     v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n] (fn [x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
+    
+    //TestFn();
 
-    v = TestParse("⏜\nlet* [y 6 z 5]\n   ⏜\n   fn* [x]\n      ⏜\n      let* ﹇\n           a 10\n           b 20\n           ﹈\n           (print (+ a b x y) (+ a z))\n      ⏝\n   ⏝\n⏝",
-                   "(let* [y 6 z 5] (fn* [x] (let* [a 10 b 20] (print (+ a b x y) (+ a z)))))");
-
-    //v = TestParse("⏜\nfn* [x]\n   (≝ a 10)\n   (≝ b 20)\n   (123)\n⏝",
-    //              "(fn* [x] (≝ a 10) (≝ b 20) (123))");
-
-
-   // Namespace ns;
     
-    MetaCompilation* mc = Compiler::Compile( &isolate,  v );
-    STRINGOLD str = Compiler::Disassemble(  &isolate, mc->compilation, mc );
-    
-    std::cout << str.ToString();
-
-    Continuation c = Interpreter::Interpret(  &isolate, mc->compilation );
-    //assert(!c.HasRunToCompletion());
-    
-    Interpreter::Interpret( &isolate,c);
-    c.ExitRuntimeFrame(&isolate);
-    
-    v = TestParse( "{ :FirstName \"Jack\" }", "{:FirstName \"Jack\"}" );
-    mc = Compiler::Compile( &isolate, v );
-    std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
-    c = Interpreter::Interpret( &isolate, mc->compilation );
-    c.ExitRuntimeFrame(&isolate);
-    
-    //assert(c.HasRunToCompletion());
-    std::cout << "\nEvaluated:" << c.GetReturnValue().Print();
-    
-    std::cout << "\n\n";
-    
-    TestRun("(+ 1 2)",INTEGER(3));
+    TestRun("(+ 1 2 3)",INTEGER(6));
+    //TestRun("(fn* [] (+ 1 2 3))",VALUE(OFunction,1));
 
     
 #ifdef USE_VECTOR

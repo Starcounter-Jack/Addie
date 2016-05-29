@@ -34,7 +34,7 @@ namespace Addie {
             RegLocal,
             RegReturn,
             //RegRuntimeReference,
-            RegAddress,
+            //RegAddress,
         };
         
         
@@ -99,9 +99,9 @@ namespace Addie {
                     case RegReturn:
                         res << "ret";
                         break;
-                    case RegAddress:
-                        res << "adr";
-                        break;
+//                    case RegAddress:
+//                        res << "adr";
+//                        break;
                     default:
                         res << "???";
                         break;
@@ -227,6 +227,10 @@ namespace Addie {
                 return existingRegNo;
             }
             
+            inline int GetEnclosedVariableCount() {
+                return enclosedVariables.size();
+            }
+            
             int GetMaxRegistersUsed() {
                 return maxFixedRegisters + maxIntermediateRegisters;
             }
@@ -241,7 +245,10 @@ namespace Addie {
                 return codeFrame->StartOfRegisters()[offset];
             }
             
-            void SetInitializationForRegister( int t, VALUE v ) {
+            void SetInitializationForRegister( Isolate* isolate, int t, VALUE v ) {
+                if (t==0) {
+                    SetReturnRegister(isolate,v); //, <#Addie::Internals::VALUE v#>)
+                }
                 assert( codeFrame == NULL );
                 VALUE* r = initRegisterBuffer;
                 //int slot = t  - GetNonInitializedRegisterCount();
