@@ -521,7 +521,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     Instruction* p = mf->tempCodeBuffer;
     
     
-    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfFixedRegisters;
+    byte* eos = (byte*)p + mf->GetSizeOfCode();
     Instruction* end = (Instruction*)eos;
     
     while (p < end) {
@@ -698,7 +698,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     prefix = 6;
     
     Instruction* p = code->StartOfInstructions();
-    byte* eos = (byte*)p + mf->GetSizeOfCode(); // - code->sizeOfFixedRegisters;
+    byte* eos = (byte*)p + mf->GetSizeOfCode();
     Instruction* end = (Instruction*)eos;
     int t = 0;
     
@@ -966,7 +966,7 @@ void Metaframe::Flush(Isolate* isolate) {
     tempCodeBufferUsed += sizeof(Instruction);
     
     //return (byte*)((byte*)codeFrame->StartOfInstructions() + tempBufferUsed);
-    size_t written = sizeof(CodeFrame) + codeFrame->sizeOfFixedRegisters +
+    size_t written = sizeof(CodeFrame) + codeFrame->sizeOfInitializedRegisters +
                             tempCodeBufferUsed;
     
     sizeOfCodeFrame = written;
@@ -979,7 +979,7 @@ void Metaframe::Flush(Isolate* isolate) {
     std::cout << "CodeFrame: " << (uintptr_t)codeFrame << "\n";
     std::cout << "Start-of-regs: " << (uintptr_t)codeFrame->StartOfRegisters() << "\n";
     std::cout << "Start-of-code: " << (uintptr_t)codeFrame->StartOfInstructions() << "\n";
-    std::cout << "Register initializations: " << codeFrame->sizeOfFixedRegisters/sizeof(VALUE) << "\n";
+    std::cout << "Register initializations: " << codeFrame->sizeOfInitializedRegisters/sizeof(VALUE) << "\n";
     std::cout << "Instructions written: " << tempCodeBufferUsed/sizeof(Instruction) << "\n";
      */
 }

@@ -280,7 +280,7 @@ namespace Addie {
                     }
                    return ((byte*)tempCodeWriteHead - (byte*)tempCodeBuffer);
                 }
-                return sizeOfCodeFrame - codeFrame->sizeOfFixedRegisters - sizeof(CodeFrame);
+                return sizeOfCodeFrame - codeFrame->sizeOfInitializedRegisters - sizeof(CodeFrame);
             }
             
             void SetReturnRegister( Isolate* isolate, VALUE v ) {
