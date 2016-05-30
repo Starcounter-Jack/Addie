@@ -30,7 +30,6 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
     //        uintptr_t address;
     VALUE a1,a2,a3,a4,a5;
     VALUE fn;
-    CodeFrame* code;
     
     while (true) {
         
@@ -68,21 +67,23 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 //std::cout << "\nexit-with-continuation @(" << p << ")";
                 goto end;
+                
             case (SCALL_0):
                 sym = r[i.B].SymbolId;
                 // TODO!
                 p++;
                 break;
 
-
             case (JMP):
                 p += i.A3;
                 break;
+                
             case (JMP_IF_TRUE):
                 if (r[0].Integer) {
                     p += i.A3;
                 }
                 break;
+                
             case (MOVE):
                 std::cout << "MOVE";
                 std::cout << "        (";
@@ -93,6 +94,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 
                 break;
+                
             case (SCALL_1):
                 sym = r[i.B].SymbolId;
                 a1 = r[i.C];
@@ -102,6 +104,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 }
                 p++;
                 break;
+                
             case (SCALL_2):
                 
                 sym = r[i.B].SymbolId;
@@ -121,6 +124,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
 
                 p++;
                 break;
+                
             case (SCALL_3):
                 
                 sym = r[i.B].SymbolId;
@@ -135,6 +139,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 }
                 p++;
                 break;
+                
             case (SCALL_4):
                 
                 sym = r[i.B].SymbolId;
@@ -150,6 +155,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 }
                 p++;
                 break;
+                
             case (DEREF):
                 sym = r[i.B].SymbolId;
                 std::cout << "Dereferencing r[" << + (unsigned int)i.B << "] (" << isolate->GetStringFromSymbolId(sym) << ")\n";
@@ -158,6 +164,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 }
                 p++;
                 break;
+                
             case (CALL_0):
                 fn = r[i.B];
                 
@@ -167,6 +174,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
 
                 
                 break;
+                
             case (CALL_1):
                 fn = r[i.B];
                 a1 = r[i.C];
@@ -177,6 +185,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 
                 r[1] = a1;
                 break;
+                
             case (CALL_2):
                 fn = r[i.B];
                 a1 = r[i.C];
@@ -190,6 +199,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 r[1] = a1;
                 r[2] = a2;
                 break;
+                
             case (CALL_3):
                 fn = r[i.B];
                 a1 = r[i.C];
@@ -225,8 +235,8 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p = cont.PC;
                 r = cont.frame->GetStartOfRegisters();
                 
-                    r[1] = a1;
-                    r[2] = a2;
+                r[1] = a1;
+                r[2] = a2;
                 r[3] = a3;
                 r[4] = a4;
                 
@@ -254,7 +264,6 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 r[5] = a5;
                 
                 break;
-
                 
             default:
                 std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;

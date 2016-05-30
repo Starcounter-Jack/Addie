@@ -25,6 +25,7 @@ extern void TestMap();
 #include "Optimized_IntArray.hpp"
 
 
+// Used by unit tests
 IntArray<int>* CreateSimpleArray() {
     IntArray<int>* arr = IntArray<int>::__beginWrite();
     arr->__write(123);

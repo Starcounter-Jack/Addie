@@ -474,7 +474,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
     VALUE* reg = mf->initRegisterBuffer;
     int prefixCount = mf->maxFixedRegisters;
     int capturedCount = mf->enclosedVariables.size();
-    int notInitializedCount = mf->maxFixedRegisters - mf->maxInitializedRegisters;
+//    int notInitializedCount = mf->maxFixedRegisters - mf->maxInitializedRegisters;
     
     int packed = 0;
     RegNoTranslation[0] = 0;
@@ -889,7 +889,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         prefix = 0;
     }
 
-    int regCount = mf->maxFixedRegisters;
+//    int regCount = mf->maxFixedRegisters;
     res << "\n------------------------------------------------------------\n";
     for (int t=0;t<mf->GetMaxRegistersUsed();t++) {
         std::ostringstream str;
