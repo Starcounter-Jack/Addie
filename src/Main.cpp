@@ -195,7 +195,7 @@ int main(int argc, const char * argv[]) {
     
     //TestRun("(+ 1 2 3)",INTEGER(6));
     //TestRun("(fn* [] (+ 1 2 3))",VALUE(OFunction,1));
-    TestRun("((fn* [] (+ 1 2 3)))",INTEGER(6)); // VALUE(OFunction,1));
+    TestRun("((fn* [x] (+ 1 2 x)) 3)",INTEGER(6)); // VALUE(OFunction,1));
 
     
 #ifdef USE_VECTOR
