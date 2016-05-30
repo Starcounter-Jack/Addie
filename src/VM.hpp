@@ -1018,7 +1018,6 @@ public:
         frame->Comp = code;
         frame->Parent = parent;
         PC = code->StartOfInstructions();
-        return PC;
     }
     
     void ExitRuntimeFrame( Isolate* isolate ) {

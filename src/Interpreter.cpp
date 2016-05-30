@@ -188,7 +188,6 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
 
                 r[1] = a1;
                 r[2] = a2;
-                p++;
                 break;
             case (CALL_3):
                 fn = r[i.B];
@@ -211,7 +210,6 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                     r[2] = a2;
                     r[3] = a3;
                 }
-                p++;
                 break;
             default:
                 std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;

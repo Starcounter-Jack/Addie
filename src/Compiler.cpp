@@ -703,7 +703,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         title << "Procedure ";
         
     }
-    title << mf->identifier << " (";
+    title << (uintptr_t)mf->codeFrame << " (";
     title << "closures=" << (int)mf->GetEnclosedVariableCount();
     title << ",args=" << (int)mf->codeFrame->maxArguments;
     title << ",init=" << (int)mf->maxInitializedRegisters;
@@ -965,6 +965,7 @@ void Metaframe::ResolvePointers(Isolate* isolate,MetaCompilation* meta) {
             int functionIdentifier = reg[t].OtherPointer;
             reg[t].OtherPointer = (uintptr_t)meta->metaframes[functionIdentifier]->codeFrame;
             //assert(false);
+            std::cout << "Pointer " << reg[t].OtherPointer << "\n";
         }
     }
 }
