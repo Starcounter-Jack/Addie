@@ -162,7 +162,8 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 fn = r[i.B];
                 code = (CodeFrame*)fn.OtherPointer;
                 cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
-                p++;
+                p = cont.PC;
+                r = cont.frame->GetStartOfRegisters();
                 break;
             case (CALL_3):
                 fn = r[i.B];

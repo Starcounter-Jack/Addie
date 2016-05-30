@@ -1006,7 +1006,7 @@ public:
     //    return (*PC).OP == RET;
     //}
     
-    void EnterIntoNewRuntimeFrame( Isolate* isolate, CodeFrame* code, RegisterRuntimeFrame* parent ) {
+    inline void EnterIntoNewRuntimeFrame( Isolate* isolate, CodeFrame* code, RegisterRuntimeFrame* parent ) {
        // assert( frame == NULL );
         // The compiled code contains the size of the registers needed for the
         // code of a single function (metaframe).
@@ -1017,6 +1017,8 @@ public:
         memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame) + code->sizeOfUninitializedRegisters, ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
+        PC = code->StartOfInstructions();
+        return PC;
     }
     
     void ExitRuntimeFrame( Isolate* isolate ) {
@@ -1036,7 +1038,6 @@ public:
         Continuation c;
         CodeFrame* unit = code->GetFirstCodeFrame();
         c.EnterIntoNewRuntimeFrame(isolate,unit, NULL);
-        c.PC = unit->StartOfInstructions();
         return Interpreter::Interpret( isolate, c );
     }
     

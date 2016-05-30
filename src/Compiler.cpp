@@ -63,7 +63,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     }
     
     //    new (unit) CodeFrame( code, registers,  );
-    newFrame->Flush(isolate);
+    //newFrame->Flush(isolate);
     mc->currentMetaframe = oldMf;
     
     if (newFrame->GetEnclosedVariableCount() > 0) {
@@ -664,6 +664,10 @@ MetaCompilation* Compiler::Compile( Isolate* isolate, VALUE form ) {
         meta->metaframes[t]->Flush(isolate);
     }
     
+    for (int t=0;t<meta->metaframes.size();t++) {
+        meta->metaframes[t]->ResolvePointers(isolate,meta);
+    }
+    
     isolate->ReportConstantWrite( (uintptr_t)comp->GetWriteHead() ); // Mark the memory as used
 
     assert( isolate->NextOnStack == isolate->Stack ); // Check of memory leaks
@@ -954,12 +958,22 @@ int VariableScope::AllocateFixedRegister( Isolate* isolate, bool initialize, VAL
     return regNo;
 }
 
+void Metaframe::ResolvePointers(Isolate* isolate,MetaCompilation* meta) {
+    VALUE* reg = codeFrame->StartOfRegisters();
+    for (int t=0;t<maxInitializedRegisters;t++) {
+        if (reg[t].Type == TOther && reg[t].OtherSubType == OFunction ) {
+            int functionIdentifier = reg[t].OtherPointer;
+            reg[t].OtherPointer = (uintptr_t)meta->metaframes[functionIdentifier]->codeFrame;
+            //assert(false);
+        }
+    }
+}
+
 
 void Metaframe::Flush(Isolate* isolate) {
     // Copy the buffer into the compilation unit
-    
-    if (IsFlushed)
-        return;
+
+    assert( !IsFlushed );
     
     PackRegisters(isolate, this);
     

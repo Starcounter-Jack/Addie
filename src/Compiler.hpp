@@ -413,9 +413,8 @@ namespace Addie {
                 return regNo;
             }
             
-            void Flush(Isolate* isolate);
-
-            
+            void Flush( Isolate* isolate );
+            void ResolvePointers( Isolate* isolate, MetaCompilation* meta);
 
         };
 
