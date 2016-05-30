@@ -28,7 +28,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
     std::string str;
 
     //        uintptr_t address;
-    VALUE a1,a2,a3,a4;
+    VALUE a1,a2,a3,a4,a5;
     VALUE fn;
     CodeFrame* code;
     
@@ -160,16 +160,18 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 break;
             case (CALL_0):
                 fn = r[i.B];
-                code = (CodeFrame*)fn.OtherPointer;
-                cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                
+                cont.EnterIntoNewRuntimeFrame(isolate, (CodeFrame*)fn.OtherPointer, cont.frame );
                 p = cont.PC;
                 r = cont.frame->GetStartOfRegisters();
+
+                
                 break;
             case (CALL_1):
                 fn = r[i.B];
                 a1 = r[i.C];
-                code = (CodeFrame*)fn.OtherPointer;
-                cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                
+                cont.EnterIntoNewRuntimeFrame(isolate, (CodeFrame*)fn.OtherPointer, cont.frame );
                 p = cont.PC;
                 r = cont.frame->GetStartOfRegisters();
                 
@@ -181,8 +183,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 a2 = r[(*p).OP];
 
-                code = (CodeFrame*)fn.OtherPointer;
-                cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                cont.EnterIntoNewRuntimeFrame(isolate, (CodeFrame*)fn.OtherPointer, cont.frame );
                 p = cont.PC;
                 r = cont.frame->GetStartOfRegisters();
 
@@ -201,8 +202,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                     r[i.A] = INTEGER(sum);
                 }
                 else {
-                    code = (CodeFrame*)fn.OtherPointer;
-                    cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                    cont.EnterIntoNewRuntimeFrame(isolate, (CodeFrame*)fn.OtherPointer, cont.frame );
                     p = cont.PC;
                     r = cont.frame->GetStartOfRegisters();
                     
@@ -211,6 +211,51 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                     r[3] = a3;
                 }
                 break;
+                
+            case (CALL_4):
+                fn = r[i.B];
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+                a3 = r[(*p).A];
+                a4 = r[(*p).B];
+                
+
+                cont.EnterIntoNewRuntimeFrame(isolate, (CodeFrame*)fn.OtherPointer, cont.frame );
+                p = cont.PC;
+                r = cont.frame->GetStartOfRegisters();
+                
+                    r[1] = a1;
+                    r[2] = a2;
+                r[3] = a3;
+                r[4] = a4;
+                
+                break;
+
+                
+            case (CALL_5):
+                fn = r[i.B];
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+                a3 = r[(*p).A];
+                a4 = r[(*p).B];
+                a5 = r[(*p).C];
+                
+                
+                cont.EnterIntoNewRuntimeFrame(isolate, (CodeFrame*)fn.OtherPointer, cont.frame );
+                p = cont.PC;
+                r = cont.frame->GetStartOfRegisters();
+                
+                r[1] = a1;
+                r[2] = a2;
+                r[3] = a3;
+                r[4] = a4;
+                r[5] = a5;
+                
+                break;
+
+                
             default:
                 std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;
                 p++;
