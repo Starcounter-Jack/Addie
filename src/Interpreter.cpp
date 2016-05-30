@@ -11,7 +11,7 @@
 using namespace Addie::Internals;
 
 // VM byte-codes are described here
-// https://github.com/Starcounter-Jack/Addie/wiki
+// https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code
 
 Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
     
@@ -29,7 +29,8 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
 
     //        uintptr_t address;
     VALUE a1,a2,a3,a4;
-
+    VALUE fn;
+    CodeFrame* code;
     
     while (true) {
         
@@ -72,15 +73,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 // TODO!
                 p++;
                 break;
-            case (SCALL_1):
-                sym = r[i.B].SymbolId;
-                a1 = r[i.C];
-                // TODO!
-                if (sym == SymPrint) {
-                    std::cout << "\nPrinting " << a1.Print() << "\n";
-                }
-                p++;
-                break;
+
 
             case (JMP):
                 p += i.A3;
@@ -100,10 +93,19 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 
                 break;
+            case (SCALL_1):
+                sym = r[i.B].SymbolId;
+                a1 = r[i.C];
+                // TODO!
+                if (sym == SymPrint) {
+                    std::cout << "\nPrinting " << a1.Print() << "\n";
+                }
+                p++;
+                break;
             case (SCALL_2):
                 
                 sym = r[i.B].SymbolId;
-                str = isolate->GetStringFromSymbolId(sym);
+                //str = isolate->GetStringFromSymbolId(sym);
                 a1 = r[i.C];
                 p++;
                 a2 = r[(*p).OP];
@@ -122,7 +124,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (SCALL_3):
                 
                 sym = r[i.B].SymbolId;
-                str = isolate->GetStringFromSymbolId(sym);
+                //str = isolate->GetStringFromSymbolId(sym);
                 a1 = r[i.C];
                 p++;
                 a2 = r[(*p).OP];
@@ -136,7 +138,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (SCALL_4):
                 
                 sym = r[i.B].SymbolId;
-                str = isolate->GetStringFromSymbolId(sym);
+                //str = isolate->GetStringFromSymbolId(sym);
                 a1 = r[i.C];
                 p++;
                 a2 = r[(*p).OP];
@@ -151,17 +153,35 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (DEREF):
                 sym = r[i.B].SymbolId;
                 std::cout << "Dereferencing r[" << + (unsigned int)i.B << "] (" << isolate->GetStringFromSymbolId(sym) << ")\n";
-                if (str.compare("y")) {
-                    r[i.A] = INTEGER(5);
+                if (sym == SymPlus) {
+                    r[i.A] = VALUE(OFunction,123);
+                }
+                p++;
+                break;
+            case (CALL_0):
+                fn = r[i.B];
+                code = (CodeFrame*)fn.OtherPointer;
+                cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                p++;
+                break;
+            case (CALL_3):
+                fn = r[i.B];
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+                a3 = r[(*p).A];
+                if (fn.Integer == 123) {
+                    sum = a1.Integer + a2.Integer + a3.Integer;
+                    r[i.A] = INTEGER(sum);
                 }
                 p++;
                 break;
             default:
                 std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;
                 p++;
-                break;
-                //                   throw std::runtime_error("Illegal OP code");
-                //                   break;
+               // break;
+                                   throw std::runtime_error("Illegal OP code");
+                                   break;
         }
     }
 end:

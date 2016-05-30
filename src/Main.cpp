@@ -124,8 +124,8 @@ VALUE TestRun( const char* input, VALUE expectedOutput ) {
     MetaCompilation* mc = Compiler::Compile( &isolate,  v );
     std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
     Continuation c = Interpreter::Interpret( &isolate, mc->compilation );
-    c.ExitRuntimeFrame(&isolate);
     v = c.GetReturnValue();
+    c.ExitRuntimeFrame(&isolate);
     std::cout << input << " == " << v.Print() << "\n";
     assert( v.Equals(expectedOutput) );
     return v;
@@ -193,8 +193,9 @@ int main(int argc, const char * argv[]) {
     //TestFn();
 
     
-    TestRun("(+ 1 2 3)",INTEGER(6));
+    //TestRun("(+ 1 2 3)",INTEGER(6));
     //TestRun("(fn* [] (+ 1 2 3))",VALUE(OFunction,1));
+    TestRun("((fn* [] 123))",INTEGER(123)); // VALUE(OFunction,1));
 
     
 #ifdef USE_VECTOR

@@ -12,7 +12,7 @@
 #define USE_OPTIMIZATIONS
 
 #ifdef USE_OPTIMIZATIONS
-#define USE_COMBINED_VM_OPS
+//#define USE_COMBINED_VM_OPS
 #define USE_CONS
 #define USE_CONS_OPTIMIZATIONS
 #define USE_ARRAY
@@ -925,7 +925,7 @@ public:
 struct CodeFrame {
 //    uint32_t SizeOfUnit;
     uint8_t maxArguments = 0;
-    uint8_t sizeOfPrefixRegisters = 0; // Unitialized registers such as ret, args, closures
+    uint8_t sizeOfUninitializedRegisters = 0; // Unitialized registers such as ret, args, closures
     uint8_t sizeOfInitializedRegisters = 0; // Costants and local variables
     //uint8_t sizeOfFixedRegisters = 0; // TODO! Remove!
     uint8_t sizeOfRegisters = 0;
@@ -938,11 +938,11 @@ struct CodeFrame {
                                                 sizeOfInitializedRegisters); }
 
     
-    CodeFrame( Metaframe* mf, int cntPrefix, int maxArgs, int regCount, int initRegCount ) {
+    CodeFrame( Metaframe* mf, int cntUninitialized, int maxArgs, int regCount, int cntInitialized ) {
         maxArguments = maxArgs;
-        sizeOfPrefixRegisters = cntPrefix * sizeof(VALUE);
+        sizeOfUninitializedRegisters = cntUninitialized * sizeof(VALUE);
         sizeOfRegisters = regCount * sizeof(VALUE);
-        sizeOfInitializedRegisters = initRegCount * sizeof(VALUE);
+        sizeOfInitializedRegisters = cntInitialized * sizeof(VALUE);
     }
 
 };
@@ -1007,14 +1007,14 @@ public:
     //}
     
     void EnterIntoNewRuntimeFrame( Isolate* isolate, CodeFrame* code, RegisterRuntimeFrame* parent ) {
-        assert( frame == NULL );
+       // assert( frame == NULL );
         // The compiled code contains the size of the registers needed for the
         // code of a single function (metaframe).
         // It also contains the initial values for the registers that are either
         // invariant or that have a initial value.
         frame = (RegisterRuntimeFrame*)isolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + code->sizeOfRegisters);
-        //size_t sizeOfPrefixRegisters = code->sizeOfPrefixRegisters * sizeof(VALUE);
-        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame) + code->sizeOfPrefixRegisters, ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
+        //size_t sizeOfUninitializedRegisters = code->sizeOfUninitializedRegisters * sizeof(VALUE);
+        memcpy( ((byte*)frame) + sizeof(RegisterRuntimeFrame) + code->sizeOfUninitializedRegisters, ((byte*)code) + sizeof(CodeFrame), code->sizeOfInitializedRegisters );
         frame->Comp = code;
         frame->Parent = parent;
     }

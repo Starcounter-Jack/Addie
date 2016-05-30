@@ -22,11 +22,11 @@ int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllo
 // Compile a function/lambda declaration
 int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     
-    assert( mtd == UseReturnRegister);
+ //   assert( mtd == UseReturnRegister);
     
     Metaframe* oldMf = mc->currentMetaframe;
 
-    Instruction* forward = oldMf->BeginCodeWrite(isolate);
+    //Instruction* forward = oldMf->BeginCodeWrite(isolate);
     
     int regFunc;
     if (mtd == UseFree) {
@@ -35,6 +35,7 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     else {
         regFunc = 0;
     }
+    
     
     Metaframe* newFrame = MALLOC_HEAP(Metaframe); // TODO! GC
     new (newFrame) Metaframe(isolate,oldMf->currentScope,oldMf->compilation);
@@ -62,21 +63,18 @@ int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloca
     }
     
     //    new (unit) CodeFrame( code, registers,  );
-    //newFrame->Seal(isolate);
+    newFrame->Flush(isolate);
     mc->currentMetaframe = oldMf;
     
     if (newFrame->GetEnclosedVariableCount() > 0) {
+         Instruction* forward = oldMf->BeginCodeWrite(isolate);
         (*forward++) = Instruction(CALL_FORWARD,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
-    } //else {
-      //  (*forward) = Instruction(NOP); // ,(uint8_t)0,(uint8_t)regFunc,(uint8_t)newFrame->enclosedVariables.size());
-    //}
-    oldMf->EndCodeWrite(isolate,forward);
-
+        oldMf->EndCodeWrite(isolate,forward);
+    }
 
     oldMf->SetInitializationForRegister(isolate,regFunc,VALUE(OFunction,newFrame->identifier));
-
     
-    return 0;
+    return regFunc;
 }
 
 
@@ -217,6 +215,7 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
            i = mf->BeginCodeWrite(isolate);
            //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
            (*i++) = Instruction( DEREF, (uint8_t)resultRegNo, (uint8_t)regNo );
+            std::cout << "Adding DEREF\n";
            mf->EndCodeWrite(isolate,i);
            return resultRegNo;
         }
@@ -598,7 +597,8 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
                 Pack(p->C);
                 break;
             default:
-                throw std::runtime_error("Not implemented");
+                std::cout << "Unknown OP in pack:" << isolate->GetStringFromSymbolId(p->OP) << "\n";
+  //              throw std::runtime_error("Not implemented");
                 break;
         }
         p++;
@@ -686,7 +686,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
     //Metaframe* mf = code->metaframe;
     
     const char* str;
-    VALUE* R = code->StartOfRegisters();
+//    VALUE* R = code->StartOfRegisters();
     
     int prefix;
     res << "============================================================\n";
@@ -700,10 +700,10 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
         
     }
     title << mf->identifier << " (";
-    title << "clo=" << (int)mf->GetEnclosedVariableCount();
-    title << ",arg=" << (int)mf->codeFrame->maxArguments;
-    title << ",con=" << (int)mf->maxInitializedRegisters;
-    title << ",tmp=" << (int)mf->maxIntermediateRegisters;
+    title << "closures=" << (int)mf->GetEnclosedVariableCount();
+    title << ",args=" << (int)mf->codeFrame->maxArguments;
+    title << ",init=" << (int)mf->maxInitializedRegisters;
+    title << ",temp=" << (int)mf->maxIntermediateRegisters;
     title << ")";
     std::string tit = title.str();
     prefix = tit.length();
@@ -957,6 +957,9 @@ int VariableScope::AllocateFixedRegister( Isolate* isolate, bool initialize, VAL
 
 void Metaframe::Flush(Isolate* isolate) {
     // Copy the buffer into the compilation unit
+    
+    if (IsFlushed)
+        return;
     
     PackRegisters(isolate, this);
     
