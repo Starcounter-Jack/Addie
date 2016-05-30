@@ -172,7 +172,23 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
                 p = cont.PC;
                 r = cont.frame->GetStartOfRegisters();
+                
                 r[1] = a1;
+                break;
+            case (CALL_2):
+                fn = r[i.B];
+                a1 = r[i.C];
+                p++;
+                a2 = r[(*p).OP];
+
+                code = (CodeFrame*)fn.OtherPointer;
+                cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                p = cont.PC;
+                r = cont.frame->GetStartOfRegisters();
+
+                r[1] = a1;
+                r[2] = a2;
+                p++;
                 break;
             case (CALL_3):
                 fn = r[i.B];
@@ -180,9 +196,20 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 a2 = r[(*p).OP];
                 a3 = r[(*p).A];
+                
                 if (fn.Integer == 123) {
                     sum = a1.Integer + a2.Integer + a3.Integer;
                     r[i.A] = INTEGER(sum);
+                }
+                else {
+                    code = (CodeFrame*)fn.OtherPointer;
+                    cont.EnterIntoNewRuntimeFrame(isolate, code, cont.frame );
+                    p = cont.PC;
+                    r = cont.frame->GetStartOfRegisters();
+                    
+                    r[1] = a1;
+                    r[2] = a2;
+                    r[3] = a3;
                 }
                 p++;
                 break;
