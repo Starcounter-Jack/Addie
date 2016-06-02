@@ -8,7 +8,7 @@
 <img src="https://github.com/Starcounter-Jack/Addie/blob/master/docs/addie2.gif">
 </td>
 <td valign="top"><h4>A modern clojure style embeddable Lisp.</h4>
-1. For those wanting Clojure without Java<br>
+1. For those liking Clojure but don't want the overhead of Java<br>
 2. Fast, small and embeddable<br>
 3. Simple single threaded isolates for simple embedding<br>
 4. Supports vertical parentheses to relax your brain 🍺<br>
