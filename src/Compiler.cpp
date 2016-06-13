@@ -544,6 +544,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
                 // case ():
 //                Pack(p->A);
 //                break;
+            case (CALL_SYSTEM):
             case (SCALL_0):
             case (CALL_0):
             case (MOVE):
@@ -775,6 +776,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << (int)p->B;
                 res << ")";
                 break;
+            case (CALL_SYSTEM):
             case (SCALL_0):
             case (CALL_0):
                 res << str;

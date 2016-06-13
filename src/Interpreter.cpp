@@ -10,8 +10,38 @@
 
 using namespace Addie::Internals;
 
+
 // VM byte-codes are described here
 // https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code
+
+
+VALUE CallSystem( Symbol func, int args, VALUE* r ) {
+    
+    int ret;
+    switch (func) {
+        case (SymPrint):
+            std::cout << "\nPrinting! ";
+            args--;
+            for (int t=1;t<args;t++) {
+                std::cout << r[t].Print();
+            }
+            std::cout << "\n";
+            return NIL();
+        case (SymPlus):
+            std::cout << "\nAdding! ";
+            args--;
+            ret = 0;
+            for (int t=1;t<args;t++) {
+                assert( r[t].IsInteger() );
+                ret += r[t].Integer;
+            }
+            return INTEGER(ret);
+        default:
+            assert(false);
+    }
+    
+}
+
 
 Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
     
@@ -67,6 +97,11 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 //std::cout << "\nexit-with-continuation @(" << p << ")";
                 goto end;
+            case (CALL_SYSTEM):
+                r[i.C] = CallSystem(r[i.B].SymbolId,i.C,r);
+                p++;
+                break;
+
                 
             case (SCALL_0):
                 sym = r[i.B].SymbolId;
@@ -100,7 +135,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a1 = r[i.C];
                 // TODO!
                 if (sym == SymPrint) {
-                    std::cout << "\nPrinting " << a1.Print() << "\n";
+                    r[i.A] = CallSystem(sym, 1, r);
                 }
                 p++;
                 break;
@@ -112,15 +147,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a1 = r[i.C];
                 p++;
                 a2 = r[(*p).OP];
-                if (sym == SymPlus) {
-                    sum = a1.Integer + a2.Integer;
-                    r[i.A] = INTEGER(sum);
-                } else if (sym == SymPrint) {
-                    std::cout << "\nPrinting " << a1.Print() << ", " << a2.Print() << "\n";
-                }
-                else {
                     throw std::runtime_error("Not implemented");
-                }
 
                 p++;
                 break;
@@ -133,10 +160,9 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 a2 = r[(*p).OP];
                 a3 = r[(*p).A];
-                if (sym == SymPlus) {
-                    sum = a1.Integer + a2.Integer + a3.Integer;
-                    r[i.A] = INTEGER(sum);
-                }
+                
+                throw std::runtime_error("Not implemented");
+                
                 p++;
                 break;
                 
@@ -149,19 +175,16 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a2 = r[(*p).OP];
                 a3 = r[(*p).A];
                 a4 = r[(*p).B];
-                if (sym == SymPlus) {
-                    sum = a1.Integer + a2.Integer + a3.Integer + a4.Integer;
-                    r[i.A] = INTEGER(sum);
-                }
+                throw std::runtime_error("Not implemented");
+
                 p++;
                 break;
                 
             case (DEREF):
                 sym = r[i.B].SymbolId;
                 std::cout << "Dereferencing r[" << + (unsigned int)i.B << "] (" << isolate->GetStringFromSymbolId(sym) << ")\n";
-                if (sym == SymPlus) {
-                    r[i.A] = VALUE(OFunction,123);
-                }
+                throw std::runtime_error("Not implemented");
+
                 p++;
                 break;
                 

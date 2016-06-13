@@ -121,6 +121,8 @@ VALUE TestParse( const char* input, int expectedCount, const char* expectedOutpu
 
 VALUE TestRun( const char* input, VALUE expectedOutput ) {
     Isolate isolate;
+    //Namespace* ns = MALLOC_HEAP(Namespace);
+    //new (ns) Namespace();
     VALUE v = Parser::Parse( input );
     MetaCompilation* mc = Compiler::Compile( &isolate,  v );
     std::cout << Compiler::Disassemble(&isolate, mc->compilation, mc ).ToString();
@@ -188,8 +190,11 @@ int main(int argc, const char * argv[]) {
     TestParse("(\"Jack\" \"Wester\")", 2, "(\"Jack\" \"Wester\")");
     TestParse( "⏜\nif (= einstein genius)\n  (print \"e=mc²\")\n  (print \"e!=mc²\")\n⏝",
                     "(if (= einstein genius) (print \"e=mc²\") (print \"e!=mc²\"))");
-    v = TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
+    TestParse("⏜\n   ⏜\n   defn pow [n] \n      ⏜\n      fn [x]\n         (apply * (repeat n x))\n      ⏝\n   ⏝\n   (def ² (pow 2))\n   (def ³ (pow 3))\n⏝",
           "((defn pow [n] (fn [x] (apply * (repeat n x)))) (def ² (pow 2)) (def ³ (pow 3)))");
+    
+    //TestParse("(print 123) (print 456)",
+    //          "(print 123) (print 456)");
     
     //TestFn();
 
@@ -198,6 +203,7 @@ int main(int argc, const char * argv[]) {
     //TestRun("(fn* [] (+ 1 2 3))",VALUE(OFunction,1));
     TestRun("((fn* [x y] (+ 2 3 x y)) 10 4)",INTEGER(19)); // VALUE(OFunction,1));
 
+    
     
 #ifdef USE_VECTOR
     TestMap();
