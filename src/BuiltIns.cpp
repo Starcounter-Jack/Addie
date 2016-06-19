@@ -67,6 +67,11 @@ VALUE Print(Continuation* c, int args ) {
 }
 
 
+VALUE Do(Continuation* c, int args ) {
+    return c->GetArgument(args-1);
+}
+
+
 
 
 
@@ -79,6 +84,7 @@ struct builtIn {
     { "*", Multiply },
     { "/", Divide },
     { "print", Print },
+    { "do", Do },
 };
 
 

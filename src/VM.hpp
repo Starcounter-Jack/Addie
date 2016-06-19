@@ -716,8 +716,7 @@ public:
 
 class Namespace : public NamedEntity {
 public:
-    std::map<Symbol,uint32_t> SlotBindings;
-    std::vector<VALUE> Slots;
+    std::map<Symbol,VALUE> Values;
 };
 
 
@@ -1025,6 +1024,7 @@ extern CodeFrame BuildInFunctionSingletonFrame;
 // Continuations are used by value as it is only 16 bytes in size (on 64 bits architectures).
 class Continuation {
 public:
+    Namespace* CurrentNamespace;
     Instruction* PC;                    // Program Counter (aka Instruction Pointer).
     RegisterRuntimeFrame* frame = NULL;
     
@@ -1080,6 +1080,8 @@ public:
     
     static Continuation Interpret( Isolate* isolate, Compilation* code ) {
         Continuation c;
+        c.CurrentNamespace = MALLOC_HEAP(Namespace);
+        new (c.CurrentNamespace) Namespace();
         CodeFrame* unit = code->GetFirstCodeFrame();
         c.EnterIntoNewRuntimeFrame(isolate,unit, NULL);
         return Interpreter::Interpret( isolate, c );

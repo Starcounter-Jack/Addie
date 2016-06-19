@@ -225,7 +225,8 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (DEREF):
                 sym = r[i.B].SymbolId;
                 std::cout << "Dereferencing r[" << + (unsigned int)i.B << "] (" << isolate->GetStringFromSymbolId(sym) << ")\n";
-                throw std::runtime_error("Not implemented");
+                //throw std::runtime_error("Not implemented");
+                r[i.A] = cont.CurrentNamespace->Values[sym];
 
                 p++;
                 break;
@@ -333,6 +334,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (DEF):
                 sym = r[i.B].SymbolId;
                 std::cout << "Defining " << isolate->GetStringFromSymbolId(sym) << "\n";
+                cont.CurrentNamespace->Values[sym] = r[i.C];
                 r[i.A] = r[i.C];
                 p++;
                 break;

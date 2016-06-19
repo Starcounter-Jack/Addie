@@ -209,6 +209,7 @@ int main(int argc, const char * argv[]) {
     TestRun("(+ 1)",INTEGER(1));
     TestRun("(+)",INTEGER(0));
     TestRun("(def a 1)",INTEGER(1));
+    TestRun("(do (def b 123) b)",INTEGER(123));
     
     
 #ifdef USE_VECTOR
