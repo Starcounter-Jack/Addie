@@ -34,11 +34,15 @@ Isolate::Isolate() {
     for (int t=0;t<Sym_Count;t++) {
         RegisterSymbol( SymStrings[t], strlen(SymStrings[t]), t );
     }
-    //for (int t=0;t<Sym_Count;t++) {
-    //    std::cout << "Registred symbol " << t << " for " << GetStringFromSymbolId(t) << "\n";
-    //}
     
     RegisterBuiltInFunctions();
+}
+
+void Isolate::DumpSymbols() {
+    for (int t=0;t<SymbolStrings.size();t++) {
+        std::cout << "Registred symbol " << t << " for " << GetStringFromSymbolId(t) << "\n";
+    }
+
 }
 
 void Isolate::PrintStatus() {

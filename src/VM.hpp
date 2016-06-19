@@ -921,6 +921,8 @@ public: Isolate();
     
     void RegisterBuiltInFunctions();
     
+    void DumpSymbols();
+    
 };
 
 // http://stackoverflow.com/questions/23791060/c-thread-local-storage-clang-503-0-40-mac-osx

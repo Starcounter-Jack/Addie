@@ -27,6 +27,18 @@ int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllo
 CodeFrame Addie::Internals::BuildInFunctionSingletonFrame( NULL, 0, 255, 256, 0 );
 
 
+int FindConstant(Isolate* isolate, MetaCompilation* mc, VALUE form) {
+    //return -1;
+    Metaframe* mf = mc->currentMetaframe;
+    for (int t=0;t<mf->maxFixedRegisters;t++) {
+        RegisterUse u = mf->RegUsage[t];
+        if (u.IsConstant && u.IsInitialized && mf->initRegisterBuffer[u.InitializedAt].Equals(form)) {
+            //return mf->RegUsage[t].InitializedAt;
+            return t; //t+1;
+        }
+    }
+    return -1;
+}
 
 int CompileConstant( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
     // Compile a constant. If this is the last statement, it will
@@ -38,7 +50,13 @@ int CompileConstant( Isolate* isolate, MetaCompilation* mc, VALUE form, Register
         return 0;
     }
     if (mtd == UseFree) {
-        int regNo = mf->currentScope->AllocateFixedRegister(isolate,true,form, RET,RegConstant);
+        
+        int regNo;
+        
+        regNo = FindConstant( isolate, mc, form );
+        if (regNo == -1) {
+            regNo = mf->currentScope->AllocateFixedRegister(isolate,true,form, RET,RegConstant);
+        }
         
         //    int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
         //Instruction* i = mf->BeginCodeWrite(isolate);
@@ -242,13 +260,14 @@ int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, Register
     
     
     if ( x == -1 ) {
-        
+
 //        throw std::runtime_error("Variable is not declared");
     
 //        CodeFrame* unit = mf->codeFrame;
 //        VALUE* registers = unit->;
         //int regNo = mf->AllocateConstant( symbol );
-        int regNo = mf->currentScope->AllocateFixedRegister(isolate,true,symbol, symbol.SymbolId,RegConstant);
+        //int regNo = mf->currentScope->AllocateFixedRegister(isolate,true,symbol, symbol.SymbolId,RegConstant);
+        int regNo = CompileConstant(isolate, mc, symbol, mtd);
         
         if (deref) {
             int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
