@@ -102,7 +102,7 @@ public:
         JMP_IF_TRUE,
         DEREF,
         CALL_FORWARD,
-        CALL_SYSTEM,
+    //    CALL_SYSTEM,
         /*
          ENCLOSE_1,
          ENCLOSE_2,
@@ -157,7 +157,7 @@ public:
         "jmp-if-true",
         "deref",
         "call-forward",
-        "call-system",
+   //     "call-system",
         /*
         "enclose-1",
         "enclose-2",
@@ -894,6 +894,9 @@ public: Isolate();
     }
     
     Symbol RegisterSymbol( const char* str, size_t size, int known );
+    
+    Symbol RegisterBuildInFunction( Symbol symbol, 
+    
 };
 
 // http://stackoverflow.com/questions/23791060/c-thread-local-storage-clang-503-0-40-mac-osx
@@ -992,7 +995,7 @@ struct RegisterRuntimeFrame
         
 extern ATTRIBUTE_TLS Isolate* CurrentIsolate;
 
-
+extern CodeFrame BuildInFunctionSingletonFrame;
 
 // Continuations are used by value as it is only 16 bytes in size (on 64 bits architectures).
 class Continuation {
@@ -1002,6 +1005,11 @@ public:
     
     inline VALUE GetReturnValue() {
         return frame->GetStartOfRegisters()[0];
+    }
+    
+    VALUE GetArgument( int t ) {
+        VALUE* r = frame->GetStartOfRegisters();
+        return r[t+1];
     }
     
     //inline bool HasRunToCompletion() {
@@ -1022,10 +1030,20 @@ public:
         PC = code->StartOfInstructions();
     }
     
+    inline void EnterIntoNewRuntimeFrame( Isolate* isolate, RegisterRuntimeFrame* parent ) {
+        frame = (RegisterRuntimeFrame*)isolate->AdvanceStack(sizeof(RegisterRuntimeFrame) + sizeof(VALUE) * 256 );
+        frame->Comp = &BuildInFunctionSingletonFrame;
+        frame->Parent = parent;
+    }
+
+    
     void ExitRuntimeFrame( Isolate* isolate ) {
         isolate->PopStack(sizeof(RegisterRuntimeFrame) + frame->Comp->sizeOfRegisters );
+        frame = frame->Parent;
     }
 };
+
+VALUE CallBuiltInFunction( Continuation* c, Symbol func, int args );
 
 
 

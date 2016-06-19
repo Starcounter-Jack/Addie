@@ -15,27 +15,34 @@ using namespace Addie::Internals;
 // https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code
 
 
-VALUE CallSystem( Symbol func, int args, VALUE* r ) {
+
+
+VALUE CallBuiltInFunction4( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3, VALUE a4 ) {
     
-    int ret;
+    //int ret;
+    VALUE ret;
+    VALUE* r;
     switch (func) {
         case (SymPrint):
             std::cout << "\nPrinting! ";
-            args--;
-            for (int t=1;t<args;t++) {
-                std::cout << r[t].Print();
-            }
-            std::cout << "\n";
-            return NIL();
+            //Metaframe
+            //c->EnterIntoNewRuntimeFrame(isolate, cf, NULL );
+            //args--;
+            //for (int t=1;t<args;t++) {
+            //    std::cout << r[t].Print();
+            //}
+            //std::cout << "\n";
+            //return NIL();
         case (SymPlus):
-            std::cout << "\nAdding! ";
-            args--;
-            ret = 0;
-            for (int t=1;t<args;t++) {
-                assert( r[t].IsInteger() );
-                ret += r[t].Integer;
-            }
-            return INTEGER(ret);
+            c->EnterIntoNewRuntimeFrame(isolate, c->frame );
+            r = c->frame->GetStartOfRegisters();
+            r[1] = a1;
+            r[2] = a2;
+            r[3] = a3;
+            r[4] = a4;
+            ret = CallBuiltInFunction(c,func,4);
+            c->ExitRuntimeFrame(isolate);
+            return ret;
         default:
             assert(false);
     }
@@ -97,10 +104,10 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 p++;
                 //std::cout << "\nexit-with-continuation @(" << p << ")";
                 goto end;
-            case (CALL_SYSTEM):
-                r[i.C] = CallSystem(r[i.B].SymbolId,i.C,r);
-                p++;
-                break;
+       //     case (CALL_SYSTEM):
+       //         r[i.C] = CallBuiltInFunction(r[i.B].SymbolId,i.C,r);
+       //         p++;
+       //         break;
 
                 
             case (SCALL_0):
@@ -133,10 +140,9 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (SCALL_1):
                 sym = r[i.B].SymbolId;
                 a1 = r[i.C];
-                // TODO!
-                if (sym == SymPrint) {
-                    r[i.A] = CallSystem(sym, 1, r);
-                }
+                
+            //    r[i.A] = CallBuiltInFunction1(sym, 1, r);
+                
                 p++;
                 break;
                 
@@ -175,7 +181,9 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a2 = r[(*p).OP];
                 a3 = r[(*p).A];
                 a4 = r[(*p).B];
-                throw std::runtime_error("Not implemented");
+                
+                r[i.A] = CallBuiltInFunction4( isolate, &cont, sym, a1, a2, a3, a4 );
+//                throw std::runtime_error("Not implemented");
 
                 p++;
                 break;

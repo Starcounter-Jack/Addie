@@ -18,6 +18,9 @@ using namespace Addie::Internals;
 int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd );
 
 
+CodeFrame Addie::Internals::BuildInFunctionSingletonFrame( NULL, 0, 255, 256, 0 );
+
+
 
 // Compile a function/lambda declaration
 int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
@@ -544,7 +547,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
                 // case ():
 //                Pack(p->A);
 //                break;
-            case (CALL_SYSTEM):
+           // case (CALL_SYSTEM):
             case (SCALL_0):
             case (CALL_0):
             case (MOVE):
@@ -776,7 +779,7 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << (int)p->B;
                 res << ")";
                 break;
-            case (CALL_SYSTEM):
+         //   case (CALL_SYSTEM):
             case (SCALL_0):
             case (CALL_0):
                 res << str;

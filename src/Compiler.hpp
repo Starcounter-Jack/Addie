@@ -171,13 +171,26 @@ namespace Addie {
         
 
         
+        // The metaframe corresponds to a function during compilation time. It contains information
+        // not needed at runtime. It contains temporary buffers used while writing code and constants
+        // using the compilation phase. These buffers are transferred to continuous memory in the runtime
+        // representation of the code and constants (the CodeFrame).
+        //
+        //
+        // Compiler     Runtime
+        // =========    =================================
+        // Metaframe -> CodeFrame -> RegisterRuntimeFrame
+        //
+        // Metaframe: Contains temporary and debug information
+        // Codeframe: Contains the bytecode and constant values in the function
+        // RegisterRuntimeFrame: Contains the state of a specific call (arguments and local variables)
+        //
         class Metaframe  {
         public:
-            int maxArguments = 0;
+            int maxArguments = 0; // The number of arguments (parameters) accepted by the function
             int identifier;
             std::string identifierStr;
             std::vector<Capture> enclosedVariables;
-            bool IsFlushed = false;
             RegisterUse RegUsage[256];
             VariableScope* Parent = NULL;
             
@@ -190,11 +203,16 @@ namespace Addie {
             int maxIntermediateRegisters = 0;
             int maxFixedRegisters = 0;
             int maxInitializedRegisters = 0;
-            Instruction* tempCodeWriteHead;
+
+            bool IsFlushed = false;  // While a function is being compiled, the code and constants are written
+                                     // to temporary buffers. When the buffers are copied into the CodeFrame,
+                                     // this flag will be set to true to indicate that the buffers are no longer in use.
             Instruction* tempCodeBuffer = NULL; // Will point to a temporary stack allocation during compilation
-            VALUE* tempRegisterWriteHead;
+            Instruction* tempCodeWriteHead; // Will point to the end of the temporary code buffer.
             VALUE* initRegisterBuffer = NULL; // Will point to a temporary stack allocation during compilation
-            //bool haveStartedWritingInitializedRegisters = false;
+            VALUE* tempRegisterWriteHead; // Will point to the end of the temporary register default value buffer.
+            
+            
             
             Metaframe( Isolate* isolate, VariableScope* parent, Compilation* comp ) :Parent(parent) {
                 if (parent != NULL ) {

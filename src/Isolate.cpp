@@ -34,6 +34,8 @@ Isolate::Isolate() {
     for (int t=0;t<Sym_Count;t++) {
         RegisterSymbol( SymStrings[t], strlen(SymStrings[t]), t );
     }
+    
+//    RegisterBuiltIn( )
 }
 
 void Isolate::PrintStatus() {
