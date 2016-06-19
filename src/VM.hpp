@@ -101,6 +101,7 @@ public:
         JMP,
         JMP_IF_TRUE,
         DEREF,
+        DEF,
         CALL_FORWARD,
     //    CALL_SYSTEM,
         /*
@@ -123,7 +124,6 @@ public:
         SymTrue,
         SymLetStar,
         SymFnStar,
-        SymDef,
         SymString,
 //        SymPlus,
 //        SymMinus,
@@ -156,6 +156,7 @@ public:
         "jmp",
         "jmp-if-true",
         "deref",
+        "def",
         "call-forward",
    //     "call-system",
         /*
@@ -178,7 +179,6 @@ public:
         "true",
         "let*",
         "fn*",
-        "def",
         "string",
 //        "+",
 //        "-",
@@ -894,7 +894,9 @@ public: Isolate();
     uint LastSymbolUsed = 0;
     
     std::string GetStringFromSymbolId( uint32_t id ) {
-        return SymbolStrings[id];
+        std::string str = SymbolStrings[id];
+        //std::cout << "Found string" << str << " for " << id << "\n";
+        return str;
     }
     
     Symbol RegisterNamespace( Symbol sym ) {

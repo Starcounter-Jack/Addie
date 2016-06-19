@@ -15,12 +15,74 @@ using namespace Addie::Internals;
 
 #define INDENTATION 20
 
+
+
+
+
+
+
 int CompileForm( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd );
 
 
 CodeFrame Addie::Internals::BuildInFunctionSingletonFrame( NULL, 0, 255, 256, 0 );
 
 
+
+int CompileConstant( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
+    // Compile a constant. If this is the last statement, it will
+    // occupy the return register (r[0]).
+    Metaframe* mf = mc->currentMetaframe;
+    
+    if (mtd == UseReturnRegister) {
+        mf->SetReturnRegister( isolate, form );
+        return 0;
+    }
+    if (mtd == UseFree) {
+        int regNo = mf->currentScope->AllocateFixedRegister(isolate,true,form, RET,RegConstant);
+        
+        //    int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
+        //Instruction* i = mf->BeginCodeWrite(isolate);
+        //    //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
+        //    (*i++) = Instruction( MOVE, (uint8_t)resultRegNo, (uint8_t)regNo );
+        //    mf->EndCodeWrite(isolate,i);
+        //    return resultRegNo;
+        return regNo;
+    }
+    throw new std::runtime_error("Error");
+}
+
+
+
+// Find all declared variables and their default values
+int CompileDef( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
+    
+    Metaframe* mf = mc->currentMetaframe;
+    
+    assert( form.IsList());
+    assert( form.Count() == 3);
+    
+    VALUE sym = form.GetAt(1);
+    VALUE value = form.GetAt(2);
+    assert( sym.IsSymbol());
+    
+    int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
+
+    Instruction* i = mf->BeginCodeWrite(isolate);
+    //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
+    
+//    ( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd )
+    int symbolReg =  CompileConstant(isolate,mc,sym,UseFree);
+    int valueReg =  CompileForm(isolate,mc,value,UseFree);
+    
+    (*i++) = Instruction( DEF, (uint8_t)resultRegNo, (uint8_t)symbolReg, (uint8_t)valueReg);
+    std::cout << "Adding DEF\n";
+    mf->EndCodeWrite(isolate,i);
+    
+   
+    
+    //assert(form.Rest().IsEmptyList());
+    return 0;
+}
 
 // Compile a function/lambda declaration
 int CompileFn( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
@@ -155,31 +217,6 @@ Metaframe* CompileFrames( Isolate* isolate, Namespace* ns, Metaframe* mf, VALUE 
 */
 
 
-
-
-
-int CompileConstant( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAllocationMethod mtd ) {
-    // Compile a constant. If this is the last statement, it will
-    // occupy the return register (r[0]).
-    Metaframe* mf = mc->currentMetaframe;
-
-    if (mtd == UseReturnRegister) {
-        mf->SetReturnRegister( isolate, form );
-        return 0;
-    }
-    if (mtd == UseFree) {
-        int regNo = mf->currentScope->AllocateFixedRegister(isolate,true,form, RET,RegConstant);
-        
-        //    int resultRegNo = mf->AllocateRegister(isolate, mtd, 0);
-        //Instruction* i = mf->BeginCodeWrite(isolate);
-        //    //auto resultRegNo = (uint8_t)mf->AllocateIntermediateRegister();
-        //    (*i++) = Instruction( MOVE, (uint8_t)resultRegNo, (uint8_t)regNo );
-        //    mf->EndCodeWrite(isolate,i);
-        //    return resultRegNo;
-        return regNo;
-    }
-    throw new std::runtime_error("Error");
-}
 
 
 int CompileSymbol( Isolate* isolate, MetaCompilation* mc, VALUE symbol, RegisterAllocationMethod mtd, bool deref ) {
@@ -376,6 +413,8 @@ int CompileParenthesis( Isolate* isolate, MetaCompilation* mc, VALUE form, Regis
                 return CompileLet( isolate, mc, form, mtd );
             case (SymFnStar):
                 return CompileFn( isolate, mc, form, mtd );
+            case (DEF):
+                return CompileDef( isolate, mc, form, mtd );
         }
         
 
@@ -556,6 +595,7 @@ void PackRegisters( Isolate* isolate, Metaframe* mf ) {
                 Pack(p->A);
                 Pack(p->B);
                 break;
+            case (DEF):
             case (SCALL_1):
             case (CALL_1):
                 Pack(p->A);
@@ -790,6 +830,8 @@ uintptr_t DisassembleUnit( Isolate* isolate, std::ostringstream& res, CodeFrame*
                 res << (int)p->B;
                 res << ")";
                 break;
+            case (DEF):
+
             case (SCALL_1):
             case (CALL_1):
                 res << str;

@@ -66,6 +66,10 @@ VALUE Print(Continuation* c, int args ) {
     return NIL();
 }
 
+
+
+
+
 struct builtIn {
     const char* name;
     BuiltInFunction func;
@@ -74,7 +78,7 @@ struct builtIn {
     { "-", Subtract },
     { "*", Multiply },
     { "/", Divide },
-    { "print", Print }
+    { "print", Print },
 };
 
 

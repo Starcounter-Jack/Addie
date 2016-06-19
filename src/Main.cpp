@@ -208,6 +208,7 @@ int main(int argc, const char * argv[]) {
     TestRun("(+ 1 2)",INTEGER(3));
     TestRun("(+ 1)",INTEGER(1));
     TestRun("(+)",INTEGER(0));
+    TestRun("(def a 1)",INTEGER(1));
     
     
 #ifdef USE_VECTOR

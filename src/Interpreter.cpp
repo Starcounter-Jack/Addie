@@ -330,6 +330,13 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 
                 break;
                 
+            case (DEF):
+                sym = r[i.B].SymbolId;
+                std::cout << "Defining " << isolate->GetStringFromSymbolId(sym) << "\n";
+                r[i.A] = r[i.C];
+                p++;
+                break;
+                
             default:
                 std::cout << "Unknown: " << isolate->GetStringFromSymbolId(i.OP) << "\n" ;
                 p++;

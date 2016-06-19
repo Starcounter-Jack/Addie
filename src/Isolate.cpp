@@ -34,6 +34,9 @@ Isolate::Isolate() {
     for (int t=0;t<Sym_Count;t++) {
         RegisterSymbol( SymStrings[t], strlen(SymStrings[t]), t );
     }
+    //for (int t=0;t<Sym_Count;t++) {
+    //    std::cout << "Registred symbol " << t << " for " << GetStringFromSymbolId(t) << "\n";
+    //}
     
     RegisterBuiltInFunctions();
 }
@@ -65,7 +68,6 @@ Symbol Isolate::RegisterSymbol( const char* str, size_t size, int known ) {
     if (known != -1 && known != id ) {
         throw std::runtime_error("Error in fixed symbol registration");
     }
-    //std::cout << "Registred symbol " << id << " for " << s << "\n";
     return id;
 }
 
