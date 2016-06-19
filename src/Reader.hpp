@@ -116,8 +116,16 @@ class Parser {
     static VALUE ParseVector( StreamReader* r);
    
     static VALUE ParseMinusOrSymbol( StreamReader* r ) {
-        throw std::runtime_error("Encountered a minus or symbol");
-        return NIL();
+        r->ReadEofOk();
+        unsigned char c = r->ReadEofOk();
+        r->UnRead();
+        if (Chars[c].IsDigit) {
+            return ParseNumber(r).Negate();
+        }
+        else {
+            r->UnRead();
+            return ParseSymbol(r);
+        }
     }
     
     static VALUE ParseComment( StreamReader* r ) {

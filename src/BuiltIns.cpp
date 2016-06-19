@@ -22,6 +22,17 @@ VALUE Add(Continuation* c, int args ) {
     return INTEGER(ret);
 }
 
+VALUE Subtract(Continuation* c, int args ) {
+    int ret = 0;
+    for (int t=0;t<args;t++) {
+        VALUE v = c->GetArgument(t);
+        assert(v.IsInteger());
+        ret -= v.Integer;
+    }
+    return INTEGER(ret);
+}
+
+
 
 VALUE Print(Continuation* c, int args ) {
     for (int t=0;t<args;t++) {
@@ -31,20 +42,19 @@ VALUE Print(Continuation* c, int args ) {
     return NIL();
 }
 
-struct {
+struct builtIn {
     const char* name;
     BuiltInFunction func;
 } builtIns [] = {
     { "+", Add },
+    { "-", Subtract },
     { "print", Print }
 };
-#define BUILTIN_COUNT 2
-
 
 
 void Isolate::RegisterBuiltInFunctions() {
     Symbol sym;
-    for (int t=0;t<BUILTIN_COUNT;t++) {
+    for (int t=0;t<sizeof(builtIns)/sizeof(builtIn);t++) {
         sym = RegisterSymbol(builtIns[t].name);
         RegisterBuiltInFunction( sym, builtIns[t].func );
     }

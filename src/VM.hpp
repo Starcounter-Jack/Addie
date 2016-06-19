@@ -126,7 +126,7 @@ public:
         SymDef,
         SymString,
 //        SymPlus,
-        SymMinus,
+//        SymMinus,
         SymStar,
         SymSlash,
         SymCons,
@@ -181,7 +181,7 @@ public:
         "def",
         "string",
 //        "+",
-        "-",
+//        "-",
         "*",
         "/",
         "Cons",
@@ -331,6 +331,12 @@ public:
         Integer = value;
     }
     
+    VALUE( int num ) {
+        Type = TNumber;
+        NumberSubType = NInteger;
+        Integer = num;
+    }
+    
     
     //    LIST Assoc( VALUE key, VALUE value );
     
@@ -360,6 +366,11 @@ public:
         SetListPointer( (uint64_t)list );
     }
     
+    VALUE Negate() {
+        assert( IsInteger() );
+        return VALUE(-Integer);
+    }
+
     
     
     
@@ -564,6 +575,7 @@ public:
     
     std::string ToString();
     std::string Print();
+    
 };
     
 class Continuation;
