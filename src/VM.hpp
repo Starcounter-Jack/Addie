@@ -125,12 +125,12 @@ public:
         SymFnStar,
         SymDef,
         SymString,
-        SymPlus,
+//        SymPlus,
         SymMinus,
         SymStar,
         SymSlash,
         SymCons,
-        SymPrint,
+//        SymPrint,
         Sym_Count
     };
     static const char *SymStrings[] = {
@@ -180,12 +180,12 @@ public:
         "fn*",
         "def",
         "string",
-        "+",
+//        "+",
         "-",
         "*",
         "/",
         "Cons",
-        "print"
+//        "print"
     };
 
 
@@ -715,6 +715,8 @@ class Function : public NamedEntity {
 class Continuation;
     struct Compilation;
 
+typedef VALUE (*BuiltInFunction)(Continuation* cont, int args);
+
 // To allow multiple VMs in the same process.
 class Isolate {
     
@@ -722,7 +724,8 @@ public:
     std::map<std::string,Symbol> SymbolsIds;  // { firstname:1, lastname:2, foo:3, bar:4 }
     std::vector<std::string> SymbolStrings;     // [ "firstname", "lastname", "foo", "bar" ]
     std::map<Symbol,Namespace*> Namespaces;
-    std::map<Symbol,Compilation*> BuiltInFunctions;
+    //    std::map<Symbol,Compilation*> BuiltInFunctions;
+    std::map<Symbol,BuiltInFunction> BuiltInFunctions;
 
     
     uintptr_t Stack;
@@ -894,8 +897,16 @@ public: Isolate();
     }
     
     Symbol RegisterSymbol( const char* str, size_t size, int known );
+    Symbol RegisterSymbol( const char* str ) {
+        return RegisterSymbol(str, strlen(str), -1);
+    }
     
-    //Symbol RegisterBuildInFunction( Symbol symbol,
+    void RegisterBuiltInFunction( Symbol symbol, VALUE (*buildInFunction)(Continuation*,int args) );
+    BuiltInFunction GetBuiltInFunction( Symbol symbol) {
+        return BuiltInFunctions[symbol];
+    }
+    
+    void RegisterBuiltInFunctions();
     
 };
 
@@ -1043,7 +1054,7 @@ public:
     }
 };
 
-VALUE CallBuiltInFunction( Continuation* c, Symbol func, int args );
+VALUE CallBuiltInFunction( Isolate* isolate, Continuation* c, Symbol func, int args );
 
 
 

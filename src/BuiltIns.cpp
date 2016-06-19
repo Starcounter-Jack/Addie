@@ -13,7 +13,6 @@ using namespace Addie::Internals;
 
 
 VALUE Add(Continuation* c, int args ) {
-    std::cout << "\nAdding! ";
     int ret = 0;
     for (int t=0;t<args;t++) {
         VALUE v = c->GetArgument(t);
@@ -23,24 +22,31 @@ VALUE Add(Continuation* c, int args ) {
     return INTEGER(ret);
 }
 
-//void RegisterBuiltInFunctions( Isolate* isolate ) {
- //   isolate->RegisterFunction( "+", Add );
-//}
 
-
-VALUE Addie::Internals::CallBuiltInFunction( Continuation* c, Symbol func, int args ) {
-    //VALUE* r =  c->frame->GetStartOfRegisters(); // cframe->StartOfRegisters();
-    //int ret;
-    switch (func) {
-        case (SymPrint):
-            std::cout << "\nPrinting! ";
-            for (int t=0;t<args;t++) {
-                std::cout << c->GetArgument(t).Print();
-            }
-            std::cout << "\n";
-            return NIL();
-        case (SymPlus):
-            return Add( c, args );
+VALUE Print(Continuation* c, int args ) {
+    for (int t=0;t<args;t++) {
+        VALUE v = c->GetArgument(t);
+        std::cout << v.Print();
     }
-    throw std::runtime_error("Not implemented");
+    return NIL();
 }
+
+struct {
+    const char* name;
+    BuiltInFunction func;
+} builtIns [] = {
+    { "+", Add },
+    { "print", Print }
+};
+#define BUILTIN_COUNT 2
+
+
+
+void Isolate::RegisterBuiltInFunctions() {
+    Symbol sym;
+    for (int t=0;t<BUILTIN_COUNT;t++) {
+        sym = RegisterSymbol(builtIns[t].name);
+        RegisterBuiltInFunction( sym, builtIns[t].func );
+    }
+}
+

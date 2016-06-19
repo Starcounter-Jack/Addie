@@ -22,30 +22,17 @@ VALUE CallBuiltInFunction4( Isolate* isolate, Continuation* c, Symbol func, VALU
     //int ret;
     VALUE ret;
     VALUE* r;
-    switch (func) {
-        case (SymPrint):
-            std::cout << "\nPrinting! ";
-            //Metaframe
-            //c->EnterIntoNewRuntimeFrame(isolate, cf, NULL );
-            //args--;
-            //for (int t=1;t<args;t++) {
-            //    std::cout << r[t].Print();
-            //}
-            //std::cout << "\n";
-            //return NIL();
-        case (SymPlus):
+
+
             c->EnterIntoNewRuntimeFrame(isolate, c->frame );
             r = c->frame->GetStartOfRegisters();
             r[1] = a1;
             r[2] = a2;
             r[3] = a3;
             r[4] = a4;
-            ret = CallBuiltInFunction(c,func,4);
+            ret = CallBuiltInFunction(isolate,c,func,4);
             c->ExitRuntimeFrame(isolate);
             return ret;
-        default:
-            assert(false);
-    }
     
 }
 
@@ -309,4 +296,18 @@ end:
     cont.PC = p;
     return cont;
     
+}
+
+
+VALUE Addie::Internals::CallBuiltInFunction( Isolate* isolate, Continuation* c, Symbol sym, int args ) {
+    //VALUE* r =  c->frame->GetStartOfRegisters(); // cframe->StartOfRegisters();
+    //int ret;
+    BuiltInFunction func = isolate->GetBuiltInFunction( sym );
+    if (func == NULL ) {
+        std::cout << "Cannot find function ";
+        std::cout << isolate->GetStringFromSymbolId(sym);
+        std::cout << "\n";
+        assert( func != NULL);
+    }
+    return func( c, args );
 }
