@@ -127,8 +127,8 @@ public:
         SymString,
 //        SymPlus,
 //        SymMinus,
-        SymStar,
-        SymSlash,
+//        SymStar,
+//        SymSlash,
         SymCons,
 //        SymPrint,
         Sym_Count
@@ -182,8 +182,8 @@ public:
         "string",
 //        "+",
 //        "-",
-        "*",
-        "/",
+//        "*",
+//        "/",
         "Cons",
 //        "print"
     };

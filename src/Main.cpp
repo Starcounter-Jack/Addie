@@ -201,7 +201,9 @@ int main(int argc, const char * argv[]) {
     
     //TestRun("(+ 1 2 3)",INTEGER(6));
     //TestRun("(fn* [] (+ 1 2 3))",VALUE(OFunction,1));
+    TestRun("((fn* [x y] (+ 2 3 x y)) 10 4)",INTEGER(19)); // VALUE(OFunction,1));
     TestRun("((fn* [x y] (- 2 -3 x y)) 10 4)",INTEGER(-13)); // VALUE(OFunction,1));
+    TestRun("((fn* [x y] (* 2 3 x y)) 10 4)",INTEGER(240)); // VALUE(OFunction,1));
 
     
     

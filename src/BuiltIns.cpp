@@ -33,6 +33,18 @@ VALUE Subtract(Continuation* c, int args ) {
 }
 
 
+VALUE Multiply(Continuation* c, int args ) {
+    int ret = 1;
+    for (int t=0;t<args;t++) {
+        VALUE v = c->GetArgument(t);
+        assert(v.IsInteger());
+        ret *= v.Integer;
+    }
+    return INTEGER(ret);
+}
+
+
+
 
 VALUE Print(Continuation* c, int args ) {
     for (int t=0;t<args;t++) {
@@ -48,6 +60,7 @@ struct builtIn {
 } builtIns [] = {
     { "+", Add },
     { "-", Subtract },
+    { "*", Multiply },
     { "print", Print }
 };
 
