@@ -1,5 +1,8 @@
 #Temporary folders
 build
+Debug
+bin
+Addie.xcodeproj
 
 # Compiled Object files
 *.slo

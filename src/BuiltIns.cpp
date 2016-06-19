@@ -23,9 +23,9 @@ VALUE Add(Continuation* c, int args ) {
     return INTEGER(ret);
 }
 
-void RegisterBuiltInFunctions( Isolate* isolate ) {
-    isolate->RegisterFunction( "+", Add );
-}
+//void RegisterBuiltInFunctions( Isolate* isolate ) {
+ //   isolate->RegisterFunction( "+", Add );
+//}
 
 
 VALUE Addie::Internals::CallBuiltInFunction( Continuation* c, Symbol func, int args ) {

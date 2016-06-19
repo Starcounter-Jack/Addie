@@ -895,7 +895,7 @@ public: Isolate();
     
     Symbol RegisterSymbol( const char* str, size_t size, int known );
     
-    Symbol RegisterBuildInFunction( Symbol symbol, 
+    //Symbol RegisterBuildInFunction( Symbol symbol,
     
 };
 
