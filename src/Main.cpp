@@ -204,7 +204,10 @@ int main(int argc, const char * argv[]) {
     TestRun("((fn* [x y] (+ 2 3 x y)) 10 4)",INTEGER(19)); // VALUE(OFunction,1));
     TestRun("((fn* [x y] (- 2 -3 x y)) 10 4)",INTEGER(-13)); // VALUE(OFunction,1));
     TestRun("((fn* [x y] (* 2 3 x y)) 10 4)",INTEGER(240)); // VALUE(OFunction,1));
-
+    TestRun("(/ 20 2 2)",INTEGER(5));
+    TestRun("(+ 1 2)",INTEGER(3));
+    TestRun("(+ 1)",INTEGER(1));
+    TestRun("(+)",INTEGER(0));
     
     
 #ifdef USE_VECTOR

@@ -15,25 +15,68 @@ using namespace Addie::Internals;
 // https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code
 
 
+VALUE CallBuiltInFunction0( Isolate* isolate, Continuation* c, Symbol func ) {
+    VALUE ret;
+    VALUE* r;
+    c->EnterIntoNewRuntimeFrame(isolate, c->frame );
+    r = c->frame->GetStartOfRegisters();
+    ret = CallBuiltInFunction(isolate,c,func,0);
+    c->ExitRuntimeFrame(isolate);
+    return ret;
+}
+
+VALUE CallBuiltInFunction1( Isolate* isolate, Continuation* c, Symbol func, VALUE a1 ) {
+    VALUE ret;
+    VALUE* r;
+    c->EnterIntoNewRuntimeFrame(isolate, c->frame );
+    r = c->frame->GetStartOfRegisters();
+    r[1] = a1;
+    ret = CallBuiltInFunction(isolate,c,func,1);
+    c->ExitRuntimeFrame(isolate);
+    return ret;
+}
+
+
+VALUE CallBuiltInFunction2( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2 ) {
+    VALUE ret;
+    VALUE* r;
+    c->EnterIntoNewRuntimeFrame(isolate, c->frame );
+    r = c->frame->GetStartOfRegisters();
+    r[1] = a1;
+    r[2] = a2;
+    ret = CallBuiltInFunction(isolate,c,func,2);
+    c->ExitRuntimeFrame(isolate);
+    return ret;
+}
+
+
+
+VALUE CallBuiltInFunction3( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3 ) {
+    VALUE ret;
+    VALUE* r;
+    c->EnterIntoNewRuntimeFrame(isolate, c->frame );
+    r = c->frame->GetStartOfRegisters();
+    r[1] = a1;
+    r[2] = a2;
+    r[3] = a3;
+    ret = CallBuiltInFunction(isolate,c,func,3);
+    c->ExitRuntimeFrame(isolate);
+    return ret;
+}
 
 
 VALUE CallBuiltInFunction4( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3, VALUE a4 ) {
-    
-    //int ret;
     VALUE ret;
     VALUE* r;
-
-
-            c->EnterIntoNewRuntimeFrame(isolate, c->frame );
-            r = c->frame->GetStartOfRegisters();
-            r[1] = a1;
-            r[2] = a2;
-            r[3] = a3;
-            r[4] = a4;
-            ret = CallBuiltInFunction(isolate,c,func,4);
-            c->ExitRuntimeFrame(isolate);
-            return ret;
-    
+    c->EnterIntoNewRuntimeFrame(isolate, c->frame );
+    r = c->frame->GetStartOfRegisters();
+    r[1] = a1;
+    r[2] = a2;
+    r[3] = a3;
+    r[4] = a4;
+    ret = CallBuiltInFunction(isolate,c,func,4);
+    c->ExitRuntimeFrame(isolate);
+    return ret;
 }
 
 
@@ -99,6 +142,8 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 
             case (SCALL_0):
                 sym = r[i.B].SymbolId;
+                r[i.A] = CallBuiltInFunction0( isolate, &cont, sym );
+
                 // TODO!
                 p++;
                 break;
@@ -127,6 +172,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (SCALL_1):
                 sym = r[i.B].SymbolId;
                 a1 = r[i.C];
+                r[i.A] = CallBuiltInFunction1( isolate, &cont, sym, a1 );
                 
             //    r[i.A] = CallBuiltInFunction1(sym, 1, r);
                 
@@ -140,7 +186,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a1 = r[i.C];
                 p++;
                 a2 = r[(*p).OP];
-                    throw std::runtime_error("Not implemented");
+                r[i.A] = CallBuiltInFunction2( isolate, &cont, sym, a1, a2 );
 
                 p++;
                 break;
@@ -154,7 +200,8 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a2 = r[(*p).OP];
                 a3 = r[(*p).A];
                 
-                throw std::runtime_error("Not implemented");
+                r[i.A] = CallBuiltInFunction3( isolate, &cont, sym, a1, a2, a3 );
+//                throw std::runtime_error("Not implemented");
                 
                 p++;
                 break;

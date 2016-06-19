@@ -44,6 +44,18 @@ VALUE Multiply(Continuation* c, int args ) {
 }
 
 
+VALUE Divide(Continuation* c, int args ) {
+    VALUE v = c->GetArgument(0);
+    assert(v.IsInteger());
+    int ret = v.Integer;
+    for (int t=1;t<args;t++) {
+        v = c->GetArgument(t);
+        assert(v.IsInteger());
+        ret /= v.Integer;
+    }
+    return INTEGER(ret);
+}
+
 
 
 VALUE Print(Continuation* c, int args ) {
@@ -61,6 +73,7 @@ struct builtIn {
     { "+", Add },
     { "-", Subtract },
     { "*", Multiply },
+    { "/", Divide },
     { "print", Print }
 };
 
