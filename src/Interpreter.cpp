@@ -15,9 +15,19 @@ using namespace Addie::Internals;
 // https://github.com/Starcounter-Jack/Addie/wiki/Byte-Code
 
 
-VALUE CallBuiltInFunction0( Isolate* isolate, Continuation* c, Symbol func ) {
+VALUE CallFunction0( Isolate* isolate, Continuation* c, Symbol func ) {
     VALUE ret;
     VALUE* r;
+    
+    VALUE fn;
+    auto x = c->CurrentNamespace->Values.find(func);
+    if (x != c->CurrentNamespace->Values.end()) {
+        fn = x->second;
+        assert(false);
+    }
+
+    
+    
     c->EnterIntoNewRuntimeFrame(isolate, c->frame );
     r = c->frame->GetStartOfRegisters();
     ret = CallBuiltInFunction(isolate,c,func,0);
@@ -25,9 +35,11 @@ VALUE CallBuiltInFunction0( Isolate* isolate, Continuation* c, Symbol func ) {
     return ret;
 }
 
-VALUE CallBuiltInFunction1( Isolate* isolate, Continuation* c, Symbol func, VALUE a1 ) {
+VALUE CallFunction1( Isolate* isolate, Continuation* c, Symbol func, VALUE a1 ) {
     VALUE ret;
     VALUE* r;
+    
+    
     c->EnterIntoNewRuntimeFrame(isolate, c->frame );
     r = c->frame->GetStartOfRegisters();
     r[1] = a1;
@@ -37,7 +49,7 @@ VALUE CallBuiltInFunction1( Isolate* isolate, Continuation* c, Symbol func, VALU
 }
 
 
-VALUE CallBuiltInFunction2( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2 ) {
+VALUE CallFunction2( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2 ) {
     VALUE ret;
     VALUE* r;
     c->EnterIntoNewRuntimeFrame(isolate, c->frame );
@@ -51,7 +63,7 @@ VALUE CallBuiltInFunction2( Isolate* isolate, Continuation* c, Symbol func, VALU
 
 
 
-VALUE CallBuiltInFunction3( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3 ) {
+VALUE CallFunction3( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3 ) {
     VALUE ret;
     VALUE* r;
     c->EnterIntoNewRuntimeFrame(isolate, c->frame );
@@ -65,7 +77,7 @@ VALUE CallBuiltInFunction3( Isolate* isolate, Continuation* c, Symbol func, VALU
 }
 
 
-VALUE CallBuiltInFunction4( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3, VALUE a4 ) {
+VALUE CallFunction4( Isolate* isolate, Continuation* c, Symbol func, VALUE a1, VALUE a2, VALUE a3, VALUE a4 ) {
     VALUE ret;
     VALUE* r;
     c->EnterIntoNewRuntimeFrame(isolate, c->frame );
@@ -142,7 +154,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 
             case (SCALL_0):
                 sym = r[i.B].SymbolId;
-                r[i.A] = CallBuiltInFunction0( isolate, &cont, sym );
+                r[i.A] = CallFunction0( isolate, &cont, sym );
 
                 // TODO!
                 p++;
@@ -172,7 +184,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
             case (SCALL_1):
                 sym = r[i.B].SymbolId;
                 a1 = r[i.C];
-                r[i.A] = CallBuiltInFunction1( isolate, &cont, sym, a1 );
+                r[i.A] = CallFunction1( isolate, &cont, sym, a1 );
                 
             //    r[i.A] = CallBuiltInFunction1(sym, 1, r);
                 
@@ -186,7 +198,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a1 = r[i.C];
                 p++;
                 a2 = r[(*p).OP];
-                r[i.A] = CallBuiltInFunction2( isolate, &cont, sym, a1, a2 );
+                r[i.A] = CallFunction2( isolate, &cont, sym, a1, a2 );
 
                 p++;
                 break;
@@ -200,7 +212,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a2 = r[(*p).OP];
                 a3 = r[(*p).A];
                 
-                r[i.A] = CallBuiltInFunction3( isolate, &cont, sym, a1, a2, a3 );
+                r[i.A] = CallFunction3( isolate, &cont, sym, a1, a2, a3 );
 //                throw std::runtime_error("Not implemented");
                 
                 p++;
@@ -216,7 +228,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 a3 = r[(*p).A];
                 a4 = r[(*p).B];
                 
-                r[i.A] = CallBuiltInFunction4( isolate, &cont, sym, a1, a2, a3, a4 );
+                r[i.A] = CallFunction4( isolate, &cont, sym, a1, a2, a3, a4 );
 //                throw std::runtime_error("Not implemented");
 
                 p++;
@@ -333,7 +345,7 @@ Continuation Interpreter::Interpret( Isolate* isolate, Continuation cont ) {
                 
             case (DEF):
                 sym = r[i.B].SymbolId;
-                std::cout << "Defining " << isolate->GetStringFromSymbolId(sym) << "\n";
+                std::cout << "Defining symbol " << sym << " (" << isolate->GetStringFromSymbolId(sym) << ")\n";
                 cont.CurrentNamespace->Values[sym] = r[i.C];
                 r[i.A] = r[i.C];
                 p++;
@@ -360,6 +372,7 @@ VALUE Addie::Internals::CallBuiltInFunction( Isolate* isolate, Continuation* c, 
     //int ret;
     BuiltInFunction func = isolate->GetBuiltInFunction( sym );
     if (func == NULL ) {
+        isolate->DumpSymbols();
         std::cout << "Cannot find function ";
         std::cout << isolate->GetStringFromSymbolId(sym);
         std::cout << "\n";

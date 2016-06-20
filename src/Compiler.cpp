@@ -33,8 +33,7 @@ int FindConstant(Isolate* isolate, MetaCompilation* mc, VALUE form) {
     for (int t=0;t<mf->maxFixedRegisters;t++) {
         RegisterUse u = mf->RegUsage[t];
         if (u.IsConstant && u.IsInitialized && mf->initRegisterBuffer[u.InitializedAt].Equals(form)) {
-            //return mf->RegUsage[t].InitializedAt;
-            return t; //t+1;
+            return t;
         }
     }
     return -1;
@@ -93,7 +92,7 @@ int CompileDef( Isolate* isolate, MetaCompilation* mc, VALUE form, RegisterAlloc
     int valueReg =  CompileForm(isolate,mc,value,UseFree);
     
     (*i++) = Instruction( DEF, (uint8_t)resultRegNo, (uint8_t)symbolReg, (uint8_t)valueReg);
-    std::cout << "Adding DEF\n";
+    //std::cout << "Adding DEF\n";
     mf->EndCodeWrite(isolate,i);
     
    
